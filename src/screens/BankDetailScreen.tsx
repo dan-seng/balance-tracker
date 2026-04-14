@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BankCard } from '../components/BankCard';
 import { Screen } from '../components/Screen';
 import { TransactionCard } from '../components/TransactionCard';
 import { Account, Transaction } from '../models';
@@ -28,29 +29,34 @@ export function BankDetailScreen({
         <Text style={styles.backText}>← Back</Text>
       </Pressable>
 
-      <View style={styles.hero}>
-        <Text style={styles.bankName}>{account.bankName}</Text>
-        <Text style={styles.accountNumber}>{account.accountNumber}</Text>
-        <Text style={styles.balanceLabel}>Current balance</Text>
-        <Text style={styles.balanceValue}>
-          ETB {account.currentBalance.toLocaleString()}
-        </Text>
-      </View>
+      <BankCard
+        account={account}
+        transactionCount={transactions.length}
+        onPress={() => {}}
+      />
 
       <View style={styles.statsRow}>
-        <View style={[styles.statCard, styles.creditCard]}>
-          <Text style={styles.statLabel}>Incoming</Text>
-          <Text style={styles.statValue}>ETB {credits.toLocaleString()}</Text>
+        <View style={styles.statCard}>
+          <View style={styles.statContent}>
+            <View style={styles.statIcon}>
+              <Text style={[styles.statIconText, styles.creditIconText]}>↑</Text>
+            </View>
+            <Text style={styles.statValue}>ETB {credits.toLocaleString()}</Text>
+          </View>
         </View>
-        <View style={[styles.statCard, styles.debitCard]}>
-          <Text style={styles.statLabel}>Outgoing</Text>
-          <Text style={styles.statValue}>ETB {debits.toLocaleString()}</Text>
+        <View style={styles.statCard}>
+          <View style={styles.statContent}>
+            <View style={styles.statIcon}>
+              <Text style={[styles.statIconText, styles.debitIconText]}>↓</Text>
+            </View>
+            <Text style={styles.statValue}>ETB {debits.toLocaleString()}</Text>
+          </View>
         </View>
       </View>
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Transactions</Text>
-        <Text style={styles.sectionHint}>{transactions.length} items</Text>
+        <Text style={styles.sectionHint}>{transactions.length}</Text>
       </View>
 
       <View style={styles.list}>
@@ -74,62 +80,47 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
-  hero: {
-    backgroundColor: '#F1F1E7',
-    borderRadius: 28,
-    marginBottom: 20,
-    padding: 26,
-  },
-  bankName: {
-    color: '#122019',
-    fontSize: 30,
-    fontWeight: '800',
-  },
-  accountNumber: {
-    color: '#5D7568',
-    fontSize: 14,
-    marginTop: 6,
-  },
-  balanceLabel: {
-    color: '#587062',
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 24,
-    textTransform: 'uppercase',
-  },
-  balanceValue: {
-    color: '#15231C',
-    fontSize: 38,
-    fontWeight: '800',
-    letterSpacing: -1,
-    marginTop: 6,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: 24,
   },
   statCard: {
-    borderRadius: 20,
+    backgroundColor: '#122019',
+    borderRadius: 16,
+    height: 50,
     flex: 1,
-    padding: 18,
+    padding: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  creditCard: {
-    backgroundColor: '#1B2D24',
+  statContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
-  debitCard: {
-    backgroundColor: '#3A241C',
+  statIcon: {
+    backgroundColor: '#1A2A23',
+    borderRadius: 999,
+    height: 32,
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statLabel: {
-    color: '#AAB9B1',
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 8,
-    textTransform: 'uppercase',
+  statIconText: {
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 16,
+  },
+  creditIconText: {
+    color: '#6BDB93',
+  },
+  debitIconText: {
+    color: '#FFB38A',
   },
   statValue: {
-    color: '#F5F7F1',
-    fontSize: 22,
+    color: '#dcdeddbc',
+    fontSize: 10,
     fontWeight: '800',
   },
   sectionHeader: {
@@ -137,9 +128,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 16,
+    marginTop: 24,
   },
   sectionTitle: {
-    color: '#F5F7F1',
+    color: '#f5f7f1e3',
     fontSize: 22,
     fontWeight: '800',
   },
