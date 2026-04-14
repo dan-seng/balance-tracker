@@ -95,3 +95,51 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+npx react-native run-android
+
+Install dependencies
+npm install
+
+Start Metro bundler (keep this terminal open)
+npm start
+
+In a second terminal, run Android
+npm run android
+
+
+
+
+Based on your SRS, here's what remains:
+
+## Completed (Phase 1)
+- ✅ React Native project setup
+- ✅ Basic UI screens (Welcome, Dashboard, BankDetail)
+- ✅ CBE parser implementation
+- ✅ TypeScript models
+- ✅ Mock data service
+
+## Remaining Work
+
+### Phase 2: SMS Integration (High Priority)
+- **Kotlin native SMS receiver** - Create `/android/smsmodule/SmsReceiver.kt` and `SmsModule.kt`
+- **SMS permissions** - Add READ_SMS, RECEIVE_SMS to Android manifest
+- **React Native bridge** - Connect Kotlin layer to JS for SMS events
+
+### Phase 3: Parsing (Medium Priority)
+- **Dashen parser** - Create `src/parsers/dashenParser.ts`
+- **Awash parser** - Create `src/parsers/awashParser.ts`
+
+### Phase 4: Storage (High Priority)
+- **SQLite integration** - Replace in-memory DB with `react-native-sqlite-storage`
+- **Database schema** - Create accounts and transactions tables
+
+### Phase 5: Logic & Features (Medium Priority)
+- **Balance computation** - Calculate balance when SMS lacks it
+- **SMS deduplication** - Hash-based checking to prevent duplicates
+- **Real-time UI updates** - React to SMS events automatically
+
+### Phase 6: Multi-Bank Support
+- Add more bank parsers as needed
+
+**Next logical step:** Start with Phase 2 (SMS Integration) since it's the foundation for everything else. Would you like me to begin with the Kotlin SMS receiver module?
