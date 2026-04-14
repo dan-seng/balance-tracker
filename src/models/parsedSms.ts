@@ -1,4 +1,12 @@
-export type BankId = 'cbe' | 'dashen' | 'awash' | 'unknown';
+export type BankId =
+  | 'cbe'
+  | 'cbebirr'
+  | 'telebirr'
+  | 'dashen'
+  | 'awash'
+  | 'wegagen'
+  | 'boa'
+  | 'unknown';
 
 export type TransactionType = 'credit' | 'debit';
 
