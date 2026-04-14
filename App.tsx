@@ -1,45 +1,33 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import { useState } from 'react';
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { Account } from './src/models';
+import { BankDetailScreen } from './src/screens/BankDetailScreen';
+import { DashboardScreen } from './src/screens/DashboardScreen';
+import { getTransactionsForAccount } from './src/services/mockDataService';
+import { WelcomeScreen } from './src/screens/WelcomeScreen';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [hasStarted, setHasStarted] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <StatusBar barStyle="light-content" />
+      {!hasStarted ? (
+        <WelcomeScreen onContinue={() => setHasStarted(true)} />
+      ) : selectedAccount ? (
+        <BankDetailScreen
+          account={selectedAccount}
+          onBack={() => setSelectedAccount(null)}
+          transactions={getTransactionsForAccount(selectedAccount.id)}
+        />
+      ) : (
+        <DashboardScreen onSelectAccount={setSelectedAccount} />
+      )}
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;
