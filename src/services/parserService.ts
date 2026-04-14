@@ -1,10 +1,11 @@
 import { ParsedSms } from '../models';
-import { parseCbeSms } from '../parsers/cbeParser';
+import { parseBoaSms } from '../parsers/boaParser';
+import { parseGenericSms } from '../parsers/genericParser';
 
 export function parseSms(message: string, sender: string): ParsedSms | null {
-  if (sender.toUpperCase().includes('CBE')) {
-    return parseCbeSms(message, sender);
+  if (sender.trim().toUpperCase() === 'BOA') {
+    return parseBoaSms(message, sender);
   }
 
-  return null;
+  return parseGenericSms(message, sender);
 }
