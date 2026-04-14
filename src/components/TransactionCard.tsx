@@ -11,68 +11,104 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
 
   return (
     <View style={styles.card}>
-      <View style={styles.row}>
-        <View>
+      <View style={styles.header}>
+        <View style={styles.icon}>
+          <Text style={[styles.iconText, isCredit ? styles.creditIcon : styles.debitIcon]}>
+            {isCredit ? '↑' : '↓'}
+          </Text>
+        </View>
+        <View style={styles.bankInfo}>
           <Text style={styles.bank}>{transaction.bankName}</Text>
           <Text style={styles.date}>
             {new Date(transaction.date).toLocaleDateString()}
           </Text>
         </View>
         <Text style={[styles.amount, isCredit ? styles.credit : styles.debit]}>
-          {isCredit ? '+' : '-'}ETB {transaction.amount.toLocaleString()}
+          {isCredit ? '+' : '-'}{transaction.amount.toLocaleString()}
         </Text>
       </View>
-      <Text style={styles.balance}>
-        Balance after: ETB {transaction.balanceAfter?.toLocaleString() ?? 'N/A'}
-      </Text>
-      <Text style={styles.sms} numberOfLines={2}>
-        {transaction.rawSms}
-      </Text>
+      <View style={styles.footer}>
+        <Text style={styles.balance}>
+          Balance: ETB {transaction.balanceAfter?.toLocaleString() ?? 'N/A'}
+        </Text>
+        <Text style={styles.sms} numberOfLines={2}>
+          {transaction.rawSms}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#162720',
-    borderColor: '#274338',
-    borderRadius: 20,
+    backgroundColor: '#122019',
+    borderColor: '#24352F',
+    borderRadius: 16,
     borderWidth: 1,
-    gap: 10,
-    padding: 20,
+    padding: 16,
   },
-  row: {
+  header: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  icon: {
+    backgroundColor: '#1A2A23',
+    borderRadius: 999,
+    height: 36,
+    width: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconText: {
+    fontSize: 18,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  creditIcon: {
+    color: '#6BDB93',
+  },
+  debitIcon: {
+    color: '#FFB38A',
+  },
+  bankInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
   bank: {
     color: '#F5F7F1',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   date: {
     color: '#93A89D',
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
+    marginTop: 2,
   },
   amount: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
   },
   credit: {
-    color: '#D7FF74',
+    color: '#6BDB93',
   },
   debit: {
     color: '#FFB38A',
   },
+  footer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#24352F',
+  },
   balance: {
-    color: '#C5D0CA',
-    fontSize: 13,
+    color: '#93A89D',
+    fontSize: 12,
+    marginBottom: 8,
   },
   sms: {
     color: '#88A094',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
   },
 });
