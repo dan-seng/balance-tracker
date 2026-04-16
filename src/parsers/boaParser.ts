@@ -16,7 +16,7 @@ export function parseBoaSms(
   }
 
   const amountMatch = normalized.match(
-    /\b(?:credited(?:\s+with)?|debited)[^\dA-Z]*(?:ETB|Birr|Br\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i,
+    /\b(?:credited|debited)(?:\s+with)?[^\dA-Z]*(?:ETB|Birr|Br\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i,
   );
   if (!amountMatch) {
     return null;
