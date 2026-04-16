@@ -38,17 +38,57 @@ const BANK_MATCHERS: BankMatcher[] = [
   {
     bankId: 'dashen',
     bankName: 'DashenBank',
-    senderValues: ['dashenbank'],
+    senderValues: ['dashenbank', 'dashen', '+251714986741'],
   },
   {
     bankId: 'awash',
     bankName: 'AwashBank',
-    senderValues: ['awash', 'awashbank'],
+    senderValues: ['awash', 'awashbank', 'awashinternationalbank'],
   },
   {
     bankId: 'wegagen',
     bankName: 'WegagenBank',
-    senderValues: ['wegagenbank'],
+    senderValues: ['wegagenbank', 'wegagen'],
+  },
+  {
+    bankId: 'hibret',
+    bankName: 'HibretBank',
+    senderValues: ['hibretbank', 'hibret'],
+  },
+  {
+    bankId: 'abay',
+    bankName: 'AbayBank',
+    senderValues: ['abay', 'abaybank'],
+  },
+  {
+    bankId: 'ahadu',
+    bankName: 'AhaduBank',
+    senderValues: ['ahadu', 'ahadubank'],
+  },
+  {
+    bankId: 'amhara',
+    bankName: 'AmharaBank',
+    senderValues: ['amhara', 'amharabank'],
+  },
+  {
+    bankId: 'berhan',
+    bankName: 'BerhanBank',
+    senderValues: ['berhan', 'berhanbank', 'berhaninternationalbank'],
+  },
+  {
+    bankId: 'mpesa',
+    bankName: 'M-Pesa',
+    senderValues: ['mpesa'],
+  },
+  {
+    bankId: 'nib',
+    bankName: 'NibBank',
+    senderValues: ['nib', 'nibbank', 'nibinternationalbank'],
+  },
+  {
+    bankId: 'zemen',
+    bankName: 'ZemenBank',
+    senderValues: ['zemen', 'zemenbank'],
   },
 ];
 
@@ -83,7 +123,7 @@ function detectTransactionType(message: string): 'credit' | 'debit' | null {
   }
 
   if (
-    /\b(debited|purchase|transfer|withdrawal|withdrawn|cash\s?out|cashout|paid|payment|sent)\b/i.test(
+    /\b(debited|purchase|transfer|transferred|withdrawal|withdrawn|cash\s?out|cashout|paid|payment|sent)\b/i.test(
       message,
     )
   ) {

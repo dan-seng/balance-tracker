@@ -6,6 +6,14 @@ export type BankId =
   | 'awash'
   | 'wegagen'
   | 'boa'
+  | 'hibret'
+  | 'abay'
+  | 'ahadu'
+  | 'amhara'
+  | 'berhan'
+  | 'mpesa'
+  | 'nib'
+  | 'zemen'
   | 'unknown';
 
 export type TransactionType = 'credit' | 'debit';
