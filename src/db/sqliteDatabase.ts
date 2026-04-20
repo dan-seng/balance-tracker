@@ -59,6 +59,14 @@ async function createTables(): Promise<void> {
     );
   `);
 
+  // Create user_settings table for preferences
+  await db.executeSql(`
+    CREATE TABLE IF NOT EXISTS user_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+
   // Create indexes for better query performance
   await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);`);
   await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);`);
@@ -246,4 +254,23 @@ export async function closeDatabase(): Promise<void> {
     await db.close();
     db = null;
   }
+}
+
+export async function setUserName(name: string): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('username', ?)`,
+    [name]
+  );
+}
+
+export async function getUserName(): Promise<string | null> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT value FROM user_settings WHERE key = 'username';`
+  );
+  if (results.rows.length === 0) {
+    return null;
+  }
+  return results.rows.item(0).value;
 }
