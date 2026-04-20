@@ -12,6 +12,8 @@ import {
   deleteTransaction,
   deleteAllTransactions,
   deleteAllAccounts,
+  setUserName,
+  getUserName,
 } from './sqliteDatabase';
 
 // Initialize database on module load
@@ -79,4 +81,14 @@ export async function clearAllTransactionsFromDb() {
 export async function clearAllAccountsFromDb() {
   await ensureDatabaseInitialized();
   return deleteAllAccounts();
+}
+
+export async function setUserNameInDb(name: string) {
+  await ensureDatabaseInitialized();
+  return setUserName(name);
+}
+
+export async function getUserNameFromDb(): Promise<string | null> {
+  await ensureDatabaseInitialized();
+  return getUserName();
 }

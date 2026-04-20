@@ -1,0 +1,36 @@
+# Feature Recommendations for Hisab
+
+Your app already has a solid foundation: it perfectly parses 15 different banks offline and displays a stunning, minimalist UI. To take it to the "Pro" level, here are the most impactful features you could add next:
+
+### 1. Spending Categories & Analytics 📊
+Right now, you see money coming in and going out, but you don't know *where* it's going. 
+- **Idea**: Auto-categorize transactions (e.g., Airtime, Utilities, Transfers, ATM Withdrawals) using keywords in the SMS.
+- **UI**: Add a beautifully animated Doughnut / Pie Chart to the Dashboard showing your monthly spend breakdown.
+
+### 2. Search and Filtering 🔍
+As your wallet grows, finding a specific payment will become impossible.
+- **Idea**: Add a sleek global search bar to instantly find transactions by amount, date, bank, or keyword.
+- **UI**: A minimalist filter drawer to select specific banks or date ranges.
+
+### 3. Biometric Security App Lock 🔒
+Since Hisab tracks personal financial data, privacy is critical.
+- **Idea**: Add a FaceID / Fingerprint lock when opening the app, utilizing React Native Biometrics.
+- **UI**: A sleek lock screen that perfectly matches your minimalist dark aesthetic.
+
+### 4. Monthly Insights & Summaries 📈
+Help users actually manage their money, rather than just track it.
+- **Idea**: A "This Month vs Last Month" widget. E.g., *"You spent ETB 5,000 less this month!"*
+- **UI**: A small, glassy widget on the Dashboard highlighting key financial wins.
+
+### 5. Export to CSV / Excel 📥
+Power users love owning their data.
+- **Idea**: Allow users to export their transaction history to a CSV file.
+- **UI**: A simple "Export" icon in the top right of the Bank Detail screen.
+
+### 6. Custom Manual Entries ✍️
+Not everything exists in an SMS. Sometimes people spend raw cash.
+- **Idea**: A Floating Action Button (`+`) on the Dashboard to let users manually log cash expenses. 
+
+---
+
+**Which one of these sounds the most exciting to build right now?** I'm happy to draw up the architecture and code for any of them!

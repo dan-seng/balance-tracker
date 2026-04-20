@@ -1,16 +1,59 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
+import { AppText as Text } from '../components/AppText';;
+import { useState } from 'react';
+import Svg, { Path, Circle, Line, Rect } from 'react-native-svg';
+
+const EyeIcon = ({ size = 18, color = "#B8D69F" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <Circle cx="12" cy="12" r="3" />
+  </Svg>
+);
+
+const EyeOffIcon = ({ size = 18, color = "#B8D69F" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+    <Line x1="1" y1="1" x2="23" y2="23" />
+  </Svg>
+);
+
+const LockIcon = ({ size = 18, color = "#8AA094", locked = false }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </Svg>
+);
+
+const UnlockIcon = ({ size = 18, color = "#8AA094" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <Path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    <Path d="M16.9 7a5 5 0 0 0-9.9 1" />
+  </Svg>
+);
 
 import { BankCard } from '../components/BankCard';
+import { SearchBar } from '../components/SearchBar';
+import { FilterDrawer } from '../components/FilterDrawer';
 import { Screen } from '../components/Screen';
 import { Account, Transaction } from '../models';
 
 type DashboardScreenProps = {
+  userName: string;
   onSelectAccount: (account: Account) => void;
   accounts: Account[];
   transactions: Transaction[];
+  onToggleLock: () => void;
+  isAppLocked: boolean;
 };
 
-export function DashboardScreen({onSelectAccount, accounts, transactions}: DashboardScreenProps) {
+export function DashboardScreen({userName, onSelectAccount, accounts, transactions, onToggleLock, isAppLocked}: DashboardScreenProps) {
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+
   const totalBalance = accounts.reduce((sum, account) => sum + account.currentBalance, 0);
   const weeklyDelta = creditsMinusDebits(transactions);
   const credits = transactions
@@ -20,33 +63,66 @@ export function DashboardScreen({onSelectAccount, accounts, transactions}: Dashb
     .filter(item => item.type === 'debit')
     .reduce((sum, item) => sum + item.amount, 0);
 
+  const filteredAccounts = accounts.filter(account => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      account.bankName.toLowerCase().includes(query) ||
+      account.accountNumber.toLowerCase().includes(query) ||
+      account.currentBalance.toString().includes(query)
+    );
+  });
+
+  const handleBankToggle = (bankName: string) => {
+    setSelectedBanks(prev =>
+      prev.includes(bankName)
+        ? prev.filter(b => b !== bankName)
+        : [...prev, bankName]
+    );
+  };
+
+  const banks = Array.from(new Set(accounts.map(a => a.bankName)));
+
   return (
     <Screen scrollable>
       <View style={styles.hero}>
         <View style={styles.heroHeader}>
           <View style={styles.heroIdentity}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>D</Text>
+              <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
             </View>
             <View>
               <Text style={styles.eyebrow}>Welcome back</Text>
-              <Text style={styles.title}>Hello, Dan</Text>
+              <Text style={styles.title}>Hello, {userName}</Text>
             </View>
           </View>
-          <View style={styles.alertButton}>
-            <Text style={styles.alertIcon}>!</Text>
+          <View style={styles.headerActions}>
+            <SearchBar onSearch={setSearchQuery} />
+            <Pressable onPress={() => setIsFilterDrawerOpen(true)} style={styles.filterButton} hitSlop={10}>
+              <Text style={styles.filterIcon}>≡</Text>
+            </Pressable>
+            <Pressable onPress={onToggleLock} style={styles.lockButton} hitSlop={10}>
+              {isAppLocked ? <LockIcon locked={true} /> : <UnlockIcon />}
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.balanceCard}>
           <View style={styles.balanceGlow} />
-          <Text style={styles.balanceLabel}>Total combined balance</Text>
+          
+          <View style={styles.balanceHeader}>
+            <Text style={styles.balanceLabel}>Total combined balance</Text>
+            <Pressable onPress={() => setIsBalanceHidden(!isBalanceHidden)} hitSlop={10} style={styles.eyeBtn}>
+              {isBalanceHidden ? <EyeOffIcon /> : <EyeIcon />}
+            </Pressable>
+          </View>
+          
           <View style={styles.balanceRow}>
             <Text style={styles.balanceCurrency}>ETB</Text>
             <Text style={styles.balanceValue}>
-              {Math.round(totalBalance).toLocaleString()}
+              {isBalanceHidden ? '••••••••' : Math.round(totalBalance).toLocaleString()}
             </Text>
-            <Text style={styles.balanceDecimals}>.00</Text>
+            {!isBalanceHidden && <Text style={styles.balanceDecimals}>.00</Text>}
           </View>
 
           <View style={styles.balancePill}>
@@ -80,11 +156,11 @@ export function DashboardScreen({onSelectAccount, accounts, transactions}: Dashb
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Bank accounts</Text>
-        <Text style={styles.sectionHint}>Tap any card</Text>
+        <Text style={styles.sectionHint}>{filteredAccounts.length} banks</Text>
       </View>
 
       <View style={styles.list}>
-        {accounts.map(account => (
+        {filteredAccounts.map(account => (
           <BankCard
             key={account.id}
             account={account}
@@ -94,7 +170,15 @@ export function DashboardScreen({onSelectAccount, accounts, transactions}: Dashb
         ))}
       </View>
 
-      
+      <FilterDrawer
+        visible={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        banks={banks}
+        selectedBanks={selectedBanks}
+        onBankToggle={handleBankToggle}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
     </Screen>
   );
 }
@@ -126,7 +210,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
-   
+  },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  filterButton: {
+    backgroundColor: '#1A2A23',
+    borderRadius: 999,
+    height: 40,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterIcon: {
+    color: '#8AA094',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  lockButton: {
+    backgroundColor: '#1A2A23',
+    borderRadius: 999,
+    height: 40,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
     alignItems: 'center',
@@ -186,6 +295,15 @@ const styles = StyleSheet.create({
     right: -20,
     top: 20,
     width: 180,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  eyeBtn: {
+    padding: 4,
+    opacity: 0.8,
   },
   balanceLabel: {
     color: '#B8D69F',

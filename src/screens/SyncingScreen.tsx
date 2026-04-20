@@ -1,4 +1,5 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { AppText as Text } from '../components/AppText';;
 
 import { Screen } from '../components/Screen';
 
@@ -15,7 +16,7 @@ export function SyncingScreen() {
           </Text>
 
           <View style={styles.loaderRow}>
-            <ActivityIndicator color="#D7FF74" size="small" />
+            <ActivityIndicator color="#FFFFFF" size="small" />
             <Text style={styles.loaderText}>Reading bank messages...</Text>
           </View>
         </View>
@@ -30,27 +31,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   panel: {
-    backgroundColor: '#14241D',
+    backgroundColor: '#181818',
     borderRadius: 28,
     padding: 28,
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   badge: {
-    color: '#D7FF74',
-    fontSize: 12,
-    fontWeight: '800',
+    color: '#bbbdbfff',
+    fontSize: 24,
     letterSpacing: 2,
     marginBottom: 16,
-    textTransform: 'uppercase',
+    fontFamily: 'nokiapure',
   },
   title: {
-    color: '#F8FAF5',
+    color: '#FFFFFF',
     fontSize: 30,
     fontWeight: '800',
     letterSpacing: -1,
     lineHeight: 36,
   },
   subtitle: {
-    color: '#B8C4BB',
+    color: '#8A8A8A',
     fontSize: 15,
     lineHeight: 24,
     marginTop: 14,
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
     marginTop: 26,
   },
   loaderText: {
-    color: '#D7FF74',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },

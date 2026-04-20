@@ -38,7 +38,7 @@ const BANK_MATCHERS: BankMatcher[] = [
   {
     bankId: 'dashen',
     bankName: 'DashenBank',
-    senderValues: ['dashenbank', 'dashen', '+251714986741'],
+    senderValues: ['dashenbank', 'dashen'],
   },
   {
     bankId: 'awash',
