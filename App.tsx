@@ -1,35 +1,148 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StatusBar, Alert, NativeModules } from 'react-native';
+import { StatusBar, Alert, NativeModules, BackHandler, View, AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
 
 import { Account, Transaction } from './src/models';
 import { BankDetailScreen } from './src/screens/BankDetailScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
+import { LockScreen } from './src/screens/LockScreen';
 import { SyncingScreen } from './src/screens/SyncingScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
-import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb } from './src/db';
+import { NameEntryScreen } from './src/screens/NameEntryScreen';
+import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { BottomNav, TabType } from './src/components/BottomNav';
+import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb } from './src/db';
 import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
 import { calculateBalance, generateSmsHash } from './src/utils/balanceUtils';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [dbReady, setDbReady] = useState(false);
   const [smsPermissionsGranted, setSmsPermissionsGranted] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isAppLocked, setIsAppLocked] = useState(false);
+  const [showLockScreen, setShowLockScreen] = useState(false);
+  const [autoLockTimeout, setAutoLockTimeout] = useState(0); // 0 = immediately, -1 = never
+  const [lastActiveTime, setLastActiveTime] = useState(Date.now());
   const accountsRef = useRef<Account[]>([]);
+
+  const rnBiometrics = new ReactNativeBiometrics({
+    allowDeviceCredentials: true,
+  });
+
+  useEffect(() => {
+    if (isAppLocked && hasStarted && userName && dbReady && !isSyncing) {
+      setShowLockScreen(true);
+    } else {
+      setShowLockScreen(false);
+    }
+  }, [isAppLocked, hasStarted, userName, dbReady, isSyncing]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && isAppLocked && hasStarted && userName && dbReady && !isSyncing) {
+        // Check if auto-lock timeout has elapsed
+        if (autoLockTimeout === -1) {
+          // Never auto-lock, don't show lock screen on app return
+          return;
+        }
+
+        const timeSinceLastActive = Date.now() - lastActiveTime;
+        const timeoutMs = autoLockTimeout * 60 * 1000;
+
+        if (autoLockTimeout === 0 || timeSinceLastActive >= timeoutMs) {
+          setShowLockScreen(true);
+        }
+      } else if (nextAppState === 'active') {
+        // Update last active time when app becomes active
+        setLastActiveTime(Date.now());
+      }
+    });
+
+    return () => subscription.remove();
+  }, [isAppLocked, hasStarted, userName, dbReady, isSyncing, autoLockTimeout, lastActiveTime]);
+
+  const handleUnlockWithBiometrics = async (): Promise<boolean> => {
+    try {
+      const result = await rnBiometrics.simplePrompt({
+        promptMessage: 'Authenticate to unlock Hisab',
+        cancelButtonText: 'Cancel',
+      });
+
+      if (result.success) {
+        setShowLockScreen(false);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.log('Biometric authentication error:', error);
+      return false;
+    }
+  };
+
+  const handleToggleLock = async () => {
+    const newLockState = !isAppLocked;
+    
+    if (newLockState) {
+      // Try to enable biometric authentication first
+      try {
+        const result = await rnBiometrics.simplePrompt({
+          promptMessage: 'Authenticate to enable app lock',
+          cancelButtonText: 'Cancel',
+        });
+
+        if (result.success) {
+          setIsAppLocked(true);
+        }
+      } catch (error) {
+        console.log('Failed to enable biometric lock:', error);
+        Alert.alert(
+          'Authentication Failed',
+          'Could not enable app lock. Biometric authentication may not be available on this device.'
+        );
+      }
+    } else {
+      // Disable lock
+      setIsAppLocked(false);
+    }
+  };
 
   useEffect(() => {
     accountsRef.current = accounts;
   }, [accounts]);
 
+  useEffect(() => {
+    const handleBackPress = () => {
+      if (selectedAccount) {
+        setSelectedAccount(null);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+    return () => {
+      subscription.remove();
+    };
+  }, [selectedAccount]);
+
   const initializeDatabase = async () => {
     try {
       await initDatabase();
+      const savedName = await getUserNameFromDb();
+      if (savedName) {
+        setUserName(savedName);
+        setHasStarted(true);
+      }
       setDbReady(true);
     } catch (error) {
       console.error('Failed to initialize database:', error);
@@ -162,32 +275,17 @@ function App() {
   const syncSmsState = useCallback(async () => {
     setIsSyncing(true);
     try {
-      const { SmsModule } = NativeModules;
-      if (!SmsModule?.getInboxSms) {
-        console.log('SmsModule.getInboxSms not available');
-        return;
-      }
-
-      const inboxSms = await SmsModule.getInboxSms(0);
-      const savedSms = SmsModule.getSavedSms
-        ? await SmsModule.getSavedSms()
-        : [];
-
       await clearAllTransactionsFromDb();
       await clearAllAccountsFromDb();
 
-      const rebuiltAccounts = await ingestSmsMessages([
-        ...(Array.isArray(inboxSms) ? inboxSms : []),
-        ...(Array.isArray(savedSms) ? savedSms : []),
-      ]);
+      // Read real SMS data natively
+      const realSmsData = await nativeSmsService.getInboxSms(5000);
+      const rebuiltAccounts = await ingestSmsMessages(realSmsData);
 
       accountsRef.current = rebuiltAccounts;
       setAccounts(rebuiltAccounts);
       await loadTransactions();
-
-      if (SmsModule.clearSavedSms) {
-        await SmsModule.clearSavedSms();
-      }
+      // Mocking, no need to clear saved SMS
     } catch (error) {
       console.error('Error syncing SMS state:', error);
     } finally {
@@ -294,8 +392,18 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" />
-      {!hasStarted ? (
+      {showLockScreen ? (
+        <LockScreen
+          onUnlock={() => setShowLockScreen(false)}
+          onUnlockWithBiometrics={handleUnlockWithBiometrics}
+        />
+      ) : !hasStarted ? (
         <WelcomeScreen onContinue={() => setHasStarted(true)} />
+      ) : !userName ? (
+        <NameEntryScreen onNameSubmit={async (name) => {
+          await setUserNameInDb(name);
+          setUserName(name);
+        }} />
       ) : !dbReady || !smsPermissionsGranted || isSyncing ? (
         <SyncingScreen />
       ) : selectedAccount ? (
@@ -305,11 +413,33 @@ function App() {
           transactions={getTransactionsForAccount(selectedAccount.id)}
         />
       ) : (
-        <DashboardScreen 
-          onSelectAccount={setSelectedAccount}
-          accounts={accounts}
-          transactions={transactions}
-        />
+        <View style={{flex: 1}}>
+          {currentTab === 'dashboard' ? (
+            <DashboardScreen
+              userName={userName!}
+              onSelectAccount={setSelectedAccount}
+              accounts={accounts}
+              transactions={transactions}
+              onToggleLock={handleToggleLock}
+              isAppLocked={isAppLocked}
+            />
+          ) : currentTab === 'analytics' ? (
+            <AnalyticsScreen transactions={transactions} />
+          ) : (
+            <SettingsScreen
+              userName={userName!}
+              onNameChange={async (name) => {
+                await setUserNameInDb(name);
+                setUserName(name);
+              }}
+              isAppLocked={isAppLocked}
+              onToggleLock={handleToggleLock}
+              autoLockTimeout={autoLockTimeout}
+              onAutoLockTimeoutChange={setAutoLockTimeout}
+            />
+          )}
+          <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
+        </View>
       )}
     </SafeAreaProvider>
   );

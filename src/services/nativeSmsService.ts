@@ -20,6 +20,13 @@ class NativeSmsService {
     }
   }
 
+  getInboxSms(limit: number): Promise<SmsEventData[]> {
+    if (!SmsModule || !SmsModule.getInboxSms) {
+      return Promise.reject(new Error('SmsModule not available'));
+    }
+    return SmsModule.getInboxSms(limit);
+  }
+
   addListener(listener: SmsListener) {
     if (!this.eventEmitter) {
       console.warn('SmsModule not available');
