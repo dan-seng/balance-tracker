@@ -1,6 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AppText as Text } from '../components/AppText';;
 
 import { BankCard } from '../components/BankCard';
+import { SearchBar } from '../components/SearchBar';
+import { FilterDrawer } from '../components/FilterDrawer';
 import { Screen } from '../components/Screen';
 import { TransactionCard } from '../components/TransactionCard';
 import { Account, Transaction } from '../models';
@@ -16,6 +20,10 @@ export function BankDetailScreen({
   transactions,
   onBack,
 }: BankDetailScreenProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+
   const credits = transactions
     .filter(item => item.type === 'credit')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -23,11 +31,28 @@ export function BankDetailScreen({
     .filter(item => item.type === 'debit')
     .reduce((sum, item) => sum + item.amount, 0);
 
+  const filteredTransactions = transactions.filter(transaction => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      transaction.bankName.toLowerCase().includes(query) ||
+      transaction.amount.toString().includes(query) ||
+      transaction.rawSms.toLowerCase().includes(query) ||
+      transaction.balanceAfter?.toString().includes(query)
+    );
+  });
+
   return (
     <Screen scrollable>
-      <Pressable onPress={onBack} style={styles.backButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-        <Text style={styles.backText}>← Back</Text>
-      </Pressable>
+      <View style={styles.headerRow}>
+        <Pressable onPress={onBack} style={styles.backButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={styles.backText}>← Back</Text>
+        </Pressable>
+        <SearchBar onSearch={setSearchQuery} />
+        <Pressable onPress={() => setIsFilterDrawerOpen(true)} style={styles.filterButton} hitSlop={10}>
+          <Text style={styles.filterIcon}>≡</Text>
+        </Pressable>
+      </View>
 
       <BankCard
         account={account}
@@ -56,28 +81,55 @@ export function BankDetailScreen({
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Transactions</Text>
-        <Text style={styles.sectionHint}>{transactions.length}</Text>
+        <Text style={styles.sectionHint}>{filteredTransactions.length}</Text>
       </View>
 
       <View style={styles.list}>
-        {transactions.map(transaction => (
+        {filteredTransactions.map(transaction => (
           <TransactionCard key={transaction.id} transaction={transaction} />
         ))}
       </View>
+
+      <FilterDrawer
+        visible={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        banks={[account.bankName]}
+        selectedBanks={[]}
+        onBankToggle={() => {}}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignSelf: 'flex-start',
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  backButton: {
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
   backText: {
     color: '#D7FF74',
     fontSize: 15,
+    fontWeight: '800',
+  },
+  filterButton: {
+    backgroundColor: '#1A2A23',
+    borderRadius: 999,
+    height: 40,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterIcon: {
+    color: '#8AA094',
+    fontSize: 20,
     fontWeight: '800',
   },
   statsRow: {
