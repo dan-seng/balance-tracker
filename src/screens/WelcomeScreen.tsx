@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
+import { AppText as Text } from '../components/AppText';;
 
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
@@ -8,28 +10,53 @@ type WelcomeScreenProps = {
 };
 
 export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  // Staggered entry animation for elements
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
   return (
     <Screen>
       <View style={styles.wrapper}>
-        <View style={styles.hero}>
-          <View style={styles.glowOne} />
-          <View style={styles.glowTwo} />
-          <Text style={styles.badge}>Hisab</Text>
-          <Text style={styles.title}>Track bank SMS like a real wallet.</Text>
+        
+        {/* Subtle, massive background vignette to give depth without clutter */}
+        <View style={styles.backgroundVignette} pointerEvents="none" />
+
+        <Animated.View 
+          style={[
+            styles.content, 
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+          ]}>
+          <Text style={styles.badge}>ሒሳብ</Text>
+          <Text style={styles.title}>
+            Track bank SMS {'\n'}
+            <Text style={styles.titleAccent}>like a real wallet.</Text>
+          </Text>
           <Text style={styles.subtitle}>
             Read incoming bank messages, structure them locally, and turn them
             into a clean financial timeline.
           </Text>
-        </View>
+        </Animated.View>
 
-        <View style={styles.featureCard}>
-          <Text style={styles.featureTitle}>What you get</Text>
-          <Text style={styles.featureItem}>Offline-first account tracking</Text>
-          <Text style={styles.featureItem}>Automatic transaction parsing</Text>
-          <Text style={styles.featureItem}>A calmer dashboard for messy SMS</Text>
-        </View>
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <PrimaryButton label="Start Building My Wallet" onPress={onContinue} />
+        </Animated.View>
 
-        <PrimaryButton label="Start Building My Wallet" onPress={onContinue} />
       </View>
     </Screen>
   );
@@ -38,78 +65,49 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 18,
-    paddingTop: 12,
+    paddingBottom: 24,
+    paddingTop: 80,
   },
-  hero: {
-    backgroundColor: '#14241D',
-    borderRadius: 32,
-    minHeight: 380,
-    overflow: 'hidden',
-    padding: 28,
-    position: 'relative',
-  },
-  glowOne: {
-    backgroundColor: '#2A5A4A',
-    borderRadius: 999,
-    height: 250,
-    opacity: 0.8,
+  backgroundVignette: {
     position: 'absolute',
-    right: -40,
-    top: -30,
-    width: 250,
-  },
-  glowTwo: {
-    backgroundColor: '#D7FF74',
+    top: -150,
+    left: 150,
+    width: 400,
+    height: 300,
     borderRadius: 999,
-    bottom: -60,
-    height: 160,
-    opacity: 0.25,
-    position: 'absolute',
-    right: 40,
-    width: 160,
+    backgroundColor: '#ffffffff',
+    opacity: 0.08, // Barely visible, just adds a premium sheen
+  },
+  content: {
+    paddingHorizontal: 8,
+    zIndex: 1,
   },
   badge: {
-    color: '#D7FF74',
-    fontSize: 13,
-    fontWeight: '700',
+    color: '#ffffffff',
+    fontSize: 52,
     letterSpacing: 2,
-    marginBottom: 20,
-    textTransform: 'uppercase',
+    marginBottom: 32,
+    fontFamily: 'nokiapure'
   },
   title: {
-    color: '#F8FAF5',
-    fontSize: 40,
-    fontWeight: '800',
+    color: '#FFFFFF',
+    fontSize: 44,
     letterSpacing: -1.5,
-    lineHeight: 46,
-    marginTop: 12,
-    maxWidth: 300,
+    lineHeight: 52,
+    marginBottom: 20,
+     fontFamily: 'Poppins-Bold',
+  },
+  titleAccent: {
+    fontFamily: 'Poppins-Bold',
+    color: '#b0b0b0ff', // A classy, muted sage tone for the second half
   },
   subtitle: {
-    color: '#B8C4BB',
-    fontSize: 15,
-    lineHeight: 24,
-    marginTop: 16,
-    maxWidth: 300,
-  },
-  featureCard: {
-    backgroundColor: '#F1F1E7',
-    borderRadius: 24,
-    gap: 12,
-    marginVertical: 20,
-    padding: 24,
-  },
-  featureTitle: {
-    color: '#1B2B22',
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  featureItem: {
-    color: '#355244',
-    fontSize: 14,
-    lineHeight: 20,
+    color: '#656565ff',
+    fontSize: 16,
+    lineHeight: 26,
+    fontWeight: '400',
+    maxWidth: '90%',
   },
 });
