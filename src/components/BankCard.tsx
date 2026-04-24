@@ -24,6 +24,7 @@ type BankCardProps = {
   transactionCount: number;
   initialIsBalanceHidden?: boolean;
   onPress: () => void;
+  customBankLogo?: string | null;
 };
 
 type BankCardTheme = {
@@ -210,6 +211,7 @@ export function BankCard({
   transactionCount,
   initialIsBalanceHidden = false,
   onPress,
+  customBankLogo,
 }: BankCardProps) {
   const [isHidden, setIsHidden] = useState(initialIsBalanceHidden);
   const theme = CARD_THEMES[account.bankId] ?? CARD_THEMES.unknown;
@@ -265,7 +267,13 @@ export function BankCard({
           </View>
 
           <View style={styles.brandBlock}>
-            {getBankLogo(account.bankId) ? (
+            {customBankLogo ? (
+              <Image
+                source={{ uri: customBankLogo }}
+                style={styles.bankLogo}
+                resizeMode="contain"
+              />
+            ) : getBankLogo(account.bankId) ? (
               <Image
                 source={getBankLogo(account.bankId)}
                 style={styles.bankLogo}

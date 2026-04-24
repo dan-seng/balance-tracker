@@ -28,7 +28,14 @@ const SettingsIcon = ({ size = 24, color = "#8AA094" }) => (
   </Svg>
 );
 
-export type TabType = 'dashboard' | 'analytics' | 'settings';
+const AddBankIcon = ({ size = 24, color = "#8AA094" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M12 5v14" />
+    <Path d="M5 12h14" />
+  </Svg>
+);
+
+export type TabType = 'dashboard' | 'analytics' | 'settings' | 'addBank';
 
 type BottomNavProps = {
   currentTab: TabType;
@@ -72,6 +79,12 @@ export function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
         <AnalyticsIcon color={currentTab === 'analytics' ? '#000000' : '#888888'} />
       </Pressable>
       <Pressable
+        style={[styles.tab, currentTab === 'addBank' && styles.activeTab]}
+        onPress={() => onTabChange('addBank')}
+      >
+        <AddBankIcon color={currentTab === 'addBank' ? '#000000' : '#888888'} />
+      </Pressable>
+      <Pressable
         style={[styles.tab, currentTab === 'settings' && styles.activeTab]}
         onPress={() => onTabChange('settings')}
       >
@@ -98,7 +111,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   tab: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 999,
   },
