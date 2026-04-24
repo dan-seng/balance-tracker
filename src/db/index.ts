@@ -14,6 +14,13 @@ import {
   deleteAllAccounts,
   setUserName,
   getUserName,
+  setBalanceHidden,
+  getBalanceHidden,
+  setUserTitle,
+  getUserTitle,
+  saveCustomBank,
+  getCustomBanks,
+  deleteCustomBank,
 } from './sqliteDatabase';
 
 // Initialize database on module load
@@ -91,4 +98,39 @@ export async function setUserNameInDb(name: string) {
 export async function getUserNameFromDb(): Promise<string | null> {
   await ensureDatabaseInitialized();
   return getUserName();
+}
+
+export async function setBalanceHiddenInDb(isHidden: boolean) {
+  await ensureDatabaseInitialized();
+  return setBalanceHidden(isHidden);
+}
+
+export async function getBalanceHiddenFromDb(): Promise<boolean> {
+  await ensureDatabaseInitialized();
+  return getBalanceHidden();
+}
+
+export async function setUserTitleInDb(title: string) {
+  await ensureDatabaseInitialized();
+  return setUserTitle(title);
+}
+
+export async function getUserTitleFromDb(): Promise<string | null> {
+  await ensureDatabaseInitialized();
+  return getUserTitle();
+}
+
+export async function saveCustomBankInDb(bankId: string, bankName: string, senderId: string, logoBase64: string | null) {
+  await ensureDatabaseInitialized();
+  return saveCustomBank(bankId, bankName, senderId, logoBase64);
+}
+
+export async function getCustomBanksFromDb(): Promise<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>> {
+  await ensureDatabaseInitialized();
+  return getCustomBanks();
+}
+
+export async function deleteCustomBankFromDb(bankId: string) {
+  await ensureDatabaseInitialized();
+  return deleteCustomBank(bankId);
 }

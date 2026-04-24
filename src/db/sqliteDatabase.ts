@@ -274,3 +274,76 @@ export async function getUserName(): Promise<string | null> {
   }
   return results.rows.item(0).value;
 }
+
+export async function setBalanceHidden(isHidden: boolean): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('balance_hidden', ?)`,
+    [isHidden ? '1' : '0']
+  );
+}
+
+export async function getBalanceHidden(): Promise<boolean> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT value FROM user_settings WHERE key = 'balance_hidden';`
+  );
+  if (results.rows.length === 0) {
+    return false;
+  }
+  return results.rows.item(0).value === '1';
+}
+
+export async function setUserTitle(title: string): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('user_title', ?)`,
+    [title]
+  );
+}
+
+export async function getUserTitle(): Promise<string | null> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT value FROM user_settings WHERE key = 'user_title';`
+  );
+  if (results.rows.length === 0) {
+    return null;
+  }
+  return results.rows.item(0).value;
+}
+
+export async function saveCustomBank(bankId: string, bankName: string, senderId: string, logoBase64: string | null): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES (?, ?)`,
+    [`custom_bank_${bankId}`, JSON.stringify({ bankName, senderId, logoBase64 })]
+  );
+}
+
+export async function getCustomBanks(): Promise<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT key, value FROM user_settings WHERE key LIKE 'custom_bank_%';`
+  );
+  const banks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }> = [];
+  for (let i = 0; i < results.rows.length; i++) {
+    const row = results.rows.item(i);
+    const bankId = row.key.replace('custom_bank_', '');
+    try {
+      const data = JSON.parse(row.value);
+      banks.push({ bankId, bankName: data.bankName, senderId: data.senderId, logoBase64: data.logoBase64 || null });
+    } catch (e) {
+      console.error('Failed to parse custom bank data:', e);
+    }
+  }
+  return banks;
+}
+
+export async function deleteCustomBank(bankId: string): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `DELETE FROM user_settings WHERE key = ?;`,
+    [`custom_bank_${bankId}`]
+  );
+}
