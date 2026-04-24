@@ -14,6 +14,16 @@ type BankMatcher = {
   senderValues: string[];
 };
 
+let CUSTOM_BANKS: BankMatcher[] = [];
+
+export function setCustomBanks(banks: Array<{ bankId: string; bankName: string; senderId: string }>) {
+  CUSTOM_BANKS = banks.map(bank => ({
+    bankId: bank.bankId as BankId,
+    bankName: bank.bankName,
+    senderValues: [bank.senderId.toLowerCase()],
+  }));
+}
+
 const BANK_MATCHERS: BankMatcher[] = [
   {
     bankId: 'boa',
@@ -98,6 +108,17 @@ function detectBank(sender: string): {
 } {
   const normalizedSender = normalizeSender(sender);
 
+  // Check custom banks first
+  for (const matcher of CUSTOM_BANKS) {
+    if (matcher.senderValues.includes(normalizedSender)) {
+      return {
+        bankId: matcher.bankId,
+        bankName: matcher.bankName,
+      };
+    }
+  }
+
+  // Check default banks
   for (const matcher of BANK_MATCHERS) {
     if (matcher.senderValues.includes(normalizedSender)) {
       return {
@@ -203,10 +224,6 @@ export function parseGenericSms(
   const normalized = message.trim();
   const detectedBank = detectBank(sender);
 
-  if (detectedBank.bankId === 'unknown') {
-    return null;
-  }
-
   const type = detectTransactionType(normalized);
   if (!type) {
     return null;
@@ -221,9 +238,17 @@ export function parseGenericSms(
   const confidence: 'high' | 'medium' | 'low' =
     balance != null ? 'high' : 'medium';
 
+  // For unknown banks, use sender as bank name and generate a bank ID
+  const bankId = detectedBank.bankId === 'unknown'
+    ? `custom-${normalizeSender(sender)}`
+    : detectedBank.bankId;
+  const bankName = detectedBank.bankId === 'unknown'
+    ? sender || 'Unknown Bank'
+    : detectedBank.bankName;
+
   return {
-    bankId: detectedBank.bankId,
-    bankName: detectedBank.bankName,
+    bankId,
+    bankName,
     sender,
     type,
     amount,
