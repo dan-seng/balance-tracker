@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { StyleSheet, View, Pressable, Alert, Modal } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { StyleSheet, View, Pressable, Alert, Modal, Dimensions, Animated } from 'react-native';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
 import { Screen } from '../components/Screen';
 import Svg, { Path, Circle } from 'react-native-svg';
+
+const { width, height } = Dimensions.get('window');
 
 const LockIcon = ({ size = 20, color = "#8A8A8A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -31,6 +33,29 @@ const ClockIcon = ({ size = 20, color = "#8A8A8A" }) => (
   </Svg>
 );
 
+const InfoIcon = ({ size = 20, color = "#8A8A8A" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Circle cx="12" cy="12" r="10" />
+    <Path d="M12 16v-4" />
+    <Path d="M12 8h.01" />
+  </Svg>
+);
+
+const PlusIcon = ({ size = 20, color = "#8A8A8A" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M12 5v14" />
+    <Path d="M5 12h14" />
+  </Svg>
+);
+
+const TrashIcon = ({ size = 16, color = "#8A8A8A" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 6h18" />
+    <Path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+    <Path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+  </Svg>
+);
+
 type SettingsScreenProps = {
   userName: string;
   onNameChange: (name: string) => Promise<void>;
@@ -38,6 +63,9 @@ type SettingsScreenProps = {
   onToggleLock: () => Promise<void>;
   autoLockTimeout: number;
   onAutoLockTimeoutChange: (minutes: number) => void;
+  customBanks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>;
+  onAddCustomBank: (bankName: string, senderId: string, logoBase64: string | null) => Promise<void>;
+  onDeleteCustomBank: (bankId: string) => Promise<void>;
 };
 
 export function SettingsScreen({
@@ -47,10 +75,23 @@ export function SettingsScreen({
   onToggleLock,
   autoLockTimeout,
   onAutoLockTimeoutChange,
+  customBanks,
+  onAddCustomBank,
+  onDeleteCustomBank,
 }: SettingsScreenProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(userName);
   const [showTimeoutDropdown, setShowTimeoutDropdown] = useState(false);
+  const toggleAnim = useRef(new Animated.Value(isAppLocked ? 1 : 0)).current;
+
+  // Animate toggle when lock state changes
+  useEffect(() => {
+    Animated.timing(toggleAnim, {
+      toValue: isAppLocked ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [isAppLocked, toggleAnim]);
 
   const handleNameSave = async () => {
     if (newName.trim()) {
@@ -128,7 +169,23 @@ export function SettingsScreen({
                 </Text>
               </View>
             </View>
-            <View style={[styles.toggle, isAppLocked && styles.toggleOn]} />
+            <View style={[styles.toggle, isAppLocked && styles.toggleOn]}>
+              <Animated.View 
+                style={[
+                  styles.toggleKnob,
+                  {
+                    transform: [
+                      {
+                        translateX: toggleAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, width * 0.05],
+                        })
+                      }
+                    ]
+                  }
+                ]} 
+              />
+            </View>
           </Pressable>
 
           <Pressable 
@@ -195,6 +252,36 @@ export function SettingsScreen({
             </Pressable>
           </Modal>
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Custom Banks</Text>
+
+          {customBanks.map((bank) => (
+            <View key={bank.bankId} style={styles.settingItem}>
+              <View style={styles.settingLeft}>
+                <View style={styles.iconContainer}>
+                  <InfoIcon />
+                </View>
+                <View style={styles.settingInfo}>
+                  <Text style={styles.settingLabel}>{bank.bankName}</Text>
+                  <Text style={styles.settingDescription}>Sender: {bank.senderId}</Text>
+                </View>
+              </View>
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => onDeleteCustomBank(bank.bankId)}
+                hitSlop={10}
+              >
+                <TrashIcon />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Version 0.0.1</Text>
+          <Text style={styles.footerText}>Developed by SPDY</Text>
+        </View>
       </View>
     </Screen>
   );
@@ -202,33 +289,34 @@ export function SettingsScreen({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 10,
-    paddingBottom: 80, // Add bottom padding to prevent items hiding under bottom nav
+    paddingTop: width * 0.025,
+    paddingBottom: height * 0.1,
+    flex: 1,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: width * 0.08,
     fontWeight: '800',
-    marginBottom: 32,
+    marginBottom: width * 0.08,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: width * 0.08,
   },
   sectionTitle: {
     color: '#8A8A8A',
-    fontSize: 12,
+    fontSize: width * 0.03,
     fontWeight: '700',
-    marginBottom: 16,
+    marginBottom: width * 0.04,
     textTransform: 'uppercase',
   },
   settingItem: {
     backgroundColor: '#181818',
-    borderRadius: 16,
+    borderRadius: width * 0.04,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
+    padding: width * 0.04,
+    marginBottom: width * 0.03,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -237,12 +325,12 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     backgroundColor: '#000000',
-    borderRadius: 12,
-    height: 40,
-    width: 40,
+    borderRadius: width * 0.03,
+    height: width * 0.1,
+    width: width * 0.1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: width * 0.03,
     borderWidth: 1,
     borderColor: '#333333',
   },
@@ -251,61 +339,76 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: width * 0.04,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: width * 0.01,
   },
   settingDescription: {
     color: '#8A8A8A',
-    fontSize: 14,
+    fontSize: width * 0.035,
   },
   toggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
+    width: width * 0.12,
+    height: width * 0.07,
+    borderRadius: width * 0.035,
     backgroundColor: '#333333',
+    padding: width * 0.008,
   },
   toggleOn: {
+    backgroundColor: '#4ade80',
+  },
+  toggleKnob: {
+    width: width * 0.054,
+    height: width * 0.054,
+    borderRadius: width * 0.027,
     backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   dropdownContainer: {
     backgroundColor: '#000000',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.03,
+    paddingVertical: width * 0.02,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: width * 0.02,
     borderWidth: 1,
     borderColor: '#333333',
   },
   dropdownValue: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: width * 0.035,
     fontWeight: '700',
   },
   dropdownArrow: {
     color: '#8A8A8A',
-    fontSize: 12,
+    fontSize: width * 0.03,
   },
   dropdownMenu: {
     backgroundColor: '#181818',
-    borderRadius: 12,
-    marginTop: 8,
+    borderRadius: width * 0.03,
+    marginTop: width * 0.02,
     overflow: 'hidden',
   },
   dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: width * 0.02,
+    paddingVertical: width * 0.02,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   dropdownItemActive: {
     backgroundColor: '#333333',
   },
   dropdownItemText: {
     color: '#8A8A8A',
-    fontSize: 14,
+    fontSize: width * 0.028,
     fontWeight: '600',
   },
   dropdownItemTextActive: {
@@ -313,26 +416,26 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: width * 0.035,
     backgroundColor: '#000000',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 4,
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.03,
+    paddingVertical: width * 0.02,
+    marginTop: width * 0.01,
     borderWidth: 1,
     borderColor: '#333333',
   },
   editButton: {
     backgroundColor: '#222222',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: width * 0.02,
     borderWidth: 1,
     borderColor: '#444444',
   },
   editButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: width * 0.035,
     fontWeight: '700',
   },
   modalOverlay: {
@@ -340,27 +443,71 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: width * 0.05,
   },
   modalContent: {
     backgroundColor: '#181818',
-    borderRadius: 24,
+    borderRadius: width * 0.04,
     width: '100%',
-    maxWidth: 340,
-    padding: 20,
+    maxWidth: width * 0.65,
+    padding: width * 0.02,
     borderWidth: 1,
     borderColor: '#333333',
   },
   modalTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: width * 0.03,
     fontWeight: '800',
-    marginBottom: 20,
+    marginBottom: width * 0.02,
     textAlign: 'center',
   },
   checkIcon: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: width * 0.03,
     fontWeight: '800',
+  },
+  deleteButton: {
+    padding: 8,
+    opacity: 0.6,
+  },
+  modalInput: {
+    backgroundColor: '#000000',
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.03,
+    paddingVertical: width * 0.025,
+    marginTop: width * 0.02,
+    borderWidth: 1,
+    borderColor: '#333333',
+    color: '#FFFFFF',
+    fontSize: width * 0.035,
+  },
+  modalButton: {
+    backgroundColor: '#222222',
+    borderRadius: width * 0.02,
+    paddingHorizontal: width * 0.04,
+    paddingVertical: width * 0.025,
+    marginTop: width * 0.03,
+    borderWidth: 1,
+    borderColor: '#444444',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#1A2A23',
+    borderColor: '#2A5A4A',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: width * 0.035,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 'auto',
+    gap: width * 0.01,
+  },
+  footerText: {
+    color: '#666666',
+    fontSize: width * 0.025,
+    fontWeight: '500',
   },
 });

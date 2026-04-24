@@ -2,15 +2,16 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { AppText as Text } from '../components/AppText';;
 import { useState } from 'react';
 import Svg, { Path, Circle, Line, Rect } from 'react-native-svg';
+import LinearGradient from 'react-native-linear-gradient';
 
-const EyeIcon = ({ size = 18, color = "#B8D69F" }) => (
+const EyeIcon = ({ size = 18, color = "#D4AF37" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <Circle cx="12" cy="12" r="3" />
   </Svg>
 );
 
-const EyeOffIcon = ({ size = 18, color = "#B8D69F" }) => (
+const EyeOffIcon = ({ size = 18, color = "#D4AF37" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
     <Line x1="1" y1="1" x2="23" y2="23" />
@@ -32,6 +33,23 @@ const UnlockIcon = ({ size = 18, color = "#8AA094" }) => (
   </Svg>
 );
 
+const WalletIcon = ({ size = 20, color = "#D4AF37" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+    <Path d="M4 6v12a2 2 0 0 0 2 2h14v-4" />
+    <Path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+  </Svg>
+);
+
+const BankIcon = ({ size = 20, color = "#D4AF37" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 21h18" />
+    <Path d="M5 21V7l8-4 8 4v14" />
+    <Path d="M17 21v-8.5a1.5 1.5 0 0 0-3 0V21" />
+    <Path d="M9 21v-6" />
+  </Svg>
+);
+
 import { BankCard } from '../components/BankCard';
 import { SearchBar } from '../components/SearchBar';
 import { FilterDrawer } from '../components/FilterDrawer';
@@ -45,10 +63,13 @@ type DashboardScreenProps = {
   transactions: Transaction[];
   onToggleLock: () => void;
   isAppLocked: boolean;
+  isBalanceHidden: boolean;
+  onToggleBalanceHidden: () => void;
+  userTitle: string | null;
+  customBanks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>;
 };
 
-export function DashboardScreen({userName, onSelectAccount, accounts, transactions, onToggleLock, isAppLocked}: DashboardScreenProps) {
-  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+export function DashboardScreen({userName, onSelectAccount, accounts, transactions, onToggleLock, isAppLocked, isBalanceHidden, onToggleBalanceHidden, userTitle, customBanks}: DashboardScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
@@ -108,30 +129,53 @@ export function DashboardScreen({userName, onSelectAccount, accounts, transactio
         </View>
 
         <View style={styles.balanceCard}>
+          <LinearGradient
+            colors={['#1F1F1F', '#2A2A2A', '#1F1F1F']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.balanceGradient}
+          />
           <View style={styles.balanceGlow} />
+          <View style={styles.balanceGlow2} />
+          
+          {/* Decorative gold border */}
+          <View style={styles.goldBorder} />
+          
+          {/* Decorative corner accents */}
+          <View style={styles.cornerAccentTopLeft} />
+          <View style={styles.cornerAccentTopRight} />
+          <View style={styles.cornerAccentBottomLeft} />
+          <View style={styles.cornerAccentBottomRight} />
           
           <View style={styles.balanceHeader}>
-            <Text style={styles.balanceLabel}>Total combined balance</Text>
-            <Pressable onPress={() => setIsBalanceHidden(!isBalanceHidden)} hitSlop={10} style={styles.eyeBtn}>
-              {isBalanceHidden ? <EyeOffIcon /> : <EyeIcon />}
-            </Pressable>
+            <View style={styles.balanceHeaderLeft}>
+              <WalletIcon size={18} />
+              <Text style={styles.balanceLabel}>Total combined balance</Text>
+            </View>
+            <View style={styles.balanceHeaderRight}>
+              <View style={styles.accountBadge}>
+                <BankIcon size={14} />
+                <Text style={styles.accountBadgeText}>{accounts.length}</Text>
+              </View>
+              <Pressable onPress={() => onToggleBalanceHidden()} hitSlop={10} style={styles.eyeBtn}>
+                {isBalanceHidden ? <EyeOffIcon /> : <EyeIcon />}
+              </Pressable>
+            </View>
           </View>
           
           <View style={styles.balanceRow}>
             <Text style={styles.balanceCurrency}>ETB</Text>
             <Text style={styles.balanceValue}>
-              {isBalanceHidden ? '••••••••' : Math.round(totalBalance).toLocaleString()}
+              {isBalanceHidden ? '********' : Math.round(totalBalance).toLocaleString()}
             </Text>
             {!isBalanceHidden && <Text style={styles.balanceDecimals}>.00</Text>}
           </View>
 
-          <View style={styles.balancePill}>
-            <Text style={styles.balancePillValue}>
-              {weeklyDelta >= 0 ? '~ +' : '~ -'}
-              {Math.abs(Math.round(weeklyDelta)).toLocaleString()}
-            </Text>
-            <Text style={styles.balanceMeta}>since last sync</Text>
-          </View>
+          <Text style={styles.amharicLogo}>ሒሳብ</Text>
+
+          {userTitle && (
+            <Text style={styles.userTitle}>{userTitle} {userName}</Text>
+          )}
         </View>
       </View>
 
@@ -166,6 +210,7 @@ export function DashboardScreen({userName, onSelectAccount, accounts, transactio
             account={account}
             onPress={() => onSelectAccount(account)}
             transactionCount={transactions.filter(t => t.accountId === account.id).length}
+            customBankLogo={customBanks.find(b => b.bankId === account.bankId)?.logoBase64}
           />
         ))}
       </View>
@@ -279,34 +324,132 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
   balanceCard: {
-    backgroundColor: '#2D6B39',
     borderRadius: 10,
     overflow: 'hidden',
     padding: 20,
     position: 'relative',
     width: '100%',
+    height: 200,
+  },
+  balanceGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   balanceGlow: {
-    backgroundColor: '#8FD0A0',
+    backgroundColor: '#D4AF37',
     borderRadius: 140,
     height: 180,
     opacity: 0.28,
     position: 'absolute',
-    right: -20,
-    top: 20,
+    right: -40,
+    top: -40,
     width: 180,
+  },
+  balanceGlow2: {
+    backgroundColor: '#FFD700',
+    borderRadius: 100,
+    height: 120,
+    opacity: 0.15,
+    position: 'absolute',
+    left: -30,
+    bottom: -30,
+    width: 120,
+  },
+  goldBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderRadius: 10,
+    pointerEvents: 'none',
+  },
+  cornerAccentTopLeft: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 20,
+    height: 20,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderTopLeftRadius: 4,
+  },
+  cornerAccentTopRight: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderTopWidth: 2,
+    borderRightWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderTopRightRadius: 4,
+  },
+  cornerAccentBottomLeft: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 2,
+    borderLeftWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderBottomLeftRadius: 4,
+  },
+  cornerAccentBottomRight: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 2,
+    borderRightWidth: 2,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    borderBottomRightRadius: 4,
   },
   balanceHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  balanceHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  balanceHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  accountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  accountBadgeText: {
+    color: '#D4AF37',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   eyeBtn: {
     padding: 4,
     opacity: 0.8,
   },
   balanceLabel: {
-    color: '#B8D69F',
+    color: '#D4AF37',
     fontSize: 9,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -317,7 +460,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   balanceCurrency: {
-    color: '#F2FAEB',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 8,
@@ -330,33 +473,29 @@ const styles = StyleSheet.create({
     letterSpacing: -1.6,
   },
   balanceDecimals: {
-    color: '#CFE5C3',
+    color: '#D4AF37',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 8,
     marginLeft: 3,
   },
-  balancePill: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#3F8B47',
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  amharicLogo: {
+    position: 'absolute',
+    bottom: 18,
+    right: 18,
+    color: 'rgba(212, 175, 55, 0.67)',
+    fontSize: 24,
+    fontFamily: 'nokiapure',
   },
-  balancePillValue: {
-    color: '#CFF6AE',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  balanceMeta: {
-    color: '#B8D69F',
+  userTitle: {
+    position: 'absolute',
+    bottom: 18,
+    left: 18,
+    color: 'rgba(212, 175, 55, 0.5)',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   statsRow: {
     flexDirection: 'row',
