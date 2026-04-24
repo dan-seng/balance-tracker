@@ -14,7 +14,8 @@ export type BankId =
   | 'mpesa'
   | 'nib'
   | 'zemen'
-  | 'unknown';
+  | 'unknown'
+  | string;
 
 export type TransactionType = 'credit' | 'debit';
 

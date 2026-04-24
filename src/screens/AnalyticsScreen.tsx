@@ -12,7 +12,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
   Payment: '#F4D5C9',  // Rose
   Withdrawal: '#D7FF74', // Lime
   Deposit: '#6BDB93',  // Mint
-  Received: '#C9F4D5', // Very soft green
+  Received: '#FFFFFF', // Very soft white
   Other: '#8A9A92'     // Muted gray
 };
 
@@ -144,30 +144,30 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   summaryCard: {
-    backgroundColor: '#352522', // Subtle Muted red-brown
+    backgroundColor: '#1d674266',
     borderRadius: 16,
     flex: 1,
     padding: 20,
     justifyContent: 'center',
   },
   incomeCard: {
-    backgroundColor: '#1E3326', // Subtle Muted green
+    backgroundColor: '#1d674266',
   },
   summaryLabel: {
-    color: '#8A9A92',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
     marginBottom: 8,
   },
   summaryValue: {
-    color: '#F4D5C9', // Soft orange
+    color: '#FFFFFF',
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   incomeValue: {
-    color: '#C9F4D5', // Soft green
+    color: '#FFFFFF',
   },
   chartContainer: {
     alignItems: 'center',
@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chartCenterLabel: {
-    color: '#8A9A92',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   sectionTitle: {
-    color: '#D7FF74',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 16,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: '#1A2A23',
     borderRadius: 24,
     padding: 24,
     gap: 24,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   barAmount: {
-    color: '#8A9A92',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   emptyText: {
-    color: '#8A9A92',
+    color: '#FFFFFF',
     fontStyle: 'italic',
   }
 });

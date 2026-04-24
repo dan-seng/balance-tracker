@@ -13,10 +13,12 @@ import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { NameEntryScreen } from './src/screens/NameEntryScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AddBankScreen } from './src/screens/AddBankScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
-import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb } from './src/db';
+import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb, setBalanceHiddenInDb, getBalanceHiddenFromDb, setUserTitleInDb, getUserTitleFromDb, saveCustomBankInDb, getCustomBanksFromDb, deleteCustomBankFromDb } from './src/db';
 import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
+import { setCustomBanks as setCustomBanksInParser } from './src/parsers/genericParser';
 import { calculateBalance, generateSmsHash } from './src/utils/balanceUtils';
 
 function App() {
@@ -33,6 +35,9 @@ function App() {
   const [showLockScreen, setShowLockScreen] = useState(false);
   const [autoLockTimeout, setAutoLockTimeout] = useState(0); // 0 = immediately, -1 = never
   const [lastActiveTime, setLastActiveTime] = useState(Date.now());
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+  const [userTitle, setUserTitle] = useState<string | null>(null);
+  const [customBanks, setCustomBanks] = useState<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>>([]);
   const accountsRef = useRef<Account[]>([]);
 
   const rnBiometrics = new ReactNativeBiometrics({
@@ -89,6 +94,12 @@ function App() {
     }
   };
 
+  const handleToggleBalanceHidden = async () => {
+    const newState = !isBalanceHidden;
+    setIsBalanceHidden(newState);
+    await setBalanceHiddenInDb(newState);
+  };
+
   const handleToggleLock = async () => {
     const newLockState = !isAppLocked;
     
@@ -143,11 +154,35 @@ function App() {
         setUserName(savedName);
         setHasStarted(true);
       }
+      const savedBalanceHidden = await getBalanceHiddenFromDb();
+      setIsBalanceHidden(savedBalanceHidden);
+      const savedTitle = await getUserTitleFromDb();
+      setUserTitle(savedTitle);
+      const savedCustomBanks = await getCustomBanksFromDb();
+      setCustomBanks(savedCustomBanks);
       setDbReady(true);
     } catch (error) {
       console.error('Failed to initialize database:', error);
     }
   };
+
+  const handleAddCustomBank = async (bankName: string, senderId: string, logoBase64: string | null) => {
+    const bankId = `custom-${Date.now()}`;
+    await saveCustomBankInDb(bankId, bankName, senderId, logoBase64);
+    const updatedBanks = [...customBanks, { bankId, bankName, senderId, logoBase64 }];
+    setCustomBanks(updatedBanks);
+  };
+
+  const handleDeleteCustomBank = async (bankId: string) => {
+    await deleteCustomBankFromDb(bankId);
+    const updatedBanks = customBanks.filter(b => b.bankId !== bankId);
+    setCustomBanks(updatedBanks);
+  };
+
+  // Update parser with custom banks when they change
+  useEffect(() => {
+    setCustomBanksInParser(customBanks);
+  }, [customBanks]);
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -400,9 +435,11 @@ function App() {
       ) : !hasStarted ? (
         <WelcomeScreen onContinue={() => setHasStarted(true)} />
       ) : !userName ? (
-        <NameEntryScreen onNameSubmit={async (name) => {
+        <NameEntryScreen onNameSubmit={async (name, title) => {
           await setUserNameInDb(name);
+          await setUserTitleInDb(title);
           setUserName(name);
+          setUserTitle(title);
         }} />
       ) : !dbReady || !smsPermissionsGranted || isSyncing ? (
         <SyncingScreen />
@@ -422,9 +459,21 @@ function App() {
               transactions={transactions}
               onToggleLock={handleToggleLock}
               isAppLocked={isAppLocked}
+              isBalanceHidden={isBalanceHidden}
+              onToggleBalanceHidden={handleToggleBalanceHidden}
+              userTitle={userTitle}
+              customBanks={customBanks}
             />
           ) : currentTab === 'analytics' ? (
             <AnalyticsScreen transactions={transactions} />
+          ) : currentTab === 'addBank' ? (
+            <AddBankScreen
+              onAddBank={async (bankName, senderId, logoBase64) => {
+                await handleAddCustomBank(bankName, senderId, logoBase64);
+                setCurrentTab('dashboard');
+              }}
+              onCancel={() => setCurrentTab('dashboard')}
+            />
           ) : (
             <SettingsScreen
               userName={userName!}
@@ -436,6 +485,9 @@ function App() {
               onToggleLock={handleToggleLock}
               autoLockTimeout={autoLockTimeout}
               onAutoLockTimeoutChange={setAutoLockTimeout}
+              customBanks={customBanks}
+              onAddCustomBank={handleAddCustomBank}
+              onDeleteCustomBank={handleDeleteCustomBank}
             />
           )}
           <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
