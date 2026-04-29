@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator } from 'react-native';
-import { AppText as Text } from '../components/AppText';;
-import Svg, { Path, Circle } from 'react-native-svg';
-import { Biometrics } from 'react-native-biometrics';
+import { AppText as Text } from '../components/AppText';
+import { theme } from '../theme';
+import Svg, { Path } from 'react-native-svg';
 
-const FingerprintIcon = ({ size = 64, color = "#D7FF74" }) => (
+const FingerprintIcon = ({ size = 80, color = theme.colors.primary }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 6" />
     <Path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 6-6 6 6 0 0 1 6 6c0 2 1 6 5 6" />
@@ -42,27 +42,28 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      <View style={styles.content}>
         <View style={styles.iconContainer}>
-          {isAuthenticating ? (
-            <ActivityIndicator color="#D7FF74" size="large" />
-          ) : (
-            <FingerprintIcon />
+          <FingerprintIcon />
+          {isAuthenticating && (
+            <View style={styles.loaderOverlay}>
+              <ActivityIndicator color={theme.colors.primary} size="large" />
+            </View>
           )}
         </View>
         
-        <Text style={styles.title}>Hisab is locked</Text>
+        <Text style={styles.title}>Hisab Locked</Text>
         <Text style={styles.subtitle}>
-          Use biometric authentication to unlock
+          Authentication required
         </Text>
 
         <Pressable
-          style={styles.retryButton}
+          style={styles.unlockButton}
           onPress={attemptBiometricUnlock}
           disabled={isAuthenticating}
         >
-          <Text style={styles.retryButtonText}>
-            {isAuthenticating ? 'Authenticating...' : 'Try Again'}
+          <Text style={styles.unlockButtonText}>
+            {isAuthenticating ? 'Authenticating...' : 'Unlock Now'}
           </Text>
         </Pressable>
       </View>
@@ -73,46 +74,60 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#122019',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  card: {
-    backgroundColor: '#1A2A23',
-    borderRadius: 32,
-    padding: 40,
+  content: {
     alignItems: 'center',
     width: '100%',
-    maxWidth: 340,
   },
   iconContainer: {
-    marginBottom: 24,
+    marginBottom: 40,
+    position: 'relative',
+    padding: 20,
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 100,
   },
   title: {
-    color: '#F5F7F1',
-    fontSize: 24,
+    color: theme.colors.text,
+    fontSize: theme.typography.sizes.xxl,
     fontWeight: '800',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#8AA094',
-    fontSize: 14,
+    color: theme.colors.textMuted,
+    fontSize: theme.typography.sizes.md,
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 20,
+    marginBottom: 48,
   },
-  retryButton: {
-    backgroundColor: '#1d674266',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
+  unlockButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    minWidth: 200,
     alignItems: 'center',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  retryButtonText: {
-    color: '#D7FF74',
-    fontSize: 14,
+  unlockButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.typography.sizes.md,
     fontWeight: '700',
   },
 });
