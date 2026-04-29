@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { TextInput, StyleSheet, View, Pressable, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
-import { AppText as Text } from './AppText';;
+import { StyleSheet, View, Pressable, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from './AppText';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 if (

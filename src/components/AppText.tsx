@@ -1,6 +1,8 @@
 import React from 'react';
 import { Text as RNText, TextInput as RNTextInput, TextProps, TextInputProps, StyleSheet } from 'react-native';
 
+import { theme } from '../theme/index';
+
 function resolveFontStyle(style: any) {
   const flatStyle = StyleSheet.flatten(style || {});
   let isBold = false;
@@ -23,6 +25,7 @@ function resolveFontStyle(style: any) {
 
   const defaultStyle = {
     fontFamily: isBold ? 'Poppins-Bold' : 'Poppins-Regular',
+    color: flatStyle.color || theme.colors.text,
     fontWeight: undefined, // Clear weight so Android does not override fontFamily with Roboto
   };
 
@@ -30,11 +33,11 @@ function resolveFontStyle(style: any) {
 }
 
 export function AppText(props: TextProps) {
-  const { style, ...rest } = props;
-  return <RNText {...rest} style={resolveFontStyle(style)} />;
+  const { style, allowFontScaling = false, ...rest } = props;
+  return <RNText {...rest} allowFontScaling={allowFontScaling} style={resolveFontStyle(style)} />;
 }
 
 export function AppTextInput(props: TextInputProps) {
-  const { style, ...rest } = props;
-  return <RNTextInput {...rest} style={resolveFontStyle(style)} />;
+  const { style, allowFontScaling = false, ...rest } = props;
+  return <RNTextInput {...rest} allowFontScaling={allowFontScaling} style={resolveFontStyle(style)} />;
 }

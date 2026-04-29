@@ -21,6 +21,10 @@ import {
   saveCustomBank,
   getCustomBanks,
   deleteCustomBank,
+  setAppLocked,
+  getAppLocked,
+  setAutoLockTimeout,
+  getAutoLockTimeout,
 } from './sqliteDatabase';
 
 // Initialize database on module load
@@ -133,4 +137,24 @@ export async function getCustomBanksFromDb(): Promise<Array<{ bankId: string; ba
 export async function deleteCustomBankFromDb(bankId: string) {
   await ensureDatabaseInitialized();
   return deleteCustomBank(bankId);
+}
+
+export async function setAppLockedInDb(isLocked: boolean) {
+  await ensureDatabaseInitialized();
+  return setAppLocked(isLocked);
+}
+
+export async function getAppLockedFromDb(): Promise<boolean> {
+  await ensureDatabaseInitialized();
+  return getAppLocked();
+}
+
+export async function setAutoLockTimeoutInDb(timeout: number) {
+  await ensureDatabaseInitialized();
+  return setAutoLockTimeout(timeout);
+}
+
+export async function getAutoLockTimeoutFromDb(): Promise<number> {
+  await ensureDatabaseInitialized();
+  return getAutoLockTimeout();
 }

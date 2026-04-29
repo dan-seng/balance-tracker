@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';;
-
+import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
 
@@ -15,14 +15,18 @@ export function NameEntryScreen({ onNameSubmit }: NameEntryScreenProps) {
 
   return (
     <Screen>
+     <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
       <View style={styles.wrapper}>
         <View style={styles.content}>
           <Text style={styles.badge}>ሒሳብ</Text>
-          <Text style={styles.title}>What shall we{'\n'}call you?</Text>
-          <Text style={styles.subtitle}>
-            Enter your preferred name to personalize your wallet experience.
-          </Text>
-
+          <Text style={styles.title}>What shall we call you?</Text>
           <View style={styles.titleSelector}>
             <Pressable
               style={[styles.titleOption, title === 'Mr.' && styles.titleOptionActive]}
@@ -54,6 +58,8 @@ export function NameEntryScreen({ onNameSubmit }: NameEntryScreenProps) {
           onPress={() => onNameSubmit(name.trim() || 'User', title)}
         />
       </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
@@ -78,19 +84,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 42,
+    fontSize: 28,
     fontWeight: '600',
-    letterSpacing: -1,
-    lineHeight: 48,
     marginBottom: 20,
-  },
-  subtitle: {
-    color: '#9EADAD',
-    fontSize: 16,
-    lineHeight: 26,
-    fontWeight: '400',
-    maxWidth: '90%',
-    marginBottom: 40,
   },
   titleSelector: {
     flexDirection: 'row',
@@ -98,8 +94,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   titleOption: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 2,
     borderColor: '#2A5A4A',
