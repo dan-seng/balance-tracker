@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, View, Pressable, Image, Alert } from 'react-native';
+import { StyleSheet, View, Pressable, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
-import { PrimaryButton } from '../components/PrimaryButton';
+import { theme } from '../theme';
 import { Screen } from '../components/Screen';
 
 type AddBankScreenProps = {
@@ -28,42 +28,57 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
 
   return (
     <Screen>
-      <View style={styles.container}>
-        <Text style={styles.title}>Add Bank</Text>
-        <Text style={styles.subtitle}>
-          Add a bank to track transactions from SMS messages
-        </Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>Add Bank</Text>
+            <Text style={styles.subtitle}>
+              Track transactions from SMS messages
+            </Text>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Bank Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., Abyssinia Bank"
-            placeholderTextColor="#666666"
-            value={bankName}
-            onChangeText={setBankName}
-          />
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Bank Name</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g., Abyssinia Bank"
+                  placeholderTextColor={theme.colors.textMutedLight}
+                  value={bankName}
+                  onChangeText={setBankName}
+                />
+              </View>
 
-          <Text style={styles.label}>Sender ID</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g., 127, CBE, BOA"
-            placeholderTextColor="#666666"
-            value={senderId}
-            onChangeText={setSenderId}
-            autoCapitalize="characters"
-          />
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Sender ID</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g., 127, CBE, BOA"
+                  placeholderTextColor={theme.colors.textMutedLight}
+                  value={senderId}
+                  onChangeText={setSenderId}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
 
-          <View style={styles.buttons}>
-            <Pressable style={styles.cancelButton} onPress={onCancel}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-            <View style={styles.addButtonContainer}>
-              <PrimaryButton label="Add Bank" onPress={handleAdd} />
+            <View style={styles.buttons}>
+              <Pressable style={styles.secondaryButton} onPress={onCancel}>
+                <Text style={styles.secondaryButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.primaryButton} onPress={handleAdd}>
+                <Text style={styles.primaryButtonText}>Add Bank</Text>
+              </Pressable>
             </View>
           </View>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
@@ -71,60 +86,79 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
   },
   title: {
-    color: '#FFFFFF',
-    fontSize: 32,
+    color: theme.colors.text,
+    fontSize: 24,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
-    color: '#9EADAD',
-    fontSize: 16,
-    marginBottom: 32,
+    color: theme.colors.textMuted,
+    fontSize: theme.typography.sizes.sm,
+    marginBottom: theme.spacing.lg,
   },
   form: {
-    gap: 20,
+    gap: theme.spacing.md,
+  },
+  inputGroup: {
+    gap: 4,
   },
   label: {
-    color: '#FFFFFF',
-    fontSize: 14,
+    color: theme.colors.text,
+    fontSize: theme.typography.sizes.xs + 2,
     fontWeight: '600',
-    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: '#1A2A23',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#FFFFFF',
-    fontSize: 16,
+    backgroundColor: theme.colors.surfaceLight,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 10,
+    color: theme.colors.text,
+    fontSize: theme.typography.sizes.md,
     borderWidth: 1,
-    borderColor: '#2A5A4A',
+    borderColor: theme.colors.surfaceLighter,
   },
   buttons: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.lg,
+    alignItems: 'center',
   },
-  addButtonContainer: {
-    flex: 1,
-  },
-  cancelButton: {
-    
-    backgroundColor: 'transparent',
-    borderRadius: 18,
-    paddingHorizontal: 35,
+  primaryButton: {
+    flex: 1.5,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.xl,
     paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: '#2A5A4A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  primaryButtonText: {
+    color: theme.colors.background,
+    fontSize: theme.typography.sizes.md,
+    fontWeight: '700',
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderRadius: theme.borderRadius.xl,
+    paddingVertical: 10,
+    borderWidth: 1.5,
+    borderColor: theme.colors.surfaceLighter,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cancelButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+  secondaryButtonText: {
+    color: theme.colors.textMuted,
+    fontSize: theme.typography.sizes.md,
     fontWeight: '600',
   },
 });
