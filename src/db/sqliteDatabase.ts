@@ -294,6 +294,44 @@ export async function getBalanceHidden(): Promise<boolean> {
   return results.rows.item(0).value === '1';
 }
 
+export async function setAppLocked(isLocked: boolean): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('app_locked', ?)` ,
+    [isLocked ? '1' : '0']
+  );
+}
+
+export async function getAppLocked(): Promise<boolean> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT value FROM user_settings WHERE key = 'app_locked';`
+  );
+  if (results.rows.length === 0) {
+    return false;
+  }
+  return results.rows.item(0).value === '1';
+}
+
+export async function setAutoLockTimeout(timeout: number): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('auto_lock_timeout', ?)` ,
+    [timeout.toString()]
+  );
+}
+
+export async function getAutoLockTimeout(): Promise<number> {
+  if (!db) throw new Error('Database not initialized');
+  const [results] = await db.executeSql(
+    `SELECT value FROM user_settings WHERE key = 'auto_lock_timeout';`
+  );
+  if (results.rows.length === 0) {
+    return 0; // Default: 0 (immediately)
+  }
+  return parseInt(results.rows.item(0).value, 10);
+}
+
 export async function setUserTitle(title: string): Promise<void> {
   if (!db) throw new Error('Database not initialized');
   await db.executeSql(
