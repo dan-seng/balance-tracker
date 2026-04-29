@@ -15,7 +15,7 @@ import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AddBankScreen } from './src/screens/AddBankScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
-import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb, setBalanceHiddenInDb, getBalanceHiddenFromDb, setUserTitleInDb, getUserTitleFromDb, saveCustomBankInDb, getCustomBanksFromDb, deleteCustomBankFromDb } from './src/db';
+import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb, setBalanceHiddenInDb, getBalanceHiddenFromDb, setUserTitleInDb, getUserTitleFromDb, saveCustomBankInDb, getCustomBanksFromDb, deleteCustomBankFromDb, setAppLockedInDb, getAppLockedFromDb, setAutoLockTimeoutInDb, getAutoLockTimeoutFromDb } from './src/db';
 import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
 import { setCustomBanks as setCustomBanksInParser } from './src/parsers/genericParser';
@@ -113,6 +113,7 @@ function App() {
 
         if (result.success) {
           setIsAppLocked(true);
+          await setAppLockedInDb(true);
         }
       } catch (error) {
         console.log('Failed to enable biometric lock:', error);
@@ -124,6 +125,7 @@ function App() {
     } else {
       // Disable lock
       setIsAppLocked(false);
+      await setAppLockedInDb(false);
     }
   };
 
@@ -160,6 +162,13 @@ function App() {
       setUserTitle(savedTitle);
       const savedCustomBanks = await getCustomBanksFromDb();
       setCustomBanks(savedCustomBanks);
+      
+      const savedAppLocked = await getAppLockedFromDb();
+      setIsAppLocked(savedAppLocked);
+      
+      const savedTimeout = await getAutoLockTimeoutFromDb();
+      setAutoLockTimeout(savedTimeout);
+
       setDbReady(true);
     } catch (error) {
       console.error('Failed to initialize database:', error);
@@ -484,7 +493,10 @@ function App() {
               isAppLocked={isAppLocked}
               onToggleLock={handleToggleLock}
               autoLockTimeout={autoLockTimeout}
-              onAutoLockTimeoutChange={setAutoLockTimeout}
+              onAutoLockTimeoutChange={async (timeout) => {
+                setAutoLockTimeout(timeout);
+                await setAutoLockTimeoutInDb(timeout);
+              }}
               customBanks={customBanks}
               onAddCustomBank={handleAddCustomBank}
               onDeleteCustomBank={handleDeleteCustomBank}
