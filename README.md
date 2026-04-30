@@ -1,145 +1,125 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+<div align="center">
+  <img src="assets/hisab.png" width="180" height="180" alt="Hisab App Icon" />
+  
+  # 🏦 Hisab
+  
+  **Your Personal Finance & Balance Tracking Companion**
+  
+  ![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+  ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+  ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
 
-# Getting Started
+  <p align="center">
+    <i>Secure, private, and automated financial tracking based on SMS notifications.</i>
+  </p>
+</div>
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## ✨ Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **Automated Tracking**: Extracts transaction data from SMS messages sent by your bank.
+- **100% Offline & Private**: All parsing, processing, and storage happens locally on your device. No cloud sync, no internet required.
+- **Biometric Security**: Keep your financial data safe with native biometric authentication and customizable auto-lock timeouts.
+- **Multi-Bank Support**: Works seamlessly with multiple banks. Easily add custom banks and SMS sender rules.
+- **Beautiful UI**: Modern, sleek, dark-themed interface built with a premium touch.
+- **Detailed Analytics**: Visualize your spending habits and account balances over time.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+## 📸 Screenshots
 
-# OR using Yarn
-yarn start
+*(Add screenshots of your beautiful UI here)*
+> E.g., Dashboard, Lock Screen, Analytics, Settings.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js `^22.11.0`
+- React Native CLI
+- Android Studio & SDK (for Android development)
+
+### Installation
+
+1. **Clone the repository:**
+   ```sh
+   git clone <repository_url>
+   cd HisabApp
+   ```
+
+2. **Install dependencies:**
+   ```sh
+   npm install
+   ```
+
+3. **Start the Metro Bundler:**
+   ```sh
+   npm start
+   ```
+
+4. **Run the Application:**
+   Open a new terminal window and run:
+   ```sh
+   npm run android
+   ```
+   *(iOS support requires CocoaPods and Xcode setup)*
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [React Native](https://reactnative.dev)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: `react-native-sqlite-storage`
+- **Security**: `react-native-biometrics`
+- **Styling**: `react-native-linear-gradient` & `react-native-svg`
+
+---
+
+## 🏗️ Project Architecture
+
+```mermaid
+graph TD;
+    A[SMS Receiver] -->|Raw Message| B(Parser Service);
+    B -->|Transaction Data| C{SQLite Storage};
+    C -->|State| D[React Native UI];
+    D --> E(Dashboard);
+    D --> F(Analytics);
+    D --> G(Settings);
 ```
 
-## Step 2: Build and run your app
+### Key Modules
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+- **`/src/db`**: Local SQLite database setup, queries, and migrations.
+- **`/src/parsers`**: Logic for parsing bank SMS formats into structured `Transaction` models.
+- **`/src/screens`**: React components representing the app's views.
+- **`/src/models`**: TypeScript interfaces defining the core data structures (e.g., `Account`, `Transaction`).
 
-### Android
+---
 
-```sh
-# Using npm
-npm run android
+## 🛡️ Privacy & Permissions
 
-# OR using Yarn
-yarn android
-```
+This app requires the following permissions to function:
+- `READ_SMS` & `RECEIVE_SMS`: Necessary to automatically track incoming bank transactions. 
+*(No SMS data ever leaves your device).*
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## 🛣️ Roadmap
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+- [x] Basic UI screens (Dashboard, Bank Detail)
+- [x] SMS Integration & Local Storage
+- [x] Automated parsing and balance calculation
+- [x] Biometric lock implementation
+- [ ] iOS Support (SMS parsing via alternative means if possible)
+- [ ] Export to CSV/PDF
+- [ ] Budgeting and categorization
 
-```sh
-bundle install
-```
+---
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
-
-npx react-native run-android
-
-Install dependencies
-npm install
-
-Start Metro bundler (keep this terminal open)
-npm start
-
-In a second terminal, run Android
-npm run android
-
-
-
-
-Based on your SRS, here's what remains:
-
-## Completed (Phase 1)
-- ✅ React Native project setup
-- ✅ Basic UI screens (Welcome, Dashboard, BankDetail)
-- ✅ CBE parser implementation
-- ✅ TypeScript models
-- ✅ Mock data service
-
-## Remaining Work
-
-### Phase 2: SMS Integration (High Priority)
-- **Kotlin native SMS receiver** - Create `/android/smsmodule/SmsReceiver.kt` and `SmsModule.kt`
-- **SMS permissions** - Add READ_SMS, RECEIVE_SMS to Android manifest
-- **React Native bridge** - Connect Kotlin layer to JS for SMS events
-
-### Phase 3: Parsing (Medium Priority)
-- **Dashen parser** - Create `src/parsers/dashenParser.ts`
-- **Awash parser** - Create `src/parsers/awashParser.ts`
-
-### Phase 4: Storage (High Priority)
-- **SQLite integration** - Replace in-memory DB with `react-native-sqlite-storage`
-- **Database schema** - Create accounts and transactions tables
-
-### Phase 5: Logic & Features (Medium Priority)
-- **Balance computation** - Calculate balance when SMS lacks it
-- **SMS deduplication** - Hash-based checking to prevent duplicates
-- **Real-time UI updates** - React to SMS events automatically
-
-### Phase 6: Multi-Bank Support
-- Add more bank parsers as needed
-
-**Next logical step:** Start with Phase 2 (SMS Integration) since it's the foundation for everything else. Would you like me to begin with the Kotlin SMS receiver module?
+<div align="center">
+  <i>Built with ❤️ using React Native</i>
+</div>
