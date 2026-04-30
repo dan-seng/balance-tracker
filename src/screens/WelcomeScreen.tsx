@@ -113,7 +113,7 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
         </Animated.View>
 
         <Animated.View style={{ opacity: fadeAnim }}>
-          <PrimaryButton label="Start Building My Wallet" onPress={onContinue} />
+          <PrimaryButton label="Build My Wallet" onPress={onContinue} />
         </Animated.View>
 
       </View>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 44,
+    fontSize: 34,
     letterSpacing: -1.5,
     lineHeight: 52,
     marginBottom: 20,
