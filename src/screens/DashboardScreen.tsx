@@ -18,7 +18,7 @@ const EyeOffIcon = ({ size = 18, color = "#D4AF37" }) => (
   </Svg>
 );
 
-const LockIcon = ({ size = 18, color = "#8AA094", locked = false }) => (
+const LockIcon = ({ size = 18, color = "#8AA094" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
     <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -76,7 +76,6 @@ export function DashboardScreen({userName, onSelectAccount, accounts, transactio
   const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.currentBalance, 0);
-  const weeklyDelta = creditsMinusDebits(transactions);
   const credits = transactions
     .filter(item => item.type === 'credit')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -123,7 +122,7 @@ export function DashboardScreen({userName, onSelectAccount, accounts, transactio
               <Text style={styles.filterIcon}>≡</Text>
             </Pressable>
             <Pressable onPress={onToggleLock} style={styles.lockButton} hitSlop={10}>
-              {isAppLocked ? <LockIcon locked={true} /> : <UnlockIcon />}
+              {isAppLocked ? <LockIcon /> : <UnlockIcon />}
             </Pressable>
           </View>
         </View>
@@ -226,17 +225,6 @@ export function DashboardScreen({userName, onSelectAccount, accounts, transactio
       />
     </Screen>
   );
-}
-
-function creditsMinusDebits(transactions: Transaction[]) {
-  const credits = transactions
-    .filter(item => item.type === 'credit')
-    .reduce((sum, item) => sum + item.amount, 0);
-  const debits = transactions
-    .filter(item => item.type === 'debit')
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  return credits - debits;
 }
 
 const styles = StyleSheet.create({
