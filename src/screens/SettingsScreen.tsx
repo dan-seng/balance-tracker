@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { StyleSheet, View, Pressable, Alert, Modal, Dimensions, Animated } from 'react-native';
+import { StyleSheet, View, Pressable, Modal, Dimensions, Animated } from 'react-native';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
 import { Screen } from '../components/Screen';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -41,13 +41,6 @@ const InfoIcon = ({ size = 20, color = "#8A8A8A" }) => (
   </Svg>
 );
 
-const PlusIcon = ({ size = 20, color = "#8A8A8A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 5v14" />
-    <Path d="M5 12h14" />
-  </Svg>
-);
-
 const TrashIcon = ({ size = 16, color = "#8A8A8A" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M3 6h18" />
@@ -76,7 +69,7 @@ export function SettingsScreen({
   autoLockTimeout,
   onAutoLockTimeoutChange,
   customBanks,
-  onAddCustomBank,
+  onAddCustomBank: _onAddCustomBank,
   onDeleteCustomBank,
 }: SettingsScreenProps) {
   const [isEditingName, setIsEditingName] = useState(false);
