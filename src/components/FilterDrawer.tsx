@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View, ScrollView } from 'react-native';
 import { AppText as Text } from './AppText';;
 
@@ -18,7 +17,7 @@ export function FilterDrawer({
   banks,
   selectedBanks,
   onBankToggle,
-  dateRange,
+  dateRange: _dateRange,
   onDateRangeChange,
 }: FilterDrawerProps) {
   return (

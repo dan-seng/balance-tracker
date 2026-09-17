@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View, Keyboard } from 'react-native';
-import { AppText as Text } from './AppText';;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle } from 'react-native-svg';
 
