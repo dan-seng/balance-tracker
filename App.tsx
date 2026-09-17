@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StatusBar, Alert, NativeModules, BackHandler, View, AppState } from 'react-native';
+import { StatusBar, Alert, BackHandler, View, AppState, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
 
 import { Account, Transaction } from './src/models';
 import { BankDetailScreen } from './src/screens/BankDetailScreen';
@@ -459,7 +459,7 @@ function App() {
           transactions={getTransactionsForAccount(selectedAccount.id)}
         />
       ) : (
-        <View style={{flex: 1}}>
+        <View style={styles.tabContainer}>
           {currentTab === 'dashboard' ? (
             <DashboardScreen
               userName={userName!}
@@ -510,3 +510,9 @@ function App() {
 }
 
 export default App;
+
+const styles = StyleSheet.create({
+  tabContainer: {
+    flex: 1,
+  },
+});
