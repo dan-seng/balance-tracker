@@ -22,10 +22,6 @@ type LockScreenProps = {
 export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  useEffect(() => {
-    attemptBiometricUnlock();
-  }, []);
-
   const attemptBiometricUnlock = async () => {
     setIsAuthenticating(true);
     try {
@@ -33,12 +29,17 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
       if (success) {
         onUnlock();
       }
-    } catch (error) {
+    } catch {
       console.log('Biometric authentication failed or not available');
     } finally {
       setIsAuthenticating(false);
     }
   };
+
+  useEffect(() => {
+    attemptBiometricUnlock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View style={styles.container}>
