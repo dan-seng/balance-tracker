@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';;
+import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
@@ -16,11 +16,11 @@ export function NameEntryScreen({ onNameSubmit }: NameEntryScreenProps) {
   return (
     <Screen>
      <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={styles.fill}
       behavior={Platform.OS === 'android' ? 'height' : 'padding'}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
       <View style={styles.wrapper}>
@@ -65,39 +65,50 @@ export function NameEntryScreen({ onNameSubmit }: NameEntryScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  fill: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   wrapper: {
     flex: 1,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 24,
-    paddingTop: 80,
+    paddingBottom: 32,
+    paddingTop: 64,
   },
   content: {
-    paddingHorizontal: 8,
+    width: '100%',
   },
   badge: {
     color: '#bbbdbfff',
-    fontSize: 52,
-    letterSpacing: 2,
-    marginBottom: 32,
+    fontSize: 38,
+    letterSpacing: 1.5,
+    marginBottom: 28,
     fontFamily: 'nokiapure'
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '600',
-    marginBottom: 20,
+    letterSpacing: -0.5,
+    lineHeight: 38,
+    marginBottom: 16,
   },
   titleSelector: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   titleOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1.5,
     borderColor: '#2A5A4A',
     backgroundColor: 'transparent',
   },
@@ -107,18 +118,19 @@ const styles = StyleSheet.create({
   },
   titleOptionText: {
     color: '#9EADAD',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   titleOptionTextActive: {
     color: '#FFFFFF',
   },
   input: {
+    width: '100%',
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 17,
     fontWeight: '600',
-    borderBottomWidth: 2,
+    borderBottomWidth: 1.5,
     borderBottomColor: '#2A5A4A',
-    paddingVertical: 12,
+    paddingVertical: 8,
   }
 });
