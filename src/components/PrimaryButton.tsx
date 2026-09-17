@@ -54,39 +54,39 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     alignItems: 'center',
-    width: '80%',
+    width: '100%',
   },
 
   shadowDeep: {
     position: 'absolute',
-    top: 8,
+    top: 6,
     left: 25,
     right: 25,
     bottom: -2,
     backgroundColor: '#000000',
-    borderRadius: 24,
+    borderRadius: 14,
     opacity: 0.25,
   },
 
   shadowMedium: {
     position: 'absolute',
-    top: 6,
+    top: 5,
     left: 23,
     right: 23,
     bottom: 0,
     backgroundColor: '#000000',
-    borderRadius: 24,
+    borderRadius: 14,
     opacity: 0.15,
   },
 
   shadowLight: {
     position: 'absolute',
-    top: 4,
+    top: 3,
     left: 21,
     right: 21,
     bottom: 2,
     backgroundColor: '#000000',
-    borderRadius: 24,
+    borderRadius: 14,
     opacity: 0.08,
   },
 
@@ -97,21 +97,21 @@ const styles = StyleSheet.create({
     left: 19,
     right: 19,
     backgroundColor: '#7e7d7d',
-    borderRadius: 26,
+    borderRadius: 16,
     opacity: 0.3,
   },
 
   wrapper: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 14,
   },
 
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 20,
+    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     position: 'relative',
     overflow: 'hidden',
     borderWidth: 1,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
-    borderRadius: 24,
+    borderRadius: 14,
   },
 
   pressed: {
@@ -134,9 +134,9 @@ const styles = StyleSheet.create({
 
   label: {
     color: '#000',
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: 'Poppins-Bold',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
     textShadowColor: 'rgba(255,255,255,0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
