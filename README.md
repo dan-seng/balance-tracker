@@ -16,6 +16,24 @@
 
 ---
 
+## 📥 Download
+
+**Hisab is free to download as an Android APK, built and signed automatically from GitHub Releases.**
+
+<p align="center">
+  <a href="https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk">
+    <img src="https://img.shields.io/badge/Download_APK-Latest_Release-success?style=for-the-badge&logo=android&logoColor=white"/>
+  </a>
+  <a href="https://dan-seng.github.io/balance-tracker/">
+    <img src="https://img.shields.io/badge/Website-Download_Page-8A806A?style=for-the-badge"/>
+  </a>
+</p>
+
+- Install the APK and allow **"install from unknown sources"** when prompted — expected for direct Android downloads.
+- All releases are listed at: [github.com/dan-seng/balance-tracker/releases](https://github.com/dan-seng/balance-tracker/releases)
+
+---
+
 ## ✨ Features
 
 - **Automated Tracking**: Extracts transaction data from SMS messages sent by your bank.
