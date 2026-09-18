@@ -1,6 +1,6 @@
 export const theme = {
   colors: {
-    primary: '#D4AF37', // Gold
+    primary: '#D4AF37', // Gold (legacy)
     primaryDark: '#B8860B',
     background: '#000000',
     surface: '#121212',
@@ -11,9 +11,34 @@ export const theme = {
     textMutedLight: '#666666',
     success: '#4ADE80',
     error: '#F87171',
-    accent: '#1A2A23', // Dark Forest Green for some elements
+    accent: '#1A2A23',
     accentText: '#8AA094',
     border: 'rgba(212, 175, 55, 0.3)',
+    iOS: {
+      blue: '#0A84FF',
+      green: '#30D158',
+      red: '#FF453A',
+      orange: '#FF9F0A',
+      purple: '#BF5AF2',
+      gold: '#D8B45C',
+      heroGold: '#C9BB93',
+      grey: '#8E8E93',
+    },
+    iosSurface: {
+      grouped1: '#1C1C1E',
+      grouped2: '#2C2C2E',
+      grouped3: '#3A3A3C',
+      label: '#FFFFFF',
+      label2: 'rgba(235, 235, 245, 0.60)',
+      label3: 'rgba(235, 235, 245, 0.30)',
+      separator: 'rgba(84, 84, 88, 0.55)',
+      fill: 'rgba(120, 120, 128, 0.12)',
+      goldBorder: 'rgba(216, 180, 92, 0.18)',
+      goldHighlight: '#2B2210',
+      goldMid: '#17140D',
+      goldDeep: '#0D0C09',
+      film: 'rgba(22, 22, 24, 0.92)',
+    },
   },
   spacing: {
     xs: 4,
