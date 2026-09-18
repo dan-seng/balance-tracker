@@ -60,13 +60,16 @@ jobs:
 
       - name: Stage APK for release
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk "hisab-${{ steps.meta.outputs.version }}-build${{ github.run_number }}.apk"
+          VERSION="${{ steps.meta.outputs.version }}"
+          RUN="${{ github.run_number }}"
+          cp android/app/build/outputs/apk/release/app-release.apk "hisab-${VERSION}-build${RUN}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "Hisab.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: hisab-release-apk
-          path: hisab-*.apk
+          path: '*.apk'
           retention-days: 14
 
       - name: Create GitHub Release
@@ -80,6 +83,9 @@ jobs:
             - Commit: `${{ github.sha }}`
             - Trigger: `${{ github.event_name }}`
             - Download the APK below, install it on your device and allow "install from unknown sources".
-          files: hisab-*.apk
+
+            A stable link is always available at:
+            `https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk`
+          files: '*.apk'
           make_latest: true
           fail_on_unmatched_files: true
