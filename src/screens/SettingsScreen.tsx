@@ -1,47 +1,52 @@
-import { useState, useRef, useEffect } from 'react';
-import { StyleSheet, View, Pressable, Modal, Dimensions, Animated } from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
+import { useState } from 'react';
+import { StyleSheet, View, Pressable, Modal, Switch, TextInput } from 'react-native';
+import { AppText as Text } from '../components/AppText';
 import { Screen } from '../components/Screen';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
-const { width, height } = Dimensions.get('window');
+const GREEN = '#30D158';
+const ORANGE = '#FF9F0A';
+const PURPLE = '#BF5AF2';
+const BLUE = '#0A84FF';
+const RED = '#FF453A';
+const LABEL2 = 'rgba(235, 235, 245, 0.60)';
+const LABEL3 = 'rgba(235, 235, 245, 0.30)';
+const SEPARATOR = 'rgba(84, 84, 88, 0.55)';
+const GROUPED1 = '#1C1C1E';
+const GROUPED2 = '#2C2C2E';
 
-const LockIcon = ({ size = 20, color = "#8A8A8A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </Svg>
-);
-
-const UnlockIcon = ({ size = 20, color = "#8A8A8A" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    <Path d="M9 12h6" />
-  </Svg>
-);
-
-const UserIcon = ({ size = 20, color = "#8A8A8A" }) => (
+const UserIcon = ({ size = 16, color = "#FFFFFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <Circle cx="12" cy="7" r="4" />
   </Svg>
 );
 
-const ClockIcon = ({ size = 20, color = "#8A8A8A" }) => (
+const LockIcon = ({ size = 16, color = "#FFFFFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Circle cx="12" cy="12" r="10" />
-    <Path d="M12 6v6l4 2" />
+    <Rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+    <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </Svg>
 );
 
-const InfoIcon = ({ size = 20, color = "#8A8A8A" }) => (
+const TimerIcon = ({ size = 16, color = "#FFFFFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Circle cx="12" cy="12" r="10" />
-    <Path d="M12 16v-4" />
-    <Path d="M12 8h.01" />
+    <Path d="M12 22a8 8 0 0 0 8-8c0-4-3-7.4-7-7.9V4h2V2h-6v2h2v2.1" />
+    <Circle cx="12" cy="14" r="5" />
+    <Path d="M12 12v2l1.5 1.5" />
   </Svg>
 );
 
-const TrashIcon = ({ size = 16, color = "#8A8A8A" }) => (
+const BankIcon = ({ size = 16, color = "#FFFFFF" }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 21h18" />
+    <Path d="M5 21V7l8-4 8 4v14" />
+    <Path d="M17 21v-8.5a1.5 1.5 0 0 0-3 0V21" />
+    <Path d="M9 21v-6" />
+  </Svg>
+);
+
+const TrashIcon = ({ size = 15, color = RED }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M3 6h18" />
     <Path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
@@ -74,17 +79,7 @@ export function SettingsScreen({
 }: SettingsScreenProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(userName);
-  const [showTimeoutDropdown, setShowTimeoutDropdown] = useState(false);
-  const toggleAnim = useRef(new Animated.Value(isAppLocked ? 1 : 0)).current;
-
-  // Animate toggle when lock state changes
-  useEffect(() => {
-    Animated.timing(toggleAnim, {
-      toValue: isAppLocked ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [isAppLocked, toggleAnim]);
+  const [showTimeoutModal, setShowTimeoutModal] = useState(false);
 
   const handleNameSave = async () => {
     if (newName.trim()) {
@@ -102,37 +97,45 @@ export function SettingsScreen({
     { label: 'Never', value: -1 },
   ];
 
+  const timeoutValue =
+    autoLockTimeout === -1
+      ? 'Never'
+      : autoLockTimeout === 0
+        ? 'Immediately'
+        : `${autoLockTimeout} min`;
+
   return (
     <Screen scrollable>
       <View style={styles.container}>
         <Text style={styles.title}>Settings</Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile</Text>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <UserIcon />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Your Name</Text>
-                {isEditingName ? (
-                  <TextInput
-                    style={styles.nameInput}
-                    value={newName}
-                    onChangeText={setNewName}
-                    onSubmitEditing={handleNameSave}
-                    autoFocus
-                    autoCapitalize="words"
-                  />
-                ) : (
-                  <Text style={styles.settingDescription}>{userName}</Text>
-                )}
-              </View>
+        <Text style={styles.groupHeader}>Profile</Text>
+        <View style={styles.group}>
+          <View style={styles.row}>
+            <View style={[styles.icon, styles.iconProfile]}>
+              <UserIcon />
+            </View>
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>Your Name</Text>
+              {isEditingName ? (
+                <TextInput
+                  style={styles.nameInput}
+                  value={newName}
+                  onChangeText={setNewName}
+                  onSubmitEditing={handleNameSave}
+                  placeholder="Name"
+                  placeholderTextColor={LABEL3}
+                  autoFocus
+                  autoCapitalize="words"
+                />
+              ) : (
+                <Text style={styles.rowDescription} numberOfLines={1}>
+                  {userName}
+                </Text>
+              )}
             </View>
             <Pressable
-              style={styles.editButton}
+              hitSlop={10}
               onPress={() => {
                 if (isEditingName) {
                   handleNameSave();
@@ -140,367 +143,290 @@ export function SettingsScreen({
                   setIsEditingName(true);
                   setNewName(userName);
                 }
-              }}
-            >
-              <Text style={styles.editButtonText}>{isEditingName ? 'Save' : 'Edit'}</Text>
+              }}>
+              <Text style={styles.linkText}>{isEditingName ? 'Save' : 'Edit'}</Text>
             </Pressable>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Security</Text>
-
-          <Pressable style={styles.settingItem} onPress={onToggleLock}>
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                {isAppLocked ? <LockIcon /> : <UnlockIcon />}
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>App Lock</Text>
-                <Text style={styles.settingDescription}>
-                  {isAppLocked ? 'Enabled - requires biometric to unlock' : 'Disabled'}
-                </Text>
-              </View>
+        <Text style={styles.groupHeader}>Security</Text>
+        <View style={styles.group}>
+          <View style={styles.row}>
+            <View style={[styles.icon, { backgroundColor: GREEN }]}>
+              <LockIcon />
             </View>
-            <View style={[styles.toggle, isAppLocked && styles.toggleOn]}>
-              <Animated.View 
-                style={[
-                  styles.toggleKnob,
-                  {
-                    transform: [
-                      {
-                        translateX: toggleAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, width * 0.05],
-                        })
-                      }
-                    ]
-                  }
-                ]} 
-              />
-            </View>
-          </Pressable>
-
-          <Pressable 
-            style={styles.settingItem} 
-            onPress={() => setShowTimeoutDropdown(true)}
-          >
-            <View style={styles.settingLeft}>
-              <View style={styles.iconContainer}>
-                <ClockIcon />
-              </View>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Auto-lock timeout</Text>
-                <Text style={styles.settingDescription}>
-                  Lock app after period of inactivity
-                </Text>
-              </View>
-            </View>
-            <View style={styles.dropdownContainer}>
-              <Text style={styles.dropdownValue}>
-                {autoLockTimeout === -1 ? 'Never' : autoLockTimeout === 0 ? 'Immediately' : `${autoLockTimeout} min`}
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>App Lock</Text>
+              <Text style={styles.rowDescription} numberOfLines={1}>
+                {isAppLocked
+                  ? 'Enabled — requires biometric to open'
+                  : 'Disabled'}
               </Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
             </View>
-          </Pressable>
+            <Switch
+              value={isAppLocked}
+              onValueChange={() => {
+                onToggleLock();
+              }}
+              trackColor={{ true: GREEN, false: GROUPED2 }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor={GROUPED2}
+            />
+          </View>
 
-          <Modal
-            visible={showTimeoutDropdown}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={() => setShowTimeoutDropdown(false)}
-          >
-            <Pressable 
-              style={styles.modalOverlay} 
-              onPress={() => setShowTimeoutDropdown(false)}
-            >
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Select Timeout</Text>
-                {timeoutOptions.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    style={[
-                      styles.dropdownItem,
-                      autoLockTimeout === option.value && styles.dropdownItemActive,
-                    ]}
-                    onPress={() => {
-                      onAutoLockTimeoutChange(option.value);
-                      setShowTimeoutDropdown(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        autoLockTimeout === option.value && styles.dropdownItemTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                    {autoLockTimeout === option.value && (
-                      <Text style={styles.checkIcon}>✓</Text>
-                    )}
-                  </Pressable>
-                ))}
-              </View>
-            </Pressable>
-          </Modal>
+          <Pressable
+            style={styles.row}
+            onPress={() => setShowTimeoutModal(true)}>
+            <View style={[styles.icon, { backgroundColor: ORANGE }]}>
+              <TimerIcon />
+            </View>
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>Auto-lock timeout</Text>
+              <Text style={styles.rowDescription} numberOfLines={1}>
+                Lock after inactivity
+              </Text>
+            </View>
+            <Text style={styles.rowValue}>{timeoutValue}</Text>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Custom Banks</Text>
-
-          {customBanks.map((bank) => (
-            <View key={bank.bankId} style={styles.settingItem}>
-              <View style={styles.settingLeft}>
-                <View style={styles.iconContainer}>
-                  <InfoIcon />
-                </View>
-                <View style={styles.settingInfo}>
-                  <Text style={styles.settingLabel}>{bank.bankName}</Text>
-                  <Text style={styles.settingDescription}>Sender: {bank.senderId}</Text>
-                </View>
+        <Text style={styles.groupHeader}>Custom Banks</Text>
+        <View style={styles.group}>
+          {customBanks.length === 0 ? (
+            <View style={styles.row}>
+              <View style={styles.rowBody}>
+                <Text style={styles.rowDescription}>
+                  No custom banks added yet.
+                </Text>
               </View>
-              <Pressable
-                style={styles.deleteButton}
-                onPress={() => onDeleteCustomBank(bank.bankId)}
-                hitSlop={10}
-              >
-                <TrashIcon />
-              </Pressable>
             </View>
-          ))}
+          ) : (
+            customBanks.map((bank, index) => (
+              <View
+                key={bank.bankId}
+                style={[
+                  styles.row,
+                  index !== customBanks.length - 1 && styles.rowBorder,
+                ]}>
+                <View style={[styles.icon, { backgroundColor: PURPLE }]}>
+                  <BankIcon />
+                </View>
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowLabel} numberOfLines={1}>
+                    {bank.bankName}
+                  </Text>
+                  <Text style={styles.rowDescription} numberOfLines={1}>
+                    Sender: {bank.senderId}
+                  </Text>
+                </View>
+                <Pressable
+                  hitSlop={12}
+                  onPress={() => onDeleteCustomBank(bank.bankId)}
+                  accessibilityLabel={`Delete ${bank.bankName}`}>
+                  <TrashIcon />
+                </Pressable>
+              </View>
+            ))
+          )}
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Version 1.0</Text>
-          <Text style={styles.footerText}>Developed by SPDY</Text>
+          <Text style={styles.footerText}>Version 1.0 · Developed by SPDY</Text>
         </View>
       </View>
+
+      <Modal
+        visible={showTimeoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowTimeoutModal(false)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowTimeoutModal(false)}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Auto-Lock</Text>
+            {timeoutOptions.map((option, index) => {
+              const selected = autoLockTimeout === option.value;
+              const isLast = index === timeoutOptions.length - 1;
+
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => {
+                    onAutoLockTimeoutChange(option.value);
+                    setShowTimeoutModal(false);
+                  }}
+                  style={[
+                    styles.modalItem,
+                    !isLast && styles.modalItemBorder,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.modalItemText,
+                      selected && styles.modalItemTextSelected,
+                    ]}>
+                    {option.label}
+                  </Text>
+                  {selected && <Text style={styles.modalCheck}>✓</Text>}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: width * 0.025,
-    paddingBottom: height * 0.1,
     flex: 1,
+    paddingTop: 8,
+    paddingBottom: 60,
   },
   title: {
     color: '#FFFFFF',
-    fontSize: width * 0.08,
+    fontSize: 32,
     fontWeight: '800',
-    marginBottom: width * 0.08,
+    letterSpacing: -1,
+    marginBottom: 30,
   },
-  section: {
-    marginBottom: width * 0.08,
-  },
-  sectionTitle: {
-    color: '#8A8A8A',
-    fontSize: width * 0.03,
-    fontWeight: '700',
-    marginBottom: width * 0.04,
+  groupHeader: {
+    color: LABEL2,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginBottom: 6,
+    marginLeft: 4,
     textTransform: 'uppercase',
   },
-  settingItem: {
-    backgroundColor: '#181818',
-    borderRadius: width * 0.04,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: width * 0.04,
-    marginBottom: width * 0.03,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    backgroundColor: '#000000',
-    borderRadius: width * 0.03,
-    height: width * 0.1,
-    width: width * 0.1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: width * 0.03,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  settingInfo: {
-    flex: 1,
-  },
-  settingLabel: {
-    color: '#FFFFFF',
-    fontSize: width * 0.04,
-    fontWeight: '700',
-    marginBottom: width * 0.01,
-  },
-  settingDescription: {
-    color: '#8A8A8A',
-    fontSize: width * 0.035,
-  },
-  toggle: {
-    width: width * 0.12,
-    height: width * 0.07,
-    borderRadius: width * 0.035,
-    backgroundColor: '#333333',
-    padding: width * 0.008,
-  },
-  toggleOn: {
-    backgroundColor: '#4ade80',
-  },
-  toggleKnob: {
-    width: width * 0.054,
-    height: width * 0.054,
-    borderRadius: width * 0.027,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  dropdownContainer: {
-    backgroundColor: '#000000',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.03,
-    paddingVertical: width * 0.02,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: width * 0.02,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  dropdownValue: {
-    color: '#FFFFFF',
-    fontSize: width * 0.035,
-    fontWeight: '700',
-  },
-  dropdownArrow: {
-    color: '#8A8A8A',
-    fontSize: width * 0.03,
-  },
-  dropdownMenu: {
-    backgroundColor: '#181818',
-    borderRadius: width * 0.03,
-    marginTop: width * 0.02,
+  group: {
+    backgroundColor: GROUPED1,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    marginBottom: 28,
     overflow: 'hidden',
   },
-  dropdownItem: {
-    paddingHorizontal: width * 0.02,
-    paddingVertical: width * 0.02,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  row: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  dropdownItemActive: {
-    backgroundColor: '#333333',
+  rowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: SEPARATOR,
   },
-  dropdownItemText: {
-    color: '#8A8A8A',
-    fontSize: width * 0.028,
+  icon: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 29,
+    justifyContent: 'center',
+    width: 29,
+  },
+  iconProfile: {
+    backgroundColor: '#58636E',
+  },
+  rowBody: {
+    flex: 1,
+  },
+  rowLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  rowDescription: {
+    color: LABEL3,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  rowValue: {
+    color: LABEL2,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+  },
+  chevron: {
+    color: LABEL3,
+    fontSize: 20,
+    fontWeight: '400',
+    marginTop: -2,
+  },
+  linkText: {
+    color: BLUE,
+    fontSize: 15,
     fontWeight: '600',
   },
-  dropdownItemTextActive: {
-    color: '#FFFFFF',
-  },
   nameInput: {
-    color: '#FFFFFF',
-    fontSize: width * 0.035,
     backgroundColor: '#000000',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.03,
-    paddingVertical: width * 0.02,
-    marginTop: width * 0.01,
+    borderColor: '#3A3A3C',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#333333',
-  },
-  editButton: {
-    backgroundColor: '#222222',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.04,
-    paddingVertical: width * 0.02,
-    borderWidth: 1,
-    borderColor: '#444444',
-  },
-  editButtonText: {
     color: '#FFFFFF',
-    fontSize: width * 0.035,
-    fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: width * 0.05,
-  },
-  modalContent: {
-    backgroundColor: '#181818',
-    borderRadius: width * 0.04,
-    width: '100%',
-    maxWidth: width * 0.65,
-    padding: width * 0.02,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: width * 0.03,
-    fontWeight: '800',
-    marginBottom: width * 0.02,
-    textAlign: 'center',
-  },
-  checkIcon: {
-    color: '#FFFFFF',
-    fontSize: width * 0.03,
-    fontWeight: '800',
-  },
-  deleteButton: {
-    padding: 8,
-    opacity: 0.6,
-  },
-  modalInput: {
-    backgroundColor: '#000000',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.03,
-    paddingVertical: width * 0.025,
-    marginTop: width * 0.02,
-    borderWidth: 1,
-    borderColor: '#333333',
-    color: '#FFFFFF',
-    fontSize: width * 0.035,
-  },
-  modalButton: {
-    backgroundColor: '#222222',
-    borderRadius: width * 0.02,
-    paddingHorizontal: width * 0.04,
-    paddingVertical: width * 0.025,
-    marginTop: width * 0.03,
-    borderWidth: 1,
-    borderColor: '#444444',
-  },
-  modalButtonPrimary: {
-    backgroundColor: '#1A2A23',
-    borderColor: '#2A5A4A',
-  },
-  modalButtonText: {
-    color: '#FFFFFF',
-    fontSize: width * 0.035,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontSize: 14,
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   footer: {
     alignItems: 'center',
-    marginTop: 'auto',
-    gap: width * 0.01,
+    marginTop: 8,
   },
   footerText: {
-    color: '#666666',
-    fontSize: width * 0.025,
+    color: LABEL3,
+    fontSize: 11,
     fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  modalOverlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 40,
+  },
+  modalCard: {
+    backgroundColor: GROUPED1,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    paddingTop: 8,
+    width: '100%',
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    textAlign: 'center',
+  },
+  modalItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  modalItemBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: SEPARATOR,
+  },
+  modalItemText: {
+    color: LABEL2,
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  modalItemTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  modalCheck: {
+    color: BLUE,
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
