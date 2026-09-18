@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View, Pressable, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from './AppText';
+import { AppTextInput } from './AppText';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 if (
@@ -10,7 +10,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const SearchIcon = ({ size = 20, color = "#8AA094" }) => (
+const SearchIcon = ({ size = 18, color = "#FFFFFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Circle cx="11" cy="11" r="8" />
     <Path d="m21 21-4.35-4.35" />
@@ -18,14 +18,14 @@ const SearchIcon = ({ size = 20, color = "#8AA094" }) => (
 );
 
 const screenWidth = Dimensions.get('window').width;
-const SEARCH_WIDTH = screenWidth - 40; // Full screen minus 20px padding on each side
+const SEARCH_WIDTH = screenWidth - 40;
 
 type SearchBarProps = {
   onSearch: (query: string) => void;
   placeholder?: string;
 };
 
-export function SearchBar({ onSearch, placeholder = 'Search transactions...' }: SearchBarProps) {
+export function SearchBar({ onSearch, placeholder = 'Bank, account, balance' }: SearchBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -50,17 +50,17 @@ export function SearchBar({ onSearch, placeholder = 'Search transactions...' }: 
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={handlePress} style={styles.iconContainer}>
-        <SearchIcon color={isExpanded ? "transparent" : "#8AA094"} />
+      <Pressable onPress={handlePress} style={styles.iconContainer} accessibilityRole="button" accessibilityLabel="Search accounts">
+        <SearchIcon color={isExpanded ? 'transparent' : '#FFFFFF'} />
       </Pressable>
-      
+
       {isExpanded && (
         <View style={styles.expandedContainer}>
-          <SearchIcon color="#B8D69F" />
-          <TextInput
+          <SearchIcon color="rgba(235,235,245,0.60)" size={16} />
+          <AppTextInput
             style={styles.input}
             placeholder={placeholder}
-            placeholderTextColor="#8AA094"
+            placeholderTextColor="rgba(235, 235, 245, 0.30)"
             value={query}
             onChangeText={handleChangeText}
             onBlur={handleBlur}
@@ -70,7 +70,9 @@ export function SearchBar({ onSearch, placeholder = 'Search transactions...' }: 
           />
           {query.length > 0 && (
             <Pressable onPress={() => { setQuery(''); onSearch(''); }} style={styles.clearButton} hitSlop={15}>
-              <Text style={styles.clearText}>✕</Text>
+              <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="rgba(235,235,245,0.60)" strokeWidth="3" strokeLinecap="round">
+                <Path d="M18 6 6 18M6 6l12 12" />
+              </Svg>
             </Pressable>
           )}
         </View>
@@ -85,29 +87,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
     height: 40,
-    zIndex: 100, // Float above neighbors
+    zIndex: 100,
   },
   iconContainer: {
-    backgroundColor: '#1A2A23',
+    backgroundColor: '#1C1C1E',
     borderRadius: 999,
-    height: 40,
-    width: 40,
+    height: 36,
+    width: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   expandedContainer: {
     position: 'absolute',
-    right: -100, // Offset to perfectly cover Filter and Lock buttons in headerActions
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E2F26', 
-    borderRadius: 999,
-    paddingHorizontal: 16,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    paddingHorizontal: 14,
     height: 44,
     width: SEARCH_WIDTH,
     borderWidth: 1,
-    borderColor: '#3A4A43',
-    // Shadow for the floating effect
+    borderColor: '#3A3A3C',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
@@ -116,24 +117,19 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#F5F7F1',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '500',
-    marginLeft: 12,
+    marginLeft: 10,
     padding: 0,
   },
   clearButton: {
     marginLeft: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2D4436',
+    backgroundColor: '#2C2C2E',
     borderRadius: 12,
     width: 24,
     height: 24,
-  },
-  clearText: {
-    color: '#8AA094',
-    fontSize: 12,
-    fontWeight: '800',
   },
 });
