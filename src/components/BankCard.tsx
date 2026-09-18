@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { AppText as Text } from './AppText';;
+import LinearGradient from 'react-native-linear-gradient';
+import { AppText as Text } from './AppText';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 
-const EyeIcon = ({ size = 18, color = "#B8D69F" }) => (
+const EyeIcon = ({ size = 15, color = "rgba(235,235,245,0.60)" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <Circle cx="12" cy="12" r="3" />
   </Svg>
 );
 
-const EyeOffIcon = ({ size = 18, color = "#B8D69F" }) => (
+const EyeOffIcon = ({ size = 15, color = "rgba(235,235,245,0.60)" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
     <Line x1="1" y1="1" x2="23" y2="23" />
@@ -22,12 +23,15 @@ import { Account } from '../models';
 type BankCardProps = {
   account: Account;
   transactionCount: number;
-  initialIsBalanceHidden?: boolean;
+  isBalanceHidden?: boolean;
+  onToggleBalanceHidden?: () => void;
   onPress: () => void;
   customBankLogo?: string | null;
 };
 
-type BankCardTheme = {
+export type BankCardTheme = {
+  color1: string;
+  color2: string;
   card: string;
   accent: string;
   chip: string;
@@ -37,7 +41,7 @@ type BankCardTheme = {
   badgeText: string;
 };
 
-const getBankLogo = (bankId: Account['bankId']): any => {
+export const getBankLogo = (bankId: Account['bankId']): any => {
   const logoMap: Record<Account['bankId'], any> = {
     cbe: require('../../assets/images/cbe.png'),
     cbebirr: require('../../assets/images/CBEBirr.png'),
@@ -61,8 +65,10 @@ const getBankLogo = (bankId: Account['bankId']): any => {
 
 const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
   cbe: {
-    card: '#5C2E91',
-    accent: '#8E63C4',
+    color1: '#8A5CF0',
+    color2: '#6640C4',
+    card: '#6640C4',
+    accent: '#8A5CF0',
     chip: '#B99BE0',
     textPrimary: '#FAF7FF',
     textSecondary: '#E6D8FB',
@@ -70,8 +76,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#47236F',
   },
   cbebirr: {
-    card: '#6E2FB0',
-    accent: '#9D68DB',
+    color1: '#7B4FD1',
+    color2: '#5E3AA8',
+    card: '#5E3AA8',
+    accent: '#7B4FD1',
     chip: '#C1A2EB',
     textPrimary: '#FBF8FF',
     textSecondary: '#E9DDFA',
@@ -79,35 +87,43 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#58258B',
   },
   telebirr: {
-    card: '#91e32c',
-    accent: '#f9fcf5',
+    color1: '#8ED33B',
+    color2: '#5FAE1E',
+    card: '#5FAE1E',
+    accent: '#8ED33B',
     chip: '#F9FFF1',
-    textPrimary: '#e7e8e7f6',
-    textSecondary: '#32513A',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#DFF0C9',
     badgeBg: '#FFFFFF',
     badgeText: '#265437',
   },
   boa: {
-    card: '#D9A515',
-    accent: '#F0C74C',
-    chip: '#FFE8A0',
-    textPrimary: '#2E2100',
-    textSecondary: '#5F4710',
-    badgeBg: '#FFF6D8',
+    color1: '#F2BE2D',
+    color2: '#B47A08',
+    card: '#B47A08',
+    accent: '#F2BE2D',
+    chip: '#FFF0B0',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#FCE8B8',
+    badgeBg: '#FFFFFF',
     badgeText: '#7A5B00',
   },
   wegagen: {
-    card: '#D96A24',
-    accent: '#F39B63',
+    color1: '#E8893F',
+    color2: '#C05621',
+    card: '#C05621',
+    accent: '#E8893F',
     chip: '#FFC8A3',
-    textPrimary: '#FFF8F4',
+    textPrimary: '#FFFFFF',
     textSecondary: '#FFE1D1',
     badgeBg: '#FFE3D0',
     badgeText: '#8A3E12',
   },
   dashen: {
+    color1: '#4E8DF3',
+    color2: '#1759B8',
     card: '#1759B8',
-    accent: '#5B97E8',
+    accent: '#4E8DF3',
     chip: '#A9C8F6',
     textPrimary: '#F7FBFF',
     textSecondary: '#D8E8FF',
@@ -115,8 +131,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#123D7F',
   },
   awash: {
-    card: '#19826C',
-    accent: '#52B29D',
+    color1: '#3D9C8E',
+    color2: '#1E6F62',
+    card: '#1E6F62',
+    accent: '#3D9C8E',
     chip: '#9EDDCF',
     textPrimary: '#F4FFFC',
     textSecondary: '#D4F3EB',
@@ -124,8 +142,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#11584A',
   },
   hibret: {
-    card: '#B60026',
-    accent: '#FA305A',
+    color1: '#E23B57',
+    color2: '#A1122D',
+    card: '#A1122D',
+    accent: '#E23B57',
     chip: '#FF7D9A',
     textPrimary: '#FFF3F6',
     textSecondary: '#FFCBD6',
@@ -133,8 +153,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#A10022',
   },
   abay: {
+    color1: '#2B6CB0',
+    color2: '#002855',
     card: '#002855',
-    accent: '#00509E',
+    accent: '#2B6CB0',
     chip: '#4A90E2',
     textPrimary: '#FFFFFF',
     textSecondary: '#A9D6E5',
@@ -142,8 +164,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#A9D6E5',
   },
   ahadu: {
+    color1: '#B08968',
+    color2: '#7F4F24',
     card: '#7F4F24',
-    accent: '#A68A64',
+    accent: '#B08968',
     chip: '#B08968',
     textPrimary: '#FFFFFF',
     textSecondary: '#EDE0D4',
@@ -151,26 +175,32 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#EDE0D4',
   },
   amhara: {
-    card: '#E9C46A',
-    accent: '#F4A261',
+    color1: '#D1A53C',
+    color2: '#8F6A1E',
+    card: '#8F6A1E',
+    accent: '#D1A53C',
     chip: '#F4A261',
-    textPrimary: '#264653',
-    textSecondary: '#2A9D8F',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#F0E2C0',
     badgeBg: '#E76F51',
     badgeText: '#FFFFFF',
   },
   berhan: {
+    color1: '#3A5A80',
+    color2: '#1F4068',
     card: '#1F4068',
-    accent: '#162447',
+    accent: '#3A5A80',
     chip: '#E43F5A',
     textPrimary: '#FFFFFF',
-    textSecondary: '#E43F5A',
+    textSecondary: '#B9CDE8',
     badgeBg: '#1B1B2F',
     badgeText: '#E43F5A',
   },
   mpesa: {
-    card: '#00B050',
-    accent: '#5CD65C',
+    color1: '#22B573',
+    color2: '#0E7C46',
+    card: '#0E7C46',
+    accent: '#22B573',
     chip: '#A3E4D7',
     textPrimary: '#FFFFFF',
     textSecondary: '#D4EFDF',
@@ -178,8 +208,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#D4EFDF',
   },
   nib: {
-    card: '#E67E22',
-    accent: '#D35400',
+    color1: '#F0953F',
+    color2: '#C66A1C',
+    card: '#C66A1C',
+    accent: '#F0953F',
     chip: '#FAD7A1',
     textPrimary: '#FFFFFF',
     textSecondary: '#FDEBD0',
@@ -187,8 +219,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#FDEBD0',
   },
   zemen: {
+    color1: '#1D4E89',
+    color2: '#01153E',
     card: '#01153E',
-    accent: '#0D3B66',
+    accent: '#1D4E89',
     chip: '#FAF0E6',
     textPrimary: '#FFFFFF',
     textSecondary: '#D9D9D9',
@@ -196,8 +230,10 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#FFFFFF',
   },
   unknown: {
+    color1: '#4A5D55',
+    color2: '#22322B',
     card: '#22322B',
-    accent: '#456054',
+    accent: '#4A5D55',
     chip: '#7A978B',
     textPrimary: '#F4F8F6',
     textSecondary: '#C8D4CF',
@@ -206,81 +242,119 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
   },
 };
 
+export const getBankCardTheme = (bankId: Account['bankId']): BankCardTheme =>
+  CARD_THEMES[bankId] ?? CARD_THEMES.unknown;
+
+export function getBankAbbrev(bankName: string): string {
+  const cleaned = bankName.replace(/[^A-Za-z0-9 ]/g, ' ').trim();
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 'BK';
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+  return words.slice(0, 3).map(word => word[0]).join('').toUpperCase();
+}
+
+const DOT_COLORS = [
+  '#D8B45C',
+  '#C9BB93',
+  '#A98E4F',
+  '#F0D38C',
+  '#B9964A',
+  '#E5C877',
+];
+
+// Keep the dots subtle so they read as texture, not decoration bars.
+function DotRow() {
+  return (
+    <View style={styles.dotRow}>
+      {DOT_COLORS.map((color, index) => (
+        <View
+          key={index}
+          style={[styles.dot, { backgroundColor: color }]}
+        />
+      ))}
+    </View>
+  );
+}
+
+const formatMoney = (value: number) =>
+  value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 export function BankCard({
   account,
   transactionCount,
-  initialIsBalanceHidden = false,
+  isBalanceHidden = false,
+  onToggleBalanceHidden = () => {},
   onPress,
   customBankLogo,
 }: BankCardProps) {
-  const [isHidden, setIsHidden] = useState(initialIsBalanceHidden);
-  const theme = CARD_THEMES[account.bankId] ?? CARD_THEMES.unknown;
+  const theme = getBankCardTheme(account.bankId);
+  const logoUri = customBankLogo ?? getBankLogo(account.bankId) ?? null;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({pressed}) => [
+      style={({ pressed }) => [
         styles.card,
-        { backgroundColor: theme.card },
-        pressed ? styles.cardPressed : null,
+        pressed && styles.cardPressed,
       ]}>
-      <View
-        pointerEvents="none"
-        style={[styles.orbLarge, { backgroundColor: theme.accent }]}
+      <LinearGradient
+        colors={[theme.color1, theme.color2]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
       />
-      <View
-        pointerEvents="none"
-        style={[styles.orbSmall, { backgroundColor: theme.chip }]}
-      />
+
+      <View style={styles.shine} />
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.bankName, { color: theme.textPrimary }]}>
+          <Text style={styles.bankName} numberOfLines={1}>
             {account.bankName}
           </Text>
-          <View style={[styles.badge, { backgroundColor: theme.badgeBg }]}>
-            <Text style={[styles.badgeText, { color: theme.badgeText }]}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>
               {transactionCount} TXNS
             </Text>
           </View>
         </View>
 
-        <View style={styles.cardNumber}>
-          <Text style={[styles.cardNumberText, { color: theme.textPrimary }]}>
-            {account.accountNumber}
-          </Text>
-        </View>
+        <DotRow />
 
         <View style={styles.bottomRow}>
           <View>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-              <Text style={[styles.cardHolderLabel, { color: theme.textSecondary }]}>
-                BALANCE
-              </Text>
-              <Pressable onPress={() => setIsHidden(!isHidden)} hitSlop={10}>
-                {isHidden ? <EyeOffIcon size={14} color={theme.textSecondary} /> : <EyeIcon size={14} color={theme.textSecondary} />}
+            <View style={styles.balanceRow}>
+              <Text style={styles.balanceLabel}>Balance</Text>
+              <Pressable
+                onPress={onToggleBalanceHidden}
+                hitSlop={10}>
+                {isBalanceHidden ? (
+                  <EyeOffIcon />
+                ) : (
+                  <EyeIcon />
+                )}
               </Pressable>
             </View>
-            <Text style={[styles.balanceValue, { color: theme.textPrimary }]}>
-              {isHidden ? '••••••••' : `ETB ${account.currentBalance.toLocaleString()}`}
+            <Text style={styles.balanceValue}>
+              {isBalanceHidden
+                ? '••••••••'
+                : `ETB ${formatMoney(account.currentBalance)}`}
             </Text>
           </View>
 
-          <View style={styles.brandBlock}>
-            {customBankLogo ? (
+          <View style={styles.logoBadge}>
+            {logoUri ? (
               <Image
-                source={{ uri: customBankLogo }}
-                style={styles.bankLogo}
-                resizeMode="contain"
-              />
-            ) : getBankLogo(account.bankId) ? (
-              <Image
-                source={getBankLogo(account.bankId)}
-                style={styles.bankLogo}
+                source={logoUri}
+                style={styles.logoImage}
                 resizeMode="contain"
               />
             ) : (
-              <View style={[styles.brandChip, { backgroundColor: theme.chip }]} />
+              <Text style={styles.logoAbbrev}>
+                {getBankAbbrev(account.bankName)}
+              </Text>
             )}
           </View>
         </View>
@@ -291,57 +365,78 @@ export function BankCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    height: 180,
+    borderRadius: 20,
+    height: 182,
     overflow: 'hidden',
-    padding: 22,
+    padding: 20,
     position: 'relative',
+    borderCurve: 'continuous',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   cardPressed: {
-    opacity: 0.9,
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
   },
-  orbLarge: {
-    borderRadius: 999,
-    height: 180,
-    opacity: 0.24,
+  gradient: {
     position: 'absolute',
-    right: -50,
-    top: -40,
-    width: 210,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  orbSmall: {
-    borderRadius: 999,
-    bottom: 20,
-    height: 76,
-    opacity: 0.28,
+  shine: {
     position: 'absolute',
-    right: 20,
-    width: 76,
+    top: -70,
+    right: -50,
+    width: 190,
+    height: 190,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   content: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingTop: 4,
-    paddingBottom: 4,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 10,
   },
   bankName: {
+    flexShrink: 1,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
   },
-  cardNumber: {
-    marginTop: 12,
+  badge: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
   },
-  cardNumberText: {
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: 2,
+  badgeText: {
+    color: '#111114',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  dotRow: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 10,
+  },
+  dot: {
+    borderRadius: 999,
+    height: 3,
+    width: 12,
+    opacity: 0.55,
   },
   bottomRow: {
     alignItems: 'flex-end',
@@ -349,44 +444,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 12,
   },
-  cardHolderLabel: {
-    fontSize: 8,
+  balanceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  balanceLabel: {
+    color: 'rgba(235, 235, 245, 0.72)',
+    fontSize: 9,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 1.3,
     textTransform: 'uppercase',
   },
   balanceValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  brandBlock: {
-    alignItems: 'flex-end',
-    gap: 6,
-  },
-  bankLogo: {
-    height: 50,
-    width: 70,
-  },
-  brandChip: {
-    borderRadius: 999,
-    height: 22,
-    width: 38,
-  },
-  brandText: {
-    fontSize: 10,
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 1.4,
+    letterSpacing: -0.4,
+    marginTop: 5,
+    fontVariant: ['tabular-nums'],
   },
-  badge: {
-    alignSelf: 'flex-start',
+  logoBadge: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    height: 44,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 44,
   },
-  badgeText: {
-    fontSize: 5,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+  logoImage: {
+    height: 28,
+    width: 34,
+  },
+  logoAbbrev: {
+    color: '#111114',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 });
