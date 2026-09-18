@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StatusBar, Alert, BackHandler, View, AppState, StyleSheet } from 'react-native';
+import { StatusBar, Alert, View, AppState, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
 import { Account, Transaction } from './src/models';
-import { BankDetailScreen } from './src/screens/BankDetailScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { LockScreen } from './src/screens/LockScreen';
 import { SyncingScreen } from './src/screens/SyncingScreen';
@@ -24,7 +23,6 @@ import { calculateBalance, generateSmsHash } from './src/utils/balanceUtils';
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -36,6 +34,7 @@ function App() {
   const [autoLockTimeout, setAutoLockTimeout] = useState(0); // 0 = immediately, -1 = never
   const [lastActiveTime, setLastActiveTime] = useState(Date.now());
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+  const [accountBalanceHidden, setAccountBalanceHidden] = useState<Record<string, boolean>>({});
   const [userTitle, setUserTitle] = useState<string | null>(null);
   const [customBanks, setCustomBanks] = useState<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>>([]);
   const accountsRef = useRef<Account[]>([]);
@@ -100,6 +99,13 @@ function App() {
     await setBalanceHiddenInDb(newState);
   };
 
+  const handleToggleAccountBalanceHidden = (accountId: string) => {
+    setAccountBalanceHidden(prev => ({
+      ...prev,
+      [accountId]: !prev[accountId],
+    }));
+  };
+
   const handleToggleLock = async () => {
     const newLockState = !isAppLocked;
     
@@ -132,21 +138,6 @@ function App() {
   useEffect(() => {
     accountsRef.current = accounts;
   }, [accounts]);
-
-  useEffect(() => {
-    const handleBackPress = () => {
-      if (selectedAccount) {
-        setSelectedAccount(null);
-        return true;
-      }
-      return false;
-    };
-
-    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-    return () => {
-      subscription.remove();
-    };
-  }, [selectedAccount]);
 
   const initializeDatabase = async () => {
     try {
@@ -201,16 +192,6 @@ function App() {
       console.error('Failed to load transactions:', error);
     }
   }, []);
-
-  const getTransactionsForAccount = (accountId: string): Transaction[] => {
-    return transactions
-      .filter(t => t.accountId === accountId)
-      .sort(
-        (left, right) =>
-          new Date(right.date).getTime() - new Date(left.date).getTime(),
-      )
-      .slice(0, 15);
-  };
 
   const requestSmsPermissions = useCallback(async () => {
     try {
@@ -452,24 +433,19 @@ function App() {
         }} />
       ) : !dbReady || !smsPermissionsGranted || isSyncing ? (
         <SyncingScreen />
-      ) : selectedAccount ? (
-        <BankDetailScreen
-          account={selectedAccount}
-          onBack={() => setSelectedAccount(null)}
-          transactions={getTransactionsForAccount(selectedAccount.id)}
-        />
       ) : (
         <View style={styles.tabContainer}>
           {currentTab === 'dashboard' ? (
             <DashboardScreen
               userName={userName!}
-              onSelectAccount={setSelectedAccount}
               accounts={accounts}
               transactions={transactions}
               onToggleLock={handleToggleLock}
               isAppLocked={isAppLocked}
               isBalanceHidden={isBalanceHidden}
               onToggleBalanceHidden={handleToggleBalanceHidden}
+              accountBalanceHidden={accountBalanceHidden}
+              onToggleAccountBalanceHidden={handleToggleAccountBalanceHidden}
               userTitle={userTitle}
               customBanks={customBanks}
             />
