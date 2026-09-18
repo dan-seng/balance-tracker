@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hisab — Every SMS balance, one clean ledger</title>
+  <meta name="description" content="Hisab reads your bank SMS on-device and turns them into one private ledger. Free for Android." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="wordmark" href="#top">
+        <span class="wordmark-am" aria-hidden="true">ሂሳብ</span>
+        <span class="wordmark-en">hisab</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#download" class="btn btn--nav">Get the app</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">For Android</p>
+          <h1 class="reveal">Every SMS balance. One clean ledger.</h1>
+          <p class="lede reveal">
+            Hisab reads your bank texts on-device and keeps all your balances
+            in a single private account. No internet banking, no sign-ups.
+          </p>
+          <div class="hero-cta reveal">
+            <a class="btn btn--gold" href="https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+              Download APK
+            </a>
+            <a class="btn btn--ghost" href="#how">How it works</a>
+          </div>
+          <p class="hero-note reveal">
+            Free · Open source · <span id="latest-meta">v0.0.1</span>
+          </p>
+        </div>
+
+        <div class="hero-device reveal">
+          <div class="device">
+            <div class="device-screen">
+              <div class="phone-statusbar">
+                <span aria-hidden="true">9:41</span>
+                <span class="phone-status-icons" aria-hidden="true">•••</span>
+              </div>
+
+              <div class="phone-home">
+                <p class="phone-greeting">Hello there</p>
+                <h2 class="phone-title">Accounts</h2>
+
+                <div class="phone-balance">
+                  <div class="balance-blob balance-blob--a" aria-hidden="true"></div>
+                  <div class="balance-blob balance-blob--b" aria-hidden="true"></div>
+                  <div class="balance-head">
+                    <span class="balance-label">Total combined balance</span>
+                    <span class="balance-pill">5 accounts</span>
+                  </div>
+                  <div class="balance-row">
+                    <button class="balance-eyes" aria-label="Reveal balance">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.75"/></svg>
+                    </button>
+                    <div class="balance-amount">ETB&nbsp;<strong>1,284,092.55</strong></div>
+                  </div>
+                  <div class="balance-foot">
+                    <span>Save as you go</span>
+                    <span class="balance-wordmark">ሂሳብ</span>
+                  </div>
+                </div>
+
+                <div class="phone-stats">
+                  <div class="stat">
+                    <span class="stat-label">Income</span>
+                    <span class="stat-value stat-value--up">+ETB&nbsp;126,402.20</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">Spent</span>
+                    <span class="stat-value stat-value--down">−ETB&nbsp;85,310.75</span>
+                  </div>
+                </div>
+
+                <div class="phone-banks">
+                  <div class="bank-cell" data-initial="A"><span class="bank-name">Awash</span></div>
+                  <div class="bank-cell" data-initial="C"><span class="bank-name">CBE</span></div>
+                  <div class="bank-cell" data-initial="D"><span class="bank-name">Dashen</span></div>
+                  <div class="bank-cell" data-initial="L"><span class="bank-name">Lion</span></div>
+                </div>
+              </div>
+
+              <div class="phone-tabbar" aria-hidden="true">
+                <span class="tab tab--on">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></svg>
+                </span>
+                <span class="tab">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>
+                </span>
+                <span class="tab">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+                <span class="tab">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="features" id="how">
+      <div class="features-inner">
+        <div class="features-copy">
+          <h2 class="reveal">Runs on your phone. Not on a server.</h2>
+          <p class="reveal">
+            Your messages never leave the device. Hisab parses each balance
+            SMS where it lands, keeps a running total, and gives you income
+            and spending at a glance.
+          </p>
+        </div>
+
+        <div class="feature-list">
+          <div class="feature-row reveal">
+            <div class="feature-mark" aria-hidden="true"></div>
+            <div>
+              <h3>Balance stays on-device</h3>
+              <p>Nothing is uploaded, synced, or shared. The ledger lives where your texts do.</p>
+            </div>
+          </div>
+          <div class="feature-row reveal">
+            <div class="feature-mark" aria-hidden="true"></div>
+            <div>
+              <h3>Every bank that texts you</h3>
+              <p>Awash, CBE, Dashen, and the rest — if a balance arrives by SMS, Hisab can read it.</p>
+            </div>
+          </div>
+          <div class="feature-row reveal">
+            <div class="feature-mark" aria-hidden="true"></div>
+            <div>
+              <h3>Income and spending, plainly</h3>
+              <p>See what came in, what went out, and what’s left — without opening a single app.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="band reveal">
+          <p class="band-label">Why text messages?</p>
+          <p>
+            Your bank already tells you your balance — dozens of times a day.
+            Hisab simply turns those messages into a ledger. No new account,
+            no password sharing, no internet banking login.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="download" id="download">
+      <div class="download-inner">
+        <div class="download-panel reveal">
+          <div class="download-copy">
+            <h2>Get Hisab for Android</h2>
+            <p>
+              Free APK, built and signed from our GitHub releases. Your device
+              may ask you to allow installs from unknown sources — that’s
+              expected for any direct Android download.
+            </p>
+            <a class="btn btn--gold btn--lg"
+               href="https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+              Download Hisab for Android <span id="download-meta"></span>
+            </a>
+            <p class="download-links">
+              <a href="https://github.com/dan-seng/balance-tracker/releases">View all releases</a>
+              ·
+              <a href="https://github.com/dan-seng/balance-tracker">Source on GitHub</a>
+            </p>
+          </div>
+          <ol class="install-steps">
+            <li>
+              <span class="step-num" aria-hidden="true">1</span>
+              <div>
+                <h3>Download the APK</h3>
+                <p>Save the file to your phone from the button above.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">2</span>
+              <div>
+                <h3>Open it</h3>
+                <p>Tap the downloaded file and allow “install from unknown sources”.</p>
+              </div>
+            </li>
+            <li>
+              <span class="step-num" aria-hidden="true">3</span>
+              <div>
+                <h3>Grant SMS reading</h3>
+                <p>Hisab only needs permission to read your bank messages — nothing else.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="wordmark">
+        <span class="wordmark-am" aria-hidden="true">ሂሳብ</span>
+        <span class="wordmark-en">hisab</span>
+      </span>
+      <p>Private by design. Built on the beach.</p>
+      <a href="https://github.com/dan-seng/balance-tracker">GitHub</a>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
