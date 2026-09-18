@@ -1,8 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, View, Pressable, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, Pressable, Alert } from 'react-native';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
-import { theme } from '../theme';
 import { Screen } from '../components/Screen';
+
+const BLUE = '#0A84FF';
+const LABEL2 = 'rgba(235, 235, 245, 0.60)';
+const LABEL3 = 'rgba(235, 235, 245, 0.30)';
+const GROUPED1 = '#1C1C1E';
+const SEPARATOR = 'rgba(84, 84, 88, 0.55)';
 
 type AddBankScreenProps = {
   onAddBank: (bankName: string, senderId: string, logoBase64: string | null) => Promise<void>;
@@ -27,58 +32,49 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
   };
 
   return (
-    <Screen>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.container}>
-            <Text style={styles.title}>Add Bank</Text>
-            <Text style={styles.subtitle}>
-              Track transactions from SMS messages
-            </Text>
+    <Screen scrollable>
+      <View style={styles.container}>
+        <Text style={styles.title}>Add Bank</Text>
+        <Text style={styles.subtitle}>Track transactions from SMS messages</Text>
 
-            <View style={styles.form}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Bank Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., Abyssinia Bank"
-                  placeholderTextColor={theme.colors.textMutedLight}
-                  value={bankName}
-                  onChangeText={setBankName}
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>Sender ID</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., 127, CBE, BOA"
-                  placeholderTextColor={theme.colors.textMutedLight}
-                  value={senderId}
-                  onChangeText={setSenderId}
-                  autoCapitalize="characters"
-                />
-              </View>
-            </View>
-
-            <View style={styles.buttons}>
-              <Pressable style={styles.secondaryButton} onPress={onCancel}>
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable style={styles.primaryButton} onPress={handleAdd}>
-                <Text style={styles.primaryButtonText}>Add Bank</Text>
-              </Pressable>
-            </View>
+        <View style={styles.group}>
+          <View style={styles.groupHeader}>
+            <Text style={styles.fieldLabel}>Bank Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., Abyssinia Bank"
+              placeholderTextColor={LABEL3}
+              value={bankName}
+              onChangeText={setBankName}
+            />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <View style={styles.groupDivider}>
+            <Text style={styles.fieldLabel}>Sender ID</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 127, CBE, BOA"
+              placeholderTextColor={LABEL3}
+              value={senderId}
+              onChangeText={setSenderId}
+              autoCapitalize="characters"
+            />
+          </View>
+        </View>
+
+        <View style={styles.buttons}>
+          <Pressable onPress={onCancel} hitSlop={10}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.primaryButtonPressed,
+            ]}
+            onPress={handleAdd}>
+            <Text style={styles.primaryButtonText}>Add Bank</Text>
+          </Pressable>
+        </View>
+      </View>
     </Screen>
   );
 }
@@ -86,79 +82,77 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+    paddingTop: 24,
   },
   title: {
-    color: theme.colors.text,
-    fontSize: 24,
+    color: '#FFFFFF',
+    fontSize: 28,
     fontWeight: '800',
-    marginBottom: 4,
+    letterSpacing: -0.8,
   },
   subtitle: {
-    color: theme.colors.textMuted,
-    fontSize: theme.typography.sizes.sm,
-    marginBottom: theme.spacing.lg,
+    color: LABEL2,
+    fontSize: 13,
+    marginBottom: 26,
+    marginTop: 4,
   },
-  form: {
-    gap: theme.spacing.md,
+  group: {
+    backgroundColor: GROUPED1,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
-  inputGroup: {
-    gap: 4,
+  groupHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  label: {
-    color: theme.colors.text,
-    fontSize: theme.typography.sizes.xs + 2,
+  groupDivider: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: SEPARATOR,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  fieldLabel: {
+    color: LABEL2,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 4,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: theme.colors.surfaceLight,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: 10,
-    color: theme.colors.text,
-    fontSize: theme.typography.sizes.md,
-    borderWidth: 1,
-    borderColor: theme.colors.surfaceLighter,
+    backgroundColor: '#000000',
+    borderRadius: 10,
+    color: '#FFFFFF',
+    fontSize: 15,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
   },
   buttons: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginTop: theme.spacing.lg,
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 18,
+    justifyContent: 'space-between',
+    marginTop: 28,
+  },
+  cancelText: {
+    color: BLUE,
+    fontSize: 16,
+    fontWeight: '600',
   },
   primaryButton: {
-    flex: 1.5,
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.xl,
-    paddingVertical: 10,
-    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: BLUE,
+    borderRadius: 999,
+    minWidth: 140,
+    paddingVertical: 14,
+  },
+  primaryButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: theme.colors.background,
-    fontSize: theme.typography.sizes.md,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
-  },
-  secondaryButton: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    borderRadius: theme.borderRadius.xl,
-    paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: theme.colors.surfaceLighter,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: theme.colors.textMuted,
-    fontSize: theme.typography.sizes.md,
-    fontWeight: '600',
   },
 });
