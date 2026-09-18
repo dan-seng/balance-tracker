@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   label: {
     color: '#000',
     fontSize: 15,
-    fontFamily: 'Poppins-Bold',
+    fontWeight: '800',
     letterSpacing: 0.3,
     textShadowColor: 'rgba(255,255,255,0.5)',
     textShadowOffset: { width: 0, height: 1 },

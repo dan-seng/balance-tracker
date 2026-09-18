@@ -48,7 +48,7 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
           <FingerprintIcon />
           {isAuthenticating && (
             <View style={styles.loaderOverlay}>
-              <ActivityIndicator color={theme.colors.primary} size="large" />
+              <ActivityIndicator color="#FFFFFF" size="large" />
             </View>
           )}
         </View>

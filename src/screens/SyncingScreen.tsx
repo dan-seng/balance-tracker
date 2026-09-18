@@ -7,7 +7,7 @@ export function SyncingScreen() {
   return (
     <Screen>
       <View style={styles.wrapper}>
-        <ActivityIndicator color={theme.colors.primary} size="large" />
+        <ActivityIndicator color="#FFFFFF" size="large" />
         <Text style={styles.loaderText}>Loading...</Text>
       </View>
     </Screen>
