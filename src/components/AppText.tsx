@@ -3,33 +3,21 @@ import { Text as RNText, TextInput as RNTextInput, TextProps, TextInputProps, St
 
 import { theme } from '../theme/index';
 
+// System-font rendering: no forced fontFamily, so fontWeight maps to the
+// platform's native typeface. Components opt into named fonts (serif,
+// nokiapure, ...) by passing an explicit fontFamily.
 function resolveFontStyle(style: any) {
   const flatStyle = StyleSheet.flatten(style || {});
-  let isBold = false;
-  
-  if (
-    flatStyle.fontWeight === 'bold' || 
-    flatStyle.fontWeight === '600' || 
-    flatStyle.fontWeight === '700' || 
-    flatStyle.fontWeight === '800' || 
-    flatStyle.fontWeight === '900' ||
-    flatStyle.fontFamily === 'Poppins-Bold'
-  ) {
-    isBold = true;
+  const hasCustomFont = Boolean(flatStyle.fontFamily);
+
+  if (hasCustomFont) {
+    return [style];
   }
-  
-  const hasCustomFont = 
-    flatStyle.fontFamily && 
-    flatStyle.fontFamily !== 'Poppins-Regular' && 
-    flatStyle.fontFamily !== 'Poppins-Bold';
 
-  const defaultStyle = {
-    fontFamily: isBold ? 'Poppins-Bold' : 'Poppins-Regular',
-    color: flatStyle.color || theme.colors.text,
-    fontWeight: undefined, // Clear weight so Android does not override fontFamily with Roboto
-  };
-
-  return hasCustomFont ? [style] : [defaultStyle, style, { fontWeight: undefined }];
+  return [
+    { color: flatStyle.color || theme.colors.text },
+    style,
+  ];
 }
 
 export function AppText(props: TextProps) {
