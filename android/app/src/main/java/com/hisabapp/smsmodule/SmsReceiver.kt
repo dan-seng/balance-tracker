@@ -15,7 +15,7 @@ class SmsReceiver : BroadcastReceiver() {
         private const val PREFS_NAME = "SmsStorage"
         private const val SMS_QUEUE_KEY = "sms_queue"
 
-        fun saveSmsToStorage(context: Context?, sender: String, message: String, timestamp: Long) {
+        fun saveSmsToStorage(context: Context?, sender: String, message: String, timestamp: Long, subId: Int?) {
             if (context == null) return
 
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -26,6 +26,9 @@ class SmsReceiver : BroadcastReceiver() {
                 put("sender", sender)
                 put("message", message)
                 put("timestamp", timestamp)
+                if (subId != null) {
+                    put("subId", subId)
+                }
             }
 
             queue.put(smsObj)
@@ -62,14 +65,17 @@ class SmsReceiver : BroadcastReceiver() {
                     val sender = smsMessage.displayOriginatingAddress
                     val message = smsMessage.messageBody
                     val timestamp = smsMessage.timestampMillis
+                    // AOSP injects "subscription" (subId) into the broadcast
+                    // extras; not formally public, but widely present since API 22.
+                    val subId: Int? = intent.getIntExtra("subscription", -1).takeIf { it >= 0 }
 
                     Log.d("SmsReceiver", "SMS from $sender: $message")
 
                     // Save to storage for later processing
-                    saveSmsToStorage(context, sender, message, timestamp)
+                    saveSmsToStorage(context, sender, message, timestamp, subId)
 
                     // Try to emit event if React Native is running
-                    SmsModule.sendSmsEvent(context, sender, message, timestamp)
+                    SmsModule.sendSmsEvent(context, sender, message, timestamp, subId)
                 }
             }
         }
