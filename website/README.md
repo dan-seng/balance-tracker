@@ -135,7 +135,7 @@ It automatically reads your **bank SMS messages** and converts them into a clean
 ## 📦 Download
 
 <p align="center">
-  <a href="https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk">
+  <a href="Hisab.apk">
     <img src="https://img.shields.io/badge/Download-Hisab_APK-success?style=for-the-badge&logo=android"/>
   </a>
 </p>
