@@ -38,6 +38,9 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
                 smsMap.putString("sender", smsObj.getString("sender"))
                 smsMap.putString("message", smsObj.getString("message"))
                 smsMap.putDouble("timestamp", smsObj.getLong("timestamp").toDouble())
+                if (smsObj.has("subId") && !smsObj.isNull("subId")) {
+                    smsMap.putInt("subId", smsObj.getInt("subId"))
+                }
                 smsList.pushMap(smsMap)
             }
             promise.resolve(smsList)
@@ -64,6 +67,7 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
                 Telephony.Sms.ADDRESS,
                 Telephony.Sms.BODY,
                 Telephony.Sms.DATE,
+                Telephony.Sms.SUBSCRIPTION_ID,
             )
             val sortOrder = "${Telephony.Sms.DATE} DESC"
             val cursor = reactApplicationContext.contentResolver.query(
@@ -78,6 +82,7 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
                 val addressIndex = it.getColumnIndex(Telephony.Sms.ADDRESS)
                 val bodyIndex = it.getColumnIndex(Telephony.Sms.BODY)
                 val dateIndex = it.getColumnIndex(Telephony.Sms.DATE)
+                val subIdIndex = it.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID)
                 var count = 0
                 val maxItems = if (limit > 0) limit else Int.MAX_VALUE
 
@@ -86,6 +91,9 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
                     smsMap.putString("sender", it.getString(addressIndex) ?: "")
                     smsMap.putString("message", it.getString(bodyIndex) ?: "")
                     smsMap.putDouble("timestamp", it.getLong(dateIndex).toDouble())
+                    if (subIdIndex >= 0 && !it.isNull(subIdIndex)) {
+                        smsMap.putInt("subId", it.getInt(subIdIndex))
+                    }
                     smsList.pushMap(smsMap)
                     count++
                 }
@@ -100,7 +108,7 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
     companion object {
         private var sharedReactContext: ReactApplicationContext? = null
 
-        fun sendSmsEvent(context: Context?, sender: String, message: String, timestamp: Long) {
+        fun sendSmsEvent(context: Context?, sender: String, message: String, timestamp: Long, subId: Int?) {
             val reactContext = sharedReactContext
 
             if (reactContext != null && reactContext.hasActiveReactInstance()) {
@@ -109,6 +117,9 @@ class SmsModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
                         putString("sender", sender)
                         putString("message", message)
                         putDouble("timestamp", timestamp.toDouble())
+                        if (subId != null) {
+                            putInt("subId", subId)
+                        }
                     })
             }
         }
