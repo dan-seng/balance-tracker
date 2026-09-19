@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: BLUE,
+    backgroundColor: '#FFFFFF',
     borderRadius: 999,
     minWidth: 140,
     paddingVertical: 14,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 15,
     fontWeight: '700',
   },
