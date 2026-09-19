@@ -9,4 +9,5 @@ export type Account = {
   currency: 'ETB';
   lastUpdated: string;
   source: 'sms';
+  subId?: number | null;
 };
