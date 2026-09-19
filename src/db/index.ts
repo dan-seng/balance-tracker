@@ -25,6 +25,8 @@ import {
   getAppLocked,
   setAutoLockTimeout,
   getAutoLockTimeout,
+  renameAccountInDb,
+  mergeAccountsInDb,
 } from './sqliteDatabase';
 
 // Initialize database on module load
@@ -157,4 +159,14 @@ export async function setAutoLockTimeoutInDb(timeout: number) {
 export async function getAutoLockTimeoutFromDb(): Promise<number> {
   await ensureDatabaseInitialized();
   return getAutoLockTimeout();
+}
+
+export async function renameAccountToDb(accountId: string, newBankName: string): Promise<void> {
+  await ensureDatabaseInitialized();
+  return renameAccountInDb(accountId, newBankName);
+}
+
+export async function mergeAccountsToDb(sourceId: string, targetId: string): Promise<void> {
+  await ensureDatabaseInitialized();
+  return mergeAccountsInDb(sourceId, targetId);
 }
