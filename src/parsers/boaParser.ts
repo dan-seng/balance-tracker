@@ -1,4 +1,5 @@
 import { ParsedSms } from '../models';
+import { extractAccountNumberHint } from './genericParser';
 
 function parseAmount(value: string): number {
   return Number(value.replace(/,/g, ''));
@@ -25,7 +26,6 @@ export function parseBoaSms(
   const balanceMatch = normalized.match(
     /\bAvailable\s+Balance:\s*(?:ETB|Birr|Br\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i,
   );
-  const accountHintMatch = normalized.match(/\baccount\s+([^\s]+)\b/i);
 
   return {
     bankId: 'boa',
@@ -37,7 +37,7 @@ export function parseBoaSms(
     date: new Date().toISOString(),
     currency: 'ETB',
     confidence: balanceMatch ? 'high' : 'medium',
-    accountNumberHint: accountHintMatch ? accountHintMatch[1] : null,
+    accountNumberHint: extractAccountNumberHint(normalized),
     rawMessage: normalized,
   };
 }
