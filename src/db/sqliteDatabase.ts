@@ -16,7 +16,6 @@ export async function initDatabase(): Promise<void> {
     });
 
     await createTables();
-    console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error;
