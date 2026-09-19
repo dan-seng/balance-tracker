@@ -43,7 +43,7 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
         onUnlock();
       }
     } catch {
-      console.log('Biometric authentication failed or not available');
+      // Biometric auth failed
     } finally {
       setIsAuthenticating(false);
     }
