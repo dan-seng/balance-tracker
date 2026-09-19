@@ -15,7 +15,7 @@ export function calculateBalance(
   if (transactionType === 'credit') {
     return currentBalance + amount;
   } else if (transactionType === 'debit') {
-    return currentBalance - amount;
+    return Math.max(0, currentBalance - amount);
   }
 
   return currentBalance;
