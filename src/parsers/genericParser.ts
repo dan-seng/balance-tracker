@@ -217,6 +217,41 @@ function extractBalance(message: string): number | null {
   return null;
 }
 
+// Extracts a full or masked account number from an SMS body.
+// Returns null when the body carries no usable account reference.
+export function extractAccountNumberHint(message: string): string | null {
+  // Labeled forms: "Acct: 1000473248437", "A/C ****1234", "Account Number ..." 
+  const labeled =
+    message.match(
+      /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|#|number)?\s*[:=-]?\s*([*Xx\u2022\u25CF#]{0,4}[\d][\d\s-]{3,17}[\d])\b/i,
+    ) ||
+    message.match(
+      /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|#|number)?\s*[:=-]?\s*(\*\*[*\d]{2,6})\b/i,
+    );
+
+  if (labeled) {
+    return labeled[1].trim().replace(/\s+/g, '');
+  }
+
+  // Bare masked tails like "****1234" or "•••• 5678"
+  const masked = message.match(/\*{2,5}[\d]{2,6}\b/i) ||
+    message.match(/[\u2022\u25CF\u2023]{2,4}[\d]{2,6}\b/);
+  if (masked) {
+    return masked[0].replace(/\s+/g, '');
+  }
+
+  // Standalone long numeric sequence (10-16 digits) that is neither amount nor
+  // balance — amount/balance numbers always carry a currency marker in practice.
+  const standalone = message.match(
+    /(?<![.\d,])(\d{4,6}[- ]?\d{3,6}[- ]?\d{3,6}|\d{10,16})(?![.\d])/,
+  );
+  if (standalone && standalone[1]) {
+    return standalone[1].replace(/[\s-]/g, '');
+  }
+
+  return null;
+}
+
 export function parseGenericSms(
   message: string,
   sender = 'Unknown',
@@ -256,6 +291,7 @@ export function parseGenericSms(
     date: new Date().toISOString(),
     currency: 'ETB',
     confidence,
+    accountNumberHint: extractAccountNumberHint(normalized),
     rawMessage: normalized,
   };
 }
