@@ -6,6 +6,7 @@ type SmsEventData = {
   sender: string;
   message: string;
   timestamp: number;
+  subId?: number | null;
 };
 
 type SmsListener = (data: SmsEventData) => void;
