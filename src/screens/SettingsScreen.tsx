@@ -64,6 +64,17 @@ type SettingsScreenProps = {
   customBanks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>;
   onAddCustomBank: (bankName: string, senderId: string, logoBase64: string | null) => Promise<void>;
   onDeleteCustomBank: (bankId: string) => Promise<void>;
+  accounts: Array<{
+    id: string;
+    bankId: string;
+    bankName: string;
+    accountNumber: string;
+    currentBalance: number;
+    currency: string;
+    subId?: number | null;
+  }>;
+  onRenameAccount: (accountId: string, newBankName: string) => Promise<void>;
+  onMergeAccounts: (sourceId: string, targetId: string) => Promise<void>;
 };
 
 export function SettingsScreen({
