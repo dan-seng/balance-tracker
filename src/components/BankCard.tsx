@@ -58,6 +58,16 @@ export const getBankLogo = (bankId: Account['bankId']): any => {
     mpesa: require('../../assets/images/mpesa.png'),
     nib: require('../../assets/images/Nib_International_Bank.png'),
     zemen: require('../../assets/images/ZemenBank.png'),
+    buna: require('../../assets/images/buna.png'),
+    sidama: require('../../assets/images/sidama.png'),
+    siinqee: require('../../assets/images/Siinqee.png'),
+    siket: require('../../assets/images/siket.png'),
+    cooperative: require('../../assets/images/Cooperative Bank of Oromia Logo.png'),
+    adis: require('../../assets/images/adisbank.png'),
+    anbesa: require('../../assets/images/anbesabank.png'),
+    chapa: require('../../assets/images/Chapa Logo.png'),
+    oromia: require('../../assets/images/Oromia International Bank Logo.png'),
+    tsedey: require('../../assets/images/tsedey.png'),
     unknown: null,
   };
   return logoMap[bankId] || null;
@@ -131,70 +141,70 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#123D7F',
   },
   awash: {
-    color1: '#3D9C8E',
-    color2: '#1E6F62',
-    card: '#1E6F62',
-    accent: '#3D9C8E',
-    chip: '#9EDDCF',
-    textPrimary: '#F4FFFC',
-    textSecondary: '#D4F3EB',
-    badgeBg: '#DFF9F2',
-    badgeText: '#11584A',
+    color1: '#31479E',
+    color2: '#1E2C61',
+    card: '#1E2C61',
+    accent: '#F7B359',
+    chip: '#F7B359',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A2ACD3',
+    badgeBg: '#FDF1E1',
+    badgeText: '#1E2C61',
   },
   hibret: {
-    color1: '#E23B57',
-    color2: '#A1122D',
-    card: '#A1122D',
-    accent: '#E23B57',
-    chip: '#FF7D9A',
-    textPrimary: '#FFF3F6',
-    textSecondary: '#FFCBD6',
-    badgeBg: '#FFE0E8',
-    badgeText: '#A10022',
+    color1: '#57DED3',
+    color2: '#358982',
+    card: '#358982',
+    accent: '#57DED3',
+    chip: '#91E9E2',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#B3F0EB',
+    badgeBg: '#E0F9F7',
+    badgeText: '#358982',
   },
   abay: {
-    color1: '#2B6CB0',
-    color2: '#002855',
-    card: '#002855',
-    accent: '#2B6CB0',
-    chip: '#4A90E2',
+    color1: '#184C6B',
+    color2: '#0E2F42',
+    card: '#0E2F42',
+    accent: '#184C6B',
+    chip: '#688A9E',
     textPrimary: '#FFFFFF',
-    textSecondary: '#A9D6E5',
-    badgeBg: '#01497C',
-    badgeText: '#A9D6E5',
+    textSecondary: '#97AEBC',
+    badgeBg: '#D5DEE4',
+    badgeText: '#0E2F42',
   },
   ahadu: {
-    color1: '#B08968',
-    color2: '#7F4F24',
-    card: '#7F4F24',
-    accent: '#B08968',
-    chip: '#B08968',
+    color1: '#6B1831',
+    color2: '#420E1E',
+    card: '#420E1E',
+    accent: '#6B1831',
+    chip: '#9E6879',
     textPrimary: '#FFFFFF',
-    textSecondary: '#EDE0D4',
-    badgeBg: '#936639',
-    badgeText: '#EDE0D4',
+    textSecondary: '#BC97A2',
+    badgeBg: '#E4D5D9',
+    badgeText: '#420E1E',
   },
   amhara: {
-    color1: '#D1A53C',
-    color2: '#8F6A1E',
-    card: '#8F6A1E',
-    accent: '#D1A53C',
-    chip: '#F4A261',
+    color1: '#3159DE',
+    color2: '#1E3789',
+    card: '#1E3789',
+    accent: '#DECD31',
+    chip: '#DECD31',
     textPrimary: '#FFFFFF',
-    textSecondary: '#F0E2C0',
-    badgeBg: '#E76F51',
-    badgeText: '#FFFFFF',
+    textSecondary: '#A2B4F0',
+    badgeBg: '#F9F6D9',
+    badgeText: '#1E3789',
   },
   berhan: {
-    color1: '#3A5A80',
-    color2: '#1F4068',
-    card: '#1F4068',
-    accent: '#3A5A80',
-    chip: '#E43F5A',
+    color1: '#2053AB',
+    color2: '#13336A',
+    card: '#13336A',
+    accent: '#2053AB',
+    chip: '#6E8FC8',
     textPrimary: '#FFFFFF',
-    textSecondary: '#B9CDE8',
-    badgeBg: '#1B1B2F',
-    badgeText: '#E43F5A',
+    textSecondary: '#9AB1D9',
+    badgeBg: '#D6E0EF',
+    badgeText: '#13336A',
   },
   mpesa: {
     color1: '#22B573',
@@ -219,16 +229,136 @@ const CARD_THEMES: Record<Account['bankId'], BankCardTheme> = {
     badgeText: '#FDEBD0',
   },
   zemen: {
-    color1: '#1D4E89',
-    color2: '#01153E',
-    card: '#01153E',
-    accent: '#1D4E89',
-    chip: '#FAF0E6',
+    color1: '#9E3131',
+    color2: '#611E1E',
+    card: '#611E1E',
+    accent: '#FFFFFF',
+    chip: '#FFFFFF',
     textPrimary: '#FFFFFF',
-    textSecondary: '#D9D9D9',
-    badgeBg: '#0B2545',
-    badgeText: '#FFFFFF',
+    textSecondary: '#D3A2A2',
+    badgeBg: '#FFFFFF',
+    badgeText: '#611E1E',
   },
+  buna: {
+    color1: '#42131B',
+    color2: '#280B10',
+    card: '#280B10',
+    accent: '#42131B',
+    chip: '#84656A',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A99498',
+    badgeBg: '#DCD4D5',
+    badgeText: '#280B10',
+  },
+
+  anbesa: {
+    color1: '#141414',
+    color2: '#0C0C0C',
+    card: '#0C0C0C',
+    accent: '#D4AF37',
+    chip: '#D4AF37',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#959595',
+    badgeBg: '#F7F0DB',
+    badgeText: '#0C0C0C',
+  },
+
+  cooperative: {
+    color1: '#1D95DB',
+    color2: '#115C87',
+    card: '#115C87',
+    accent: '#FFFFFF',
+    chip: '#FFFFFF',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#99CFEE',
+    badgeBg: '#FFFFFF',
+    badgeText: '#115C87',
+  },
+
+  chapa: {
+    color1: '#68F556',
+    color2: '#409735',
+    card: '#409735',
+    accent: '#1E6B15',
+    chip: '#1E6B15',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#BBFAB2',
+    badgeBg: '#D6E4D4',
+    badgeText: '#409735',
+  },
+
+  sidama: {
+    color1: '#56C5F5',
+    color2: '#357A97',
+    card: '#357A97',
+    accent: '#1E7A3C',
+    chip: '#1E7A3C',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#B2E4FA',
+    badgeBg: '#D6E7DB',
+    badgeText: '#357A97',
+  },
+
+  siinqee: {
+    color1: '#397539',
+    color2: '#234823',
+    card: '#234823',
+    accent: '#C7E80F',
+    chip: '#C7E80F',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A5C0A5',
+    badgeBg: '#F4FAD3',
+    badgeText: '#234823',
+  },
+
+  siket: {
+    color1: '#3E4F4A',
+    color2: '#26302D',
+    card: '#26302D',
+    accent: '#93A6A0',
+    chip: '#93A6A0',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A8AFAD',
+    badgeBg: '#EBEEED',
+    badgeText: '#26302D',
+  },
+
+  adis: {
+    color1: '#1D4ED8',
+    color2: '#113085',
+    card: '#113085',
+    accent: '#F7C948',
+    chip: '#F7C948',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#99AFED',
+    badgeBg: '#FDF5DE',
+    badgeText: '#113085',
+  },
+
+  oromia: {
+    color1: '#1E7A3C',
+    color2: '#124B25',
+    card: '#124B25',
+    accent: '#F7C948',
+    chip: '#F7C948',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#99C3A7',
+    badgeBg: '#FDF5DE',
+    badgeText: '#124B25',
+  },
+
+  tsedey: {
+    color1: '#3D806C',
+    color2: '#254F42',
+    card: '#254F42',
+    accent: '#F7C948',
+    chip: '#F7C948',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#A7C5BC',
+    badgeBg: '#FDF5DE',
+    badgeText: '#254F42',
+  },
+
   unknown: {
     color1: '#4A5D55',
     color2: '#22322B',
@@ -251,6 +381,12 @@ export function getBankAbbrev(bankName: string): string {
   if (words.length === 0) return 'BK';
   if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
   return words.slice(0, 3).map(word => word[0]).join('').toUpperCase();
+}
+
+export function maskAccountNumber(accountNumber: string): string {
+  const digits = accountNumber.replace(/[^\d]/g, '');
+  if (digits.length < 4) return '•••• ••••';
+  return `•• ${digits.slice(-4)}`;
 }
 
 const DOT_COLORS = [
@@ -311,9 +447,14 @@ export function BankCard({
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.bankName} numberOfLines={1}>
-            {account.bankName}
-          </Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.bankName} numberOfLines={1}>
+              {account.bankName}
+            </Text>
+            <Text style={styles.acctNumber} numberOfLines={1}>
+              {maskAccountNumber(account.accountNumber)}
+            </Text>
+          </View>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
               {transactionCount} TXNS
@@ -407,12 +548,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
-  bankName: {
+  headerLeft: {
     flexShrink: 1,
+    gap: 2,
+  },
+  bankName: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,
+  },
+  acctNumber: {
+    color: 'rgba(235, 235, 245, 0.66)',
+    fontSize: 10,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.4,
   },
   badge: {
     backgroundColor: '#FFFFFF',
