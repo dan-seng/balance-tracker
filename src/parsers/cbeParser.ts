@@ -1,4 +1,5 @@
 import { ParsedSms } from '../models';
+import { extractAccountNumberHint } from './genericParser';
 
 function parseAmount(value: string) {
   return Number(value.replace(/,/g, ''));
@@ -22,7 +23,7 @@ export function parseCbeSms(message: string, sender = 'CBE'): ParsedSms | null {
   if (creditMatch) {
     return {
       bankId: 'cbe',
-      bankName: 'Commercial Bank of Eth',
+      bankName: 'CBE',
       sender,
       type: 'credit',
       amount: parseAmount(creditMatch[1]),
@@ -30,6 +31,7 @@ export function parseCbeSms(message: string, sender = 'CBE'): ParsedSms | null {
       date: new Date().toISOString(),
       currency: 'ETB',
       confidence: 'high',
+      accountNumberHint: extractAccountNumberHint(normalized),
       rawMessage: normalized,
     };
   }
@@ -37,7 +39,7 @@ export function parseCbeSms(message: string, sender = 'CBE'): ParsedSms | null {
   if (debitMatch) {
     return {
       bankId: 'cbe',
-      bankName: 'Commercial Bank of Eth',
+      bankName: 'CBE',
       sender,
       type: 'debit',
       amount: parseAmount(debitMatch[1]),
@@ -45,6 +47,7 @@ export function parseCbeSms(message: string, sender = 'CBE'): ParsedSms | null {
       date: new Date().toISOString(),
       currency: 'ETB',
       confidence: 'high',
+      accountNumberHint: extractAccountNumberHint(normalized),
       rawMessage: normalized,
     };
   }
