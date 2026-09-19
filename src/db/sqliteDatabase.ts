@@ -71,14 +71,27 @@ async function createTables(): Promise<void> {
   await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);`);
   await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);`);
   await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_hash ON transactions(hash);`);
+
+  // Migration: add sub_id (SIM/subscription id) to accounts for existing installs
+  const [cols] = await db.executeSql('PRAGMA table_info(accounts);');
+  let hasSubId = false;
+  for (let i = 0; i < cols.rows.length; i++) {
+    if (cols.rows.item(i).name === 'sub_id') {
+      hasSubId = true;
+      break;
+    }
+  }
+  if (!hasSubId) {
+    await db.executeSql('ALTER TABLE accounts ADD COLUMN sub_id INTEGER DEFAULT NULL;');
+  }
 }
 
 export async function saveAccount(account: Account): Promise<void> {
   if (!db) throw new Error('Database not initialized');
 
   await db.executeSql(`
-    INSERT OR REPLACE INTO accounts (id, bank_id, bank_name, account_number, current_balance, currency, last_updated, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO accounts (id, bank_id, bank_name, account_number, current_balance, currency, last_updated, source, sub_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     account.id,
     account.bankId,
@@ -88,6 +101,7 @@ export async function saveAccount(account: Account): Promise<void> {
     account.currency,
     account.lastUpdated,
     account.source,
+    account.subId != null ? account.subId : null,
   ]);
 }
 
@@ -108,6 +122,7 @@ export async function getAccounts(): Promise<Account[]> {
       currency: row.currency,
       lastUpdated: row.last_updated,
       source: row.source,
+      subId: row.sub_id != null ? Number(row.sub_id) : null,
     });
   }
 
@@ -133,6 +148,7 @@ export async function getAccountById(id: string): Promise<Account | null> {
     currency: row.currency,
     lastUpdated: row.last_updated,
     source: row.source,
+    subId: row.sub_id != null ? Number(row.sub_id) : null,
   };
 }
 
@@ -145,6 +161,69 @@ export async function updateAccountBalance(accountId: string, newBalance: number
     WHERE id = ?
   `, [newBalance, new Date().toISOString(), accountId]);
 }
+
+function accountDigits(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d]/g, '');
+  return digits.length >= 4 ? digits : null;
+}
+
+export async function renameAccountInDb(accountId: string, newBankName: string): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  await db.executeSql(`UPDATE accounts SET bank_name = ? WHERE id = ?;`, [newBankName.trim(), accountId]);
+}
+
+export async function mergeAccountsInDb(sourceId: string, targetId: string): Promise<void> {
+  if (!db) throw new Error('Database not initialized');
+  if (sourceId === targetId) throw new Error('Cannot merge an account into itself');
+
+  const [sourceRows] = await db.executeSql('SELECT * FROM accounts WHERE id = ?;', [sourceId]);
+  const [targetRows] = await db.executeSql('SELECT * FROM accounts WHERE id = ?;', [targetId]);
+  if (sourceRows.rows.length === 0 || targetRows.rows.length === 0) {
+    throw new Error('One of the accounts no longer exists');
+  }
+
+  const source = sourceRows.rows.item(0);
+  const target = targetRows.rows.item(0);
+
+  const sourceDigits = accountDigits(source.account_number);
+  const targetDigits = accountDigits(target.account_number);
+
+  // Prefer the richer identity: longer masked account number, a real SIM id,
+  // a non-placeholder bank name, and a non-null balance.
+  let bankName = target.bank_name;
+  let accountNumber = target.account_number;
+  let subId = target.sub_id != null ? Number(target.sub_id) : null;
+  let balance = target.current_balance != null ? Number(target.current_balance) : null;
+  let lastUpdated = target.last_updated;
+
+  const richerDigits =
+    sourceDigits && (!targetDigits || sourceDigits.length > targetDigits.length);
+  if (richerDigits) accountNumber = source.account_number;
+  if (subId == null && source.sub_id != null) subId = Number(source.sub_id);
+  const placeholder = (n: string) => !n || /^(placeholder|unknown)$/i.test(n.trim());
+  if (placeholder(bankName) && !placeholder(source.bank_name)) {
+    bankName = source.bank_name;
+  }
+  if (balance == null && source.current_balance != null) {
+    balance = Number(source.current_balance);
+    lastUpdated = source.last_updated;
+  }
+
+  await db.executeSql(
+    'UPDATE accounts SET bank_name = ?, account_number = ?, current_balance = ?, last_updated = ?, sub_id = ? WHERE id = ?;',
+    [bankName, accountNumber, balance, lastUpdated, subId, targetId]
+  );
+
+  // Re-point every transaction from the source onto the merged account.
+  await db.executeSql(
+    'UPDATE transactions SET account_id = ? WHERE account_id = ?;', [targetId, sourceId]
+  );
+
+  // The source account is now fully absorbed.
+  await db.executeSql('DELETE FROM accounts WHERE id = ?;', [sourceId]);
+}
+
 
 export async function saveTransaction(transaction: Transaction): Promise<void> {
   if (!db) throw new Error('Database not initialized');
