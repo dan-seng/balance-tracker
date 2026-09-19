@@ -4,7 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
-import { Account, Transaction } from './src/models';
+import { Account, ParsedSms, Transaction } from './src/models';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { LockScreen } from './src/screens/LockScreen';
 import { SyncingScreen } from './src/screens/SyncingScreen';
@@ -19,6 +19,88 @@ import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
 import { setCustomBanks as setCustomBanksInParser } from './src/parsers/genericParser';
 import { calculateBalance, generateSmsHash } from './src/utils/balanceUtils';
+import { getMockSmsMessages, NEW_BANKS } from './src/mocks/mockSmsData';
+import { mergeAccountsToDb, renameAccountToDb } from './src/db';
+
+// TEMPORARY: switch to mock SMS data instead of reading the real phone inbox.
+// Set this back to false to return to reading real SMS.
+const USE_MOCK_DATA = false;
+
+function accountDigits(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/[^\d]/g, '');
+  return digits.length >= 4 ? digits : null;
+}
+
+function toDisplayAccountNumber(hint: string | null | undefined): string {
+  if (!hint) return '•••• ••••';
+  const digits = hint.replace(/[^\d]/g, '');
+  if (digits.length >= 6) return digits;
+  if (digits.length >= 4) return `•••• ${digits.slice(-4)}`;
+  return '•••• ••••';
+}
+
+function findAccountForSms(
+  accounts: Account[],
+  parsed: ParsedSms,
+  subId?: number | null,
+): Account | null {
+  const candidates = accounts.filter(a => a.bankId === parsed.bankId);
+  if (candidates.length === 0) return null;
+
+  const hintDigits = accountDigits(parsed.accountNumberHint);
+  if (hintDigits) {
+    for (const candidate of candidates) {
+      const candidateDigits = accountDigits(candidate.accountNumber);
+      if (!candidateDigits) continue;
+      const matchesFull =
+        candidateDigits.length >= 6 &&
+        hintDigits.length >= 6 &&
+        candidateDigits === hintDigits;
+      const matchesLast4 = candidateDigits.slice(-4) === hintDigits.slice(-4);
+      if (matchesFull || matchesLast4) return candidate;
+    }
+  }
+
+  if (subId != null) {
+    const bySub = candidates.find(a => a.subId === subId);
+    if (bySub) return bySub;
+  }
+
+  // Legacy glue: a sole account that carries no identity yet will absorb a
+  // message that reveals nothing distinguishing. Never glue onto an account
+  // that is already identified but failed to match — that would merge balances
+  // from a second SIM into the wrong wallet.
+  if (candidates.length === 1) {
+    const only = candidates[0];
+    const onlyDigits = accountDigits(only.accountNumber);
+    const unidentified = onlyDigits == null && only.subId == null;
+    if (unidentified) return only;
+  }
+
+  return null;
+}
+
+// Upgrades an existing account with identity details learned from a newer SMS.
+// Returns true when persisted fields changed.
+function applyAccountIdentity(
+  account: Account,
+  parsed: ParsedSms,
+  subId?: number | null,
+): boolean {
+  let changed = false;
+  if (subId != null && account.subId == null) {
+    account.subId = subId;
+    changed = true;
+  }
+  const hintDigits = accountDigits(parsed.accountNumberHint);
+  const storedDigits = accountDigits(account.accountNumber);
+  if (hintDigits && storedDigits && hintDigits.length > storedDigits.length) {
+    account.accountNumber = toDisplayAccountNumber(parsed.accountNumberHint);
+    changed = true;
+  }
+  return changed;
+}
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
@@ -38,12 +120,18 @@ function App() {
   const [userTitle, setUserTitle] = useState<string | null>(null);
   const [customBanks, setCustomBanks] = useState<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>>([]);
   const accountsRef = useRef<Account[]>([]);
+  const skipLockScreenRef = useRef(false);
+  const hasSyncedRef = useRef(false);
 
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
   });
 
   useEffect(() => {
+    if (skipLockScreenRef.current) {
+      skipLockScreenRef.current = false;
+      return;
+    }
     if (isAppLocked && hasStarted && userName && dbReady && !isSyncing) {
       setShowLockScreen(true);
     } else {
@@ -166,11 +254,43 @@ function App() {
     }
   };
 
+  const ensureCustomBankAccounts = useCallback(
+    async (
+      banks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>,
+      current: Account[],
+    ): Promise<Account[]> => {
+      let next = current;
+      for (const bank of banks) {
+        if (next.some(a => a.bankId === bank.bankId)) {
+          continue;
+        }
+        const placeholder: Account = {
+          id: `${bank.bankId}-account`,
+          bankId: bank.bankId,
+          bankName: bank.bankName,
+          accountNumber: '•••• ••••',
+          currentBalance: 0,
+          currency: 'ETB',
+          lastUpdated: new Date().toISOString(),
+          source: 'sms',
+        };
+        await saveAccountToDb(placeholder);
+        next = [...next, placeholder];
+      }
+      return next;
+    },
+    [],
+  );
+
   const handleAddCustomBank = async (bankName: string, senderId: string, logoBase64: string | null) => {
     const bankId = `custom-${Date.now()}`;
     await saveCustomBankInDb(bankId, bankName, senderId, logoBase64);
     const updatedBanks = [...customBanks, { bankId, bankName, senderId, logoBase64 }];
     setCustomBanks(updatedBanks);
+
+    const updatedAccounts = await ensureCustomBankAccounts(updatedBanks, accountsRef.current);
+    accountsRef.current = updatedAccounts;
+    setAccounts(updatedAccounts);
   };
 
   const handleDeleteCustomBank = async (bankId: string) => {
@@ -225,7 +345,7 @@ function App() {
   }, []);
 
   const ingestSmsMessages = useCallback(async (
-    smsMessages: Array<{ sender: string; message: string; timestamp: number }>,
+    smsMessages: Array<{ sender: string; message: string; timestamp: number; subId?: number | null }>,
   ) => {
     const currentAccounts = await getAccountsFromDb();
     const orderedMessages = [...smsMessages].sort(
@@ -233,7 +353,7 @@ function App() {
     );
 
     for (const sms of orderedMessages) {
-      const { sender, message, timestamp } = sms;
+      const { sender, message, timestamp, subId } = sms;
       const parsed = parseSms(message, sender);
       if (!parsed || parsed.bankId === 'unknown') {
         continue;
@@ -245,22 +365,25 @@ function App() {
         continue;
       }
 
-      let account = currentAccounts.find(a => a.bankId === parsed.bankId);
+      let account = findAccountForSms(currentAccounts, parsed, subId);
 
       if (!account) {
         const newAccount: Account = {
           id: `${parsed.bankId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           bankId: parsed.bankId,
           bankName: parsed.bankName,
-          accountNumber: '•••• ••••',
+          accountNumber: toDisplayAccountNumber(parsed.accountNumberHint),
           currentBalance: parsed.balance ?? 0,
           currency: 'ETB',
           lastUpdated: new Date(timestamp).toISOString(),
           source: 'sms',
+          subId: subId != null ? subId : null,
         };
         account = newAccount;
         await saveAccountToDb(newAccount);
         currentAccounts.push(newAccount);
+      } else if (applyAccountIdentity(account, parsed, subId)) {
+        await saveAccountToDb(account);
       }
 
       let balanceAfter = parsed.balance;
@@ -303,12 +426,18 @@ function App() {
       await clearAllTransactionsFromDb();
       await clearAllAccountsFromDb();
 
-      // Read real SMS data natively
-      const realSmsData = await nativeSmsService.getInboxSms(5000);
-      const rebuiltAccounts = await ingestSmsMessages(realSmsData);
+      // Read real SMS data natively (or use mock data while USE_MOCK_DATA is on)
+      const smsData = USE_MOCK_DATA
+        ? getMockSmsMessages()
+        : await nativeSmsService.getInboxSms(5000);
+      if (USE_MOCK_DATA) {
+        setCustomBanksInParser([...customBanks, ...NEW_BANKS]);
+      }
+      const rebuiltAccounts = await ingestSmsMessages(smsData);
 
-      accountsRef.current = rebuiltAccounts;
-      setAccounts(rebuiltAccounts);
+      const mergedAccounts = await ensureCustomBankAccounts(customBanks, rebuiltAccounts);
+      accountsRef.current = mergedAccounts;
+      setAccounts(mergedAccounts);
       await loadTransactions();
       // Mocking, no need to clear saved SMS
     } catch (error) {
@@ -316,7 +445,59 @@ function App() {
     } finally {
       setIsSyncing(false);
     }
-  }, [ingestSmsMessages, loadTransactions]);
+  }, [ingestSmsMessages, loadTransactions, customBanks, ensureCustomBankAccounts]);
+
+  const loadSampleTransactions = useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      await clearAllTransactionsFromDb();
+      await clearAllAccountsFromDb();
+
+      const allBanks = [...customBanks, ...NEW_BANKS];
+      setCustomBanksInParser(allBanks);
+
+      const rebuiltAccounts = await ingestSmsMessages(getMockSmsMessages());
+
+      const mergedAccounts = await ensureCustomBankAccounts(allBanks, rebuiltAccounts);
+      accountsRef.current = mergedAccounts;
+      setAccounts(mergedAccounts);
+      await loadTransactions();
+    } catch (error) {
+      console.error('Error loading sample transactions:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [ingestSmsMessages, loadTransactions, customBanks, ensureCustomBankAccounts]);
+
+  const handleRenameAccount = useCallback(
+    async (accountId: string, newBankName: string) => {
+      try {
+        await renameAccountToDb(accountId, newBankName);
+        const updated = await getAccountsFromDb();
+        accountsRef.current = updated;
+        setAccounts(updated);
+        await loadTransactions();
+      } catch (error) {
+        console.error('Error renaming account:', error);
+      }
+    },
+    [loadTransactions],
+  );
+
+  const handleMergeAccounts = useCallback(
+    async (sourceId: string, targetId: string) => {
+      try {
+        await mergeAccountsToDb(sourceId, targetId);
+        const updated = await getAccountsFromDb();
+        accountsRef.current = updated;
+        setAccounts(updated);
+        await loadTransactions();
+      } catch (error) {
+        console.error('Error merging accounts:', error);
+      }
+    },
+    [loadTransactions],
+  );
 
   useEffect(() => {
     initializeDatabase();
@@ -326,15 +507,33 @@ function App() {
   useEffect(() => {
     if (!dbReady || !smsPermissionsGranted) return;
 
-    syncSmsState();
+    if (hasSyncedRef.current) {
+      // Already synced once — just reload from DB
+      (async () => {
+        const loadedAccounts = await getAccountsFromDb();
+        accountsRef.current = loadedAccounts;
+        setAccounts(loadedAccounts);
+        await loadTransactions();
+      })();
+      return;
+    }
+
+    syncSmsState().then(() => {
+      hasSyncedRef.current = true;
+    });
+
+    if (USE_MOCK_DATA) {
+      return;
+    }
 
     const handleSms = async (data: {
       sender: string;
       message: string;
       timestamp: number;
+      subId?: number | null;
     }) => {
       try {
-        const { sender, message, timestamp } = data;
+        const { sender, message, timestamp, subId } = data;
         const parsed = parseSms(message, sender);
         if (!parsed) {
           return;
@@ -346,22 +545,25 @@ function App() {
           return;
         }
 
-        let account = accountsRef.current.find(a => a.bankId === parsed.bankId);
+        let account = findAccountForSms(accountsRef.current, parsed, subId);
 
         if (!account) {
           const newAccount: Account = {
             id: `${parsed.bankId}-${Date.now()}`,
             bankId: parsed.bankId,
             bankName: parsed.bankName,
-            accountNumber: '•••• ••••',
+            accountNumber: toDisplayAccountNumber(parsed.accountNumberHint),
             currentBalance: parsed.balance ?? 0,
             currency: 'ETB',
             lastUpdated: new Date(timestamp).toISOString(),
             source: 'sms',
+            subId: subId != null ? subId : null,
           };
           account = newAccount;
           await saveAccountToDb(newAccount);
           accountsRef.current = [...accountsRef.current, newAccount];
+        } else if (applyAccountIdentity(account, parsed, subId)) {
+          await saveAccountToDb(account);
         }
 
         let balanceAfter = parsed.balance;
@@ -463,6 +665,7 @@ function App() {
             <SettingsScreen
               userName={userName!}
               onNameChange={async (name) => {
+                skipLockScreenRef.current = true;
                 await setUserNameInDb(name);
                 setUserName(name);
               }}
@@ -476,6 +679,9 @@ function App() {
               customBanks={customBanks}
               onAddCustomBank={handleAddCustomBank}
               onDeleteCustomBank={handleDeleteCustomBank}
+              accounts={accounts}
+              onRenameAccount={handleRenameAccount}
+              onMergeAccounts={handleMergeAccounts}
             />
           )}
           <BottomNav currentTab={currentTab} onTabChange={setCurrentTab} />
