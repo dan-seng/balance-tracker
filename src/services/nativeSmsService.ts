@@ -39,7 +39,6 @@ class NativeSmsService {
     }
 
     const subscription = this.eventEmitter.addListener('onSmsReceived', (data: SmsEventData) => {
-      console.log('SMS Event received:', data);
       listener(data);
     });
     this.subscriptions.set(listener, subscription);
