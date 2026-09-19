@@ -140,15 +140,23 @@ export function DashboardScreen({
     .filter(item => item.type === 'debit')
     .reduce((sum, item) => sum + item.amount, 0);
 
-  const filteredAccounts = accounts.filter(account => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      account.bankName.toLowerCase().includes(query) ||
-      account.accountNumber.toLowerCase().includes(query) ||
-      account.currentBalance.toString().includes(query)
-    );
-  });
+  const filteredAccounts = useMemo(() => {
+    const txCountMap = new Map<string, number>();
+    for (const t of transactions) {
+      txCountMap.set(t.accountId, (txCountMap.get(t.accountId) ?? 0) + 1);
+    }
+    return accounts
+      .filter(account => {
+        if (!searchQuery) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+          account.bankName.toLowerCase().includes(query) ||
+          account.accountNumber.toLowerCase().includes(query) ||
+          account.currentBalance.toString().includes(query)
+        );
+      })
+      .sort((a, b) => (txCountMap.get(b.id) ?? 0) - (txCountMap.get(a.id) ?? 0));
+  }, [accounts, transactions, searchQuery]);
 
   const sheetTransactions = useMemo(() => {
     if (!sheetAccount) {
