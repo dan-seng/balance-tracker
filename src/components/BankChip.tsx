@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppText as Text } from './AppText';
-import { getBankAbbrev, getBankCardTheme, getBankLogo } from './BankCard';
+import { getBankAbbrev, getBankCardTheme, getBankLogo, maskAccountNumber } from './BankCard';
 import { Account } from '../models';
 
 type BankChipProps = {
@@ -49,6 +49,9 @@ export const BankChip = forwardRef<View, BankChipProps>(
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {firstWord}
         </Text>
+        <Text style={styles.acct} numberOfLines={1} ellipsizeMode="tail">
+          {maskAccountNumber(account.accountNumber)}
+        </Text>
       </Pressable>
     );
   },
@@ -86,6 +89,15 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '500',
     marginTop: 7,
+    textAlign: 'center',
+    width: '100%',
+  },
+  acct: {
+    color: 'rgba(235, 235, 245, 0.38)',
+    fontSize: 9,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+    marginTop: 2,
     textAlign: 'center',
     width: '100%',
   },
