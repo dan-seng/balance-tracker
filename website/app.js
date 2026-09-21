@@ -25,7 +25,7 @@
     tag: FALLBACK_TAG,
     urls: { ...DEFAULT_URLS },
     sizes: {
-      androidApk: '45 MB'
+      androidApk: '28 MB'
     }
   };
 
