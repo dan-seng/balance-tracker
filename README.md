@@ -42,6 +42,7 @@
 - **Multi-Bank Support**: Works seamlessly with multiple banks. Easily add custom banks and SMS sender rules.
 - **Beautiful UI**: Modern, sleek, dark-themed interface built with a premium touch.
 - **Detailed Analytics**: Visualize your spending habits and account balances over time.
+- **Shop Ledger**: Record products, opening stock, restocks, multi-item sales, running expenses, customer credit, and repayments. See daily/monthly profit, collections, and outstanding balances. Shop records stay in a separate local database and survive SMS resyncs.
 
 ---
 
@@ -94,6 +95,12 @@
 - **Database**: `react-native-sqlite-storage`
 - **Security**: `react-native-biometrics`
 - **Styling**: `react-native-linear-gradient` & `react-native-svg`
+
+### Shop ledger checks
+
+Run `npx jest __tests__/shopUtils.test.ts __tests__/shopDatabase.test.ts __tests__/ShopScreen.test.tsx --runInBand`. The database integration test uses Python 3's built-in SQLite to execute the real queries while replacing only the Android bridge.
+
+The first Shop version records whole units (pieces, packs, bottles, etc.) and ETB amounts with two decimal places. Profit uses sale-time product costs and recorded operating expenses. Collections include repayments; outstanding customer debt is always shown across all time.
 
 ---
 
