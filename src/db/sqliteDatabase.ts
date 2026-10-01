@@ -1,10 +1,7 @@
-import SQLite from 'react-native-sqlite-storage';
+import SQLite from './sqliteRuntime';
 import { Account, Transaction } from '../models';
 
 const DB_NAME = 'HisabApp.db';
-
-// Enable promises for SQLite
-SQLite.enablePromise(true);
 
 let db: SQLite.SQLiteDatabase | null = null;
 
