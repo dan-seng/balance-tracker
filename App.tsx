@@ -13,6 +13,7 @@ import { NameEntryScreen } from './src/screens/NameEntryScreen';
 import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AddBankScreen } from './src/screens/AddBankScreen';
+import { ShopScreen } from './src/screens/ShopScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
 import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb, setBalanceHiddenInDb, getBalanceHiddenFromDb, setUserTitleInDb, getUserTitleFromDb, saveCustomBankInDb, getCustomBanksFromDb, deleteCustomBankFromDb, setAppLockedInDb, getAppLockedFromDb, setAutoLockTimeoutInDb, getAutoLockTimeoutFromDb } from './src/db';
 import { nativeSmsService } from './src/services/nativeSmsService';
@@ -248,6 +249,10 @@ function App() {
       const savedTimeout = await getAutoLockTimeoutFromDb();
       setAutoLockTimeout(savedTimeout);
 
+      const savedAccounts = await getAccountsFromDb();
+      accountsRef.current = savedAccounts;
+      setAccounts(savedAccounts);
+      setTransactions(await getTransactionsFromDb());
       setDbReady(true);
     } catch (error) {
       console.error('Failed to initialize database:', error);
@@ -447,28 +452,6 @@ function App() {
     }
   }, [ingestSmsMessages, loadTransactions, customBanks, ensureCustomBankAccounts]);
 
-  const loadSampleTransactions = useCallback(async () => {
-    setIsSyncing(true);
-    try {
-      await clearAllTransactionsFromDb();
-      await clearAllAccountsFromDb();
-
-      const allBanks = [...customBanks, ...NEW_BANKS];
-      setCustomBanksInParser(allBanks);
-
-      const rebuiltAccounts = await ingestSmsMessages(getMockSmsMessages());
-
-      const mergedAccounts = await ensureCustomBankAccounts(allBanks, rebuiltAccounts);
-      accountsRef.current = mergedAccounts;
-      setAccounts(mergedAccounts);
-      await loadTransactions();
-    } catch (error) {
-      console.error('Error loading sample transactions:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [ingestSmsMessages, loadTransactions, customBanks, ensureCustomBankAccounts]);
-
   const handleRenameAccount = useCallback(
     async (accountId: string, newBankName: string) => {
       try {
@@ -614,7 +597,7 @@ function App() {
     return () => {
       nativeSmsService.removeAllListeners();
     };
-  }, [dbReady, smsPermissionsGranted, syncSmsState]);
+  }, [dbReady, smsPermissionsGranted, syncSmsState, loadTransactions]);
 
   return (
     <SafeAreaProvider>
@@ -633,7 +616,7 @@ function App() {
           setUserName(name);
           setUserTitle(title);
         }} />
-      ) : !dbReady || !smsPermissionsGranted || isSyncing ? (
+      ) : !dbReady || isSyncing ? (
         <SyncingScreen />
       ) : (
         <View style={styles.tabContainer}>
@@ -653,6 +636,8 @@ function App() {
             />
           ) : currentTab === 'analytics' ? (
             <AnalyticsScreen transactions={transactions} />
+          ) : currentTab === 'shop' ? (
+            <ShopScreen />
           ) : currentTab === 'addBank' ? (
             <AddBankScreen
               onAddBank={async (bankName, senderId, logoBase64) => {

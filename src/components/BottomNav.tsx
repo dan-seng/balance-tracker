@@ -39,7 +39,13 @@ const AddBankIcon = ({ size = 24, color = INACTIVE }) => (
   </Svg>
 );
 
-export type TabType = 'dashboard' | 'analytics' | 'settings' | 'addBank';
+const ShopIcon = ({ size = 24, color = INACTIVE }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <Path d="M3 10l2-6h14l2 6M4 10v10h16V10M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0M9 20v-6h6v6" />
+  </Svg>
+);
+
+export type TabType = 'dashboard' | 'analytics' | 'shop' | 'settings' | 'addBank';
 
 type BottomNavProps = {
   currentTab: TabType;
@@ -49,6 +55,7 @@ type BottomNavProps = {
 const TABS: { key: TabType; label: string; icon: (p: { size?: number; color?: string }) => React.ReactNode }[] = [
   { key: 'dashboard', label: 'Wallet', icon: WalletIcon },
   { key: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
+  { key: 'shop', label: 'Shop', icon: ShopIcon },
   { key: 'addBank', label: 'Add Bank', icon: AddBankIcon },
   { key: 'settings', label: 'Settings', icon: SettingsIcon },
 ];
@@ -117,6 +124,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 2,
