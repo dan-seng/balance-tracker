@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-02T14:33:28.774952+00:00",
+  "title": "Design System: Hisab",
+  "extensions": {
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [],
+    "typographyMeta": {
+      "display": {
+        "displayName": "Profit",
+        "purpose": "Strongest ledger amount; tabular numerals."
+      }
+    },
+    "platform": {
+      "name": "React Native Android",
+      "units": "Source measurements are dp; CSS snippets use equivalent px for panel rendering.",
+      "previewStates": "Hover and focus outlines in HTML snippets are panel-only affordances; native source uses press opacity and platform focus."
+    },
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Black Canvas",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "grouped1": {
+        "role": "neutral",
+        "displayName": "Grouped Dark",
+        "tonalRamp": [
+          "oklch(15% 0.004 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(38% 0.004 286)",
+          "oklch(49% 0.004 286)",
+          "oklch(61% 0.004 286)",
+          "oklch(72% 0.004 286)",
+          "oklch(84% 0.004 286)",
+          "oklch(95% 0.004 286)"
+        ]
+      },
+      "grouped2": {
+        "role": "neutral",
+        "displayName": "Grouped Raised",
+        "tonalRamp": [
+          "oklch(15% 0.004 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(38% 0.004 286)",
+          "oklch(49% 0.004 286)",
+          "oklch(61% 0.004 286)",
+          "oklch(72% 0.004 286)",
+          "oklch(84% 0.004 286)",
+          "oklch(95% 0.004 286)"
+        ]
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "White Label",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "label2": {
+        "role": "neutral",
+        "displayName": "Secondary Label",
+        "tonalRamp": [
+          "oklch(15% 0.006 286)",
+          "oklch(26% 0.006 286)",
+          "oklch(38% 0.006 286)",
+          "oklch(49% 0.006 286)",
+          "oklch(61% 0.006 286)",
+          "oklch(72% 0.006 286)",
+          "oklch(84% 0.006 286)",
+          "oklch(95% 0.006 286)"
+        ]
+      },
+      "separator": {
+        "role": "neutral",
+        "displayName": "Separator",
+        "tonalRamp": [
+          "oklch(15% 0.006 286)",
+          "oklch(26% 0.006 286)",
+          "oklch(38% 0.006 286)",
+          "oklch(49% 0.006 286)",
+          "oklch(61% 0.006 286)",
+          "oklch(72% 0.006 286)",
+          "oklch(84% 0.006 286)",
+          "oklch(95% 0.006 286)"
+        ]
+      },
+      "gold": {
+        "role": "primary",
+        "displayName": "Hisab Gold",
+        "tonalRamp": [
+          "oklch(15% 0.12 85)",
+          "oklch(26% 0.12 85)",
+          "oklch(38% 0.12 85)",
+          "oklch(49% 0.12 85)",
+          "oklch(61% 0.12 85)",
+          "oklch(72% 0.12 85)",
+          "oklch(84% 0.12 85)",
+          "oklch(95% 0.12 85)"
+        ]
+      },
+      "green": {
+        "role": "secondary",
+        "displayName": "Income Green",
+        "tonalRamp": [
+          "oklch(15% 0.19 150)",
+          "oklch(26% 0.19 150)",
+          "oklch(38% 0.19 150)",
+          "oklch(49% 0.19 150)",
+          "oklch(61% 0.19 150)",
+          "oklch(72% 0.19 150)",
+          "oklch(84% 0.19 150)",
+          "oklch(95% 0.19 150)"
+        ]
+      },
+      "red": {
+        "role": "secondary",
+        "displayName": "Spending Red",
+        "tonalRamp": [
+          "oklch(15% 0.21 25)",
+          "oklch(26% 0.21 25)",
+          "oklch(38% 0.21 25)",
+          "oklch(49% 0.21 25)",
+          "oklch(61% 0.21 25)",
+          "oklch(72% 0.21 25)",
+          "oklch(84% 0.21 25)",
+          "oklch(95% 0.21 25)"
+        ]
+      },
+      "gold-highlight": {
+        "role": "neutral",
+        "displayName": "Gold Highlight",
+        "tonalRamp": [
+          "oklch(15% 0.045 85)",
+          "oklch(26% 0.045 85)",
+          "oklch(38% 0.045 85)",
+          "oklch(49% 0.045 85)",
+          "oklch(61% 0.045 85)",
+          "oklch(72% 0.045 85)",
+          "oklch(84% 0.045 85)",
+          "oklch(95% 0.045 85)"
+        ]
+      },
+      "gold-mid": {
+        "role": "neutral",
+        "displayName": "Gold Mid",
+        "tonalRamp": [
+          "oklch(15% 0.015 85)",
+          "oklch(26% 0.015 85)",
+          "oklch(38% 0.015 85)",
+          "oklch(49% 0.015 85)",
+          "oklch(61% 0.015 85)",
+          "oklch(72% 0.015 85)",
+          "oklch(84% 0.015 85)",
+          "oklch(95% 0.015 85)"
+        ]
+      },
+      "nav-inactive": {
+        "role": "neutral",
+        "displayName": "Inactive Label",
+        "tonalRamp": [
+          "oklch(15% 0.006 286)",
+          "oklch(26% 0.006 286)",
+          "oklch(38% 0.006 286)",
+          "oklch(49% 0.006 286)",
+          "oklch(61% 0.006 286)",
+          "oklch(72% 0.006 286)",
+          "oklch(84% 0.006 286)",
+          "oklch(95% 0.006 286)"
+        ]
+      },
+      "film": {
+        "role": "neutral",
+        "displayName": "Navigation Film",
+        "tonalRamp": [
+          "oklch(15% 0.004 286)",
+          "oklch(26% 0.004 286)",
+          "oklch(38% 0.004 286)",
+          "oklch(49% 0.004 286)",
+          "oklch(61% 0.004 286)",
+          "oklch(72% 0.004 286)",
+          "oklch(84% 0.004 286)",
+          "oklch(95% 0.004 286)"
+        ]
+      }
+    },
+    "tonalRampNote": "Synthesized preview ramps; not additional source color tokens."
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Native Shop action translated for the preview panel.",
+      "html": "<button class=\"ds-button-primary\">Record sale</button>",
+      "css": ".ds-button-primary { background:#D8B45C;color:#17140D;border:0;border-radius:12px;padding:14px 16px;min-height:48px;font:600 15px system-ui; } .ds-button-primary:hover,.ds-button-primary:active,.ds-button-primary:disabled {opacity:.55} .ds-button-primary:focus-visible {outline:2px solid #D8B45C;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Native Shop action translated for the preview panel.",
+      "html": "<button class=\"ds-button-secondary\">Record sale</button>",
+      "css": ".ds-button-secondary { background:#2C2C2E;color:#FFFFFF;border:0;border-radius:12px;padding:14px 16px;min-height:48px;font:600 15px system-ui; } .ds-button-secondary:hover,.ds-button-secondary:active,.ds-button-secondary:disabled {opacity:.55} .ds-button-secondary:focus-visible {outline:2px solid #D8B45C;outline-offset:3px}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labeled entry field.",
+      "html": "<label class=\"ds-field\">Amount<input placeholder=\"0.00\" /></label>",
+      "css": ".ds-field{display:grid;gap:8px;font:14px/1.5 system-ui;color:rgba(235,235,245,.6)} .ds-field input{background:#1C1C1E;color:white;border:0;border-radius:12px;padding:12px 14px;min-height:52px;font:16px system-ui} .ds-field input::placeholder{color:rgba(235,235,245,.6)} .ds-field input:focus-visible{outline:2px solid #D8B45C;outline-offset:2px}"
+    },
+    {
+      "name": "Summary Panel",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A flat grouped financial summary.",
+      "html": "<section class=\"ds-card\"><span>Profit</span><strong>ETB 1,250.00</strong></section>",
+      "css": ".ds-card{background:#1C1C1E;color:white;border-radius:16px;padding:20px;font:14px/1.5 system-ui;display:grid;gap:10px} .ds-card span{color:rgba(235,235,245,.6)} .ds-card strong{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Selected Choice",
+      "kind": "chip",
+      "description": "Selection surface in entry forms.",
+      "html": "<button class=\"ds-choice\" aria-pressed=\"true\">Coffee</button>",
+      "css": ".ds-choice{background:#2B2210;color:white;border:1px solid #D8B45C;border-radius:12px;padding:14px;min-height:48px;font:600 16px system-ui;text-align:left}.ds-choice:hover,.ds-choice:active{opacity:.55}.ds-choice:focus-visible{outline:2px solid #D8B45C;outline-offset:3px}"
+    },
+    {
+      "name": "Section Navigation",
+      "kind": "nav",
+      "description": "Equal-width Shop section tabs.",
+      "html": "<nav class=\"ds-nav\"><button aria-current=\"page\">Overview</button><button>Stock</button><button>Customers</button><button>History</button></nav>",
+      "css": ".ds-nav{display:flex;background:#000;border-bottom:1px solid rgba(84,84,88,.55)}.ds-nav button{flex:1;background:transparent;color:rgba(235,235,245,.6);border:0;padding:12px 4px;min-height:48px;font:600 15px system-ui}.ds-nav [aria-current]{color:#D8B45C;border-bottom:2px solid #D8B45C}.ds-nav button:hover,.ds-nav button:active{opacity:.6}.ds-nav button:focus-visible{outline:2px solid #D8B45C;outline-offset:-2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Hisab incumbent interface",
+    "overview": "Hisab uses a black canvas, flat dark grouped surfaces, system typography and restrained gold actions. White amounts establish hierarchy; secondary labels recede while green and red communicate income and spending.\n\nThe Shop extension carries the incumbent visual system into a practical daily ledger. Entry speed, readable amounts, validation and honest totals take priority over decoration. This document records source evidence; runtime rendering has not been inspected.",
+    "keyCharacteristics": [
+      "Black canvas and tonal grouping",
+      "System text and clear numeric hierarchy",
+      "Gold actions; green and red financial meanings",
+      "Persistent navigation and modal entry"
+    ],
+    "rules": [
+      {
+        "name": "Meaning Before Accent",
+        "body": "Use gold for action and selection, green for positive financial values, and red for negative values and errors.",
+        "section": "colors"
+      },
+      {
+        "name": "Amount Before Annotation",
+        "body": "Give totals stronger size and weight than their explanatory labels; use tabular numerals for ledger amounts.",
+        "section": "typography"
+      },
+      {
+        "name": "Flat Grouping",
+        "body": "Group content with surface tone, spacing and separators; the ledger uses no decorative shadows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve platform system text through AppText unless a component explicitly opts into a named font.",
+      "Do provide Android Back handling, safe-area and keyboard clearance in Shop forms.",
+      "Do keep Shop controls at least 48 dp tall and explicitly enable text scaling.",
+      "Do allow financial rows and section headers to wrap when space is tight."
+    ],
+    "donts": [
+      "Don't force the theme's available Poppins fonts into the system-text wrapper.",
+      "Don't collapse profit, collections and customer balances into one unexplained total.",
+      "Don't add decorative shadows to the flat ledger surfaces."
+    ]
+  }
+}
