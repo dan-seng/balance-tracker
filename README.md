@@ -1,154 +1,137 @@
 <div align="center">
-  <img src="assets/hisab.png" width="180" height="180" alt="Hisab App Icon" />
-  
-  # 🏦 Hisab
-  
-  **Your Personal Finance & Balance Tracking Companion**
-  
+  <img src="assets/hisab.png" width="180" height="180" alt="Hisab app icon" />
+
+  # Hisab · ሂሳብ
+
+  **Bank balances and a simple shop notebook, on your phone.**
+
   ![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
   ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
   ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
-
-  <p align="center">
-    <i>Secure, private, and automated financial tracking based on SMS notifications.</i>
-  </p>
 </div>
 
----
+Hisab is an Android app for tracking Ethiopian bank accounts from SMS and keeping manual shop records in ETB. Messages and financial records are processed and stored locally, with no cloud sync.
 
-## 📥 Download
+## Download
 
-**Hisab is free to download as an Android APK, built and signed automatically from GitHub Releases.**
+[Download the latest Android APK](https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk) · [All releases](https://github.com/dan-seng/balance-tracker/releases) · [Download page](https://dan-seng.github.io/balance-tracker/)
 
-<p align="center">
-  <a href="https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk">
-    <img src="https://img.shields.io/badge/Download_APK-Latest_Release-success?style=for-the-badge&logo=android&logoColor=white"/>
-  </a>
-  <a href="https://dan-seng.github.io/balance-tracker/">
-    <img src="https://img.shields.io/badge/Website-Download_Page-8A806A?style=for-the-badge"/>
-  </a>
-</p>
+Allow installation from your browser or file manager if Android requests it. The repository's GitHub Actions release workflow builds and signs the APK.
 
-- Install the APK and allow **"install from unknown sources"** when prompted — expected for direct Android downloads.
-- All releases are listed at: [github.com/dan-seng/balance-tracker/releases](https://github.com/dan-seng/balance-tracker/releases)
+## Features
 
----
+- **Wallet:** bank SMS import, individual account balances, combined balance, income and spending totals, and balance visibility controls.
+- **Bank accounts:** multiple accounts, custom bank names and SMS sender IDs, transaction history, search and filters.
+- **Analytics:** weekly, monthly and yearly spending views, categories, and top merchants inferred from bank messages.
+- **Shop:** products, quantities, stock purchases, sales, expenses, profit, customer debt and debt payments.
+- **English and Amharic:** switch in Settings; your choice is remembered offline. Amharic uses the bundled Nokia Pure font.
+- **Security:** biometric app lock and configurable automatic locking.
 
-## ✨ Features
+## Using Shop
 
-- **Automated Tracking**: Extracts transaction data from SMS messages sent by your bank.
-- **100% Offline & Private**: All parsing, processing, and storage happens locally on your device. No cloud sync, no internet required.
-- **Biometric Security**: Keep your financial data safe with native biometric authentication and customizable auto-lock timeouts.
-- **Multi-Bank Support**: Works seamlessly with multiple banks. Easily add custom banks and SMS sender rules.
-- **Beautiful UI**: Modern, sleek, dark-themed interface built with a premium touch.
-- **Detailed Analytics**: Visualize your spending habits and account balances over time.
-- **Shop Ledger**: Record products, opening stock, restocks, multi-item sales, running expenses, customer credit, and repayments. See daily/monthly profit, collections, and outstanding balances. Shop records stay in a separate local database and survive SMS resyncs.
+Open **Shop** from the bottom navigation. The **How to use Shop** guide explains the workflow in either language.
 
----
+1. **Add a product.** Enter its name, how you count it, the quantity already on your shelf, and the buying and selling prices for one item.
+2. **Record a sale.** Choose the items and quantities, then enter what the customer paid. Leave the payment field blank for full payment, or enter `0` if nothing was paid. Select a customer whenever money is still owed.
+3. **Buy stock.** Record additional items purchased for resale. This increases stock and updates the average buying price.
+4. **Add an expense.** Record shop running costs such as rent, transport, wages or bills.
+5. **Record a debt payment.** Open Customers, choose the customer and unpaid sale, then enter their payment.
 
-## 📸 Screenshots
+**Daily totals** shows profit or loss, money received, and what customers owe. You can select today, this month or all time.
 
-*(Add screenshots of your beautiful UI here)*
-> E.g., Dashboard, Lock Screen, Analytics, Settings.
+| Total | What it means |
+| --- | --- |
+| Profit / loss | Sales minus the purchase cost of the items sold and shop expenses. Includes sales customers have not paid for yet. |
+| Money received | Sale payments and debt payments received in the selected period. |
+| Customers owe | All unpaid customer sales, regardless of the selected period. |
 
----
+For example, buying an item for **100 ETB** and selling it for **150 ETB** earns **50 ETB** before shop expenses. If the customer pays later, the sale still contributes to profit; their later payment increases money received without counting the sale twice.
 
-## 🚀 Getting Started
+Stock purchases reduce profit as the items sell. Record them through **Buy stock** to avoid also counting them as running expenses. Quantities use whole numbers; ETB amounts support two decimal places.
 
-### Prerequisites
+Shop has its own SQLite database, works without SMS permission, and survives bank SMS resyncs. Shop records are entered manually and are not automatically matched to bank transactions. See [Shop documentation](docs/shop-feature.md).
 
-- Node.js `^22.11.0`
-- React Native CLI
-- Android Studio & SDK (for Android development)
+## Language settings
 
-### Installation
+Go to **Settings → Language** and choose **English** or **አማርኛ**. Navigation, onboarding, wallet, analytics, settings and Shop update immediately, and the selection is restored after reopening.
 
-1. **Clone the repository:**
-   ```sh
-   git clone <repository_url>
-   cd HisabApp
-   ```
+Names, account numbers and original SMS contents stay as entered or received. Dates and amounts follow the selected language; this does not switch to the Ethiopian calendar. Android-owned permission dialogs follow the device language. See [language support](docs/languages.md) for implementation and translation maintenance.
 
-2. **Install dependencies:**
-   ```sh
-   npm install
-   ```
+## Development
 
-3. **Start the Metro Bundler:**
-   ```sh
-   npm start
-   ```
+### Requirements
 
-4. **Run the Application:**
-   Open a new terminal window and run:
-   ```sh
-   npm run android
-   ```
-   *(iOS support requires CocoaPods and Xcode setup)*
+- Node.js **22.11.0 or newer**
+- Android Studio, Android SDK and a compatible Java environment
+- An Android device or emulator
+- Python 3 for the SQLite integration tests
 
----
+### Run locally
 
-## 🛠️ Tech Stack
-
-- **Framework**: [React Native](https://reactnative.dev)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database**: `react-native-sqlite-storage`
-- **Security**: `react-native-biometrics`
-- **Styling**: `react-native-linear-gradient` & `react-native-svg`
-
-### Shop ledger checks
-
-Run `npx jest __tests__/shopUtils.test.ts __tests__/shopDatabase.test.ts __tests__/ShopScreen.test.tsx --runInBand`. The database integration test uses Python 3's built-in SQLite to execute the real queries while replacing only the Android bridge.
-
-The first Shop version records whole units (pieces, packs, bottles, etc.) and ETB amounts with two decimal places. Profit uses sale-time product costs and recorded operating expenses. Collections include repayments; outstanding customer debt is always shown across all time.
-
----
-
-## 🏗️ Project Architecture
-
-```mermaid
-graph TD;
-    A[SMS Receiver] -->|Raw Message| B(Parser Service);
-    B -->|Transaction Data| C{SQLite Storage};
-    C -->|State| D[React Native UI];
-    D --> E(Dashboard);
-    D --> F(Analytics);
-    D --> G(Settings);
+```sh
+git clone https://github.com/dan-seng/balance-tracker.git
+cd balance-tracker
+npm install
+npm start
 ```
 
-### Key Modules
+In another terminal:
 
-- **`/src/db`**: Local SQLite database setup, queries, and migrations.
-- **`/src/parsers`**: Logic for parsing bank SMS formats into structured `Transaction` models.
-- **`/src/screens`**: React components representing the app's views.
-- **`/src/models`**: TypeScript interfaces defining the core data structures (e.g., `Account`, `Transaction`).
+```sh
+npm run android
+```
 
----
+The Android build includes ARM phone and Intel emulator architectures. To build a debug APK specifically for an x86_64 emulator:
 
-## 🛡️ Privacy & Permissions
+```sh
+cd android
+./gradlew app:assembleDebug -PreactNativeArchitectures=x86_64
+```
 
-This app requires the following permissions to function:
-- `READ_SMS` & `RECEIVE_SMS`: Necessary to automatically track incoming bank transactions. 
-*(No SMS data ever leaves your device).*
+Bank imports require real bank SMS and SMS permissions. You can use Shop on an emulator without bank messages.
 
----
+### Checks
 
-## 🛣️ Roadmap
+```sh
+npx tsc --noEmit
+npm test -- --runInBand
+npm run lint
+```
 
-- [x] Basic UI screens (Dashboard, Bank Detail)
-- [x] SMS Integration & Local Storage
-- [x] Automated parsing and balance calculation
-- [x] Biometric lock implementation
-- [ ] iOS Support (SMS parsing via alternative means if possible)
-- [ ] Export to CSV/PDF
-- [ ] Budgeting and categorization
+The current test suite has **17 tests** covering shop accounting and SQLite persistence, partial payments, sale drafts, first-product setup, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
 
----
+Android emulator checks also verified startup, persisted Amharic selection, Nokia Pure rendering and the Shop guide. TypeScript, all tests and lint for changed files passed; the full-repository lint command may report existing issues in other files.
 
-<div align="center">
-  <i>Built with ❤️ using React Native</i>
-</div>
+## Architecture
 
-### Languages
+```mermaid
+graph TD
+    SMS[Bank SMS] --> Parser[SMS parsers]
+    Parser --> BankDB[HisabApp.db]
+    BankDB --> Wallet[Wallet and analytics]
+    Manual[Manual shop entries] --> ShopDB[HisabShop.db]
+    ShopDB --> Shop[Shop notebook]
+    Settings[Settings] --> BankDB
+    Settings --> Language[English / Amharic]
+    Language --> UI[Shared text and app screens]
+```
 
-Choose **English** or **አማርኛ** in **Settings → Language**. The entire interface, including Shop, switches immediately and remembers your choice offline. See [language support](docs/languages.md) for coverage and translation maintenance.
+| Module | Responsibility |
+| --- | --- |
+| `src/screens` | Wallet, analytics, Shop, settings, onboarding and lock screens |
+| `src/components` | Shared controls, bank cards, transaction sheets and text rendering |
+| `src/db` | Local SQLite storage for bank data, settings and Shop records |
+| `src/parsers` | Bank SMS parsing into account and transaction data |
+| `src/i18n` | Language selection and Amharic translations |
+| `src/utils` | Balances, spending insights and shop accounting |
+| `src/models` | Typed account, transaction and shop records |
+
+Built with React Native, TypeScript, `react-native-sqlite-storage`, `react-native-biometrics`, `react-native-svg` and `react-native-linear-gradient`.
+
+## Privacy and permissions
+
+`READ_SMS` and `RECEIVE_SMS` enable bank-message imports and incoming transaction tracking. SMS data stays on the device. **Shop does not need these permissions.**
+
+## Future work
+
+Export and backup, returns and stock adjustments, fractional quantities, supplier credit, taxes and multi-shop support are not implemented in the current Shop version. iOS support would require a different approach to bank-message imports.
