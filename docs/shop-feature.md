@@ -50,3 +50,9 @@ Daily-ledger composition A is approved and implemented. Supplier credit, taxes, 
 All 12 Jest tests pass, including the database lifecycle, accounting, inline customer creation while keeping a sale draft, and access to Shop when SMS permission is declined. TypeScript and lint for the changed application/test files pass. SQLite promise configuration is shared once across the bank and shop databases. Finishing source-review fixes are applied.
 
 Native layout screenshots and a completed APK build remain unverified: emulator inspection and the follow-up debug-build authorization were declined. Generated previews are design references rather than runtime screenshots.
+
+## Plain-language Shop interface
+
+The Shop screen now calls its overview **Daily totals** and its stock tab **Products**. **Buy stock** adds purchased items; **Add expense** records running costs. **Money received** includes sale payments and debt payments, while **Customers owe** shows all unpaid sales. Negative profit is explicitly labelled **Loss**.
+
+A collapsible **How to use Shop** guide explains the four steps and gives a 100 ETB purchase / 150 ETB sale example. New shops have a direct **Add your first product** starting point. Forms ask practical questions about quantities, buying/selling prices and money paid. These changes are available in English and Amharic without changing accounting or saved records.

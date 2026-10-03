@@ -148,3 +148,7 @@ This app requires the following permissions to function:
 <div align="center">
   <i>Built with ❤️ using React Native</i>
 </div>
+
+### Languages
+
+Choose **English** or **አማርኛ** in **Settings → Language**. The entire interface, including Shop, switches immediately and remembers your choice offline. See [language support](docs/languages.md) for coverage and translation maintenance.

@@ -20,3 +20,5 @@ Entry flows: products and opening stock, restock, multi-item sales, expenses, in
 Review: source finishing review completed; explicit period chooser, customer amount width, inline customer creation and scope documentation fixes applied. Design system documented from final source. Detector findings: none.
 
 Verification: all 12 Jest tests pass, including actual SQLite query lifecycle and sale-draft interaction; TypeScript and changed-file ESLint pass. Native screenshots and final APK build were not completed after emulator inspection and follow-up build authorization were declined.
+
+Comprehension refinement: Daily totals / Products / Customers navigation, Buy stock action, question-based form labels, optional four-step help, first-product entry action, explicit Loss label and clearer distinction between profit, money received and customer debt. Both languages share the same flows; Amharic uses bundled Nokia Pure. Android layouts and guide expansion inspected; all 17 tests and TypeScript pass.
