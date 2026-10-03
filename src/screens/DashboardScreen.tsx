@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n';
+import { t, useLanguage } from '../i18n';
 import { StyleSheet, View, Pressable, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText as Text } from '../components/AppText';
@@ -8,7 +10,9 @@ import LinearGradient from 'react-native-linear-gradient';
 
 import { theme } from '../theme';
 
-type LGProps = ComponentProps<typeof LinearGradient> & { type?: 'linear' | 'radial' };
+type LGProps = ComponentProps<typeof LinearGradient> & {
+  type?: 'linear' | 'radial';
+};
 const RadialGradient = LinearGradient as unknown as ComponentType<LGProps>;
 
 const EyeIcon = ({ size = 16, color = "rgba(235,235,245,0.60)" }) => (
@@ -70,7 +74,12 @@ type DashboardScreenProps = {
   accountBalanceHidden: Record<string, boolean>;
   onToggleAccountBalanceHidden: (accountId: string) => void;
   userTitle: string | null;
-  customBanks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>;
+  customBanks: Array<{
+    bankId: string;
+    bankName: string;
+    senderId: string;
+    logoBase64: string | null;
+  }>;
 };
 
 const GOLD = theme.colors.iosSurface;
@@ -87,10 +96,14 @@ export function DashboardScreen({
   userTitle,
   customBanks,
 }: DashboardScreenProps) {
+  const language = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [sheetAccount, setSheetAccount] = useState<Account | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [morph, setMorph] = useState<{ account: Account; fromRect: ChipRect | null } | null>(null);
+  const [morph, setMorph] = useState<{
+    account: Account;
+    fromRect: ChipRect | null;
+  } | null>(null);
   const chipRefs = useRef<Record<string, View | null>>({});
   const scrollY = useRef(new Animated.Value(0)).current;
   const [isScrolled, setIsScrolled] = useState(false);
@@ -127,12 +140,17 @@ export function DashboardScreen({
       useNativeDriver: true,
       listener: (event: { nativeEvent: { contentOffset: { y: number } } }) => {
         const y = event.nativeEvent.contentOffset.y;
-        setIsScrolled(prev => (y > 6 ? (prev ? prev : true) : prev ? false : prev));
+        setIsScrolled(prev =>
+          y > 6 ? (prev ? prev : true) : prev ? false : prev,
+        );
       },
     },
   );
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.currentBalance, 0);
+  const totalBalance = accounts.reduce(
+    (sum, account) => sum + account.currentBalance,
+    0,
+  );
   const credits = transactions
     .filter(item => item.type === 'credit')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -142,8 +160,8 @@ export function DashboardScreen({
 
   const filteredAccounts = useMemo(() => {
     const txCountMap = new Map<string, number>();
-    for (const t of transactions) {
-      txCountMap.set(t.accountId, (txCountMap.get(t.accountId) ?? 0) + 1);
+    for (const item of transactions) {
+      txCountMap.set(item.accountId, (txCountMap.get(item.accountId) ?? 0) + 1);
     }
     return accounts
       .filter(account => {
@@ -155,7 +173,9 @@ export function DashboardScreen({
           account.currentBalance.toString().includes(query)
         );
       })
-      .sort((a, b) => (txCountMap.get(b.id) ?? 0) - (txCountMap.get(a.id) ?? 0));
+      .sort(
+        (a, b) => (txCountMap.get(b.id) ?? 0) - (txCountMap.get(a.id) ?? 0),
+      );
   }, [accounts, transactions, searchQuery]);
 
   const sheetTransactions = useMemo(() => {
@@ -200,15 +220,26 @@ export function DashboardScreen({
     }
   };
 
-  const ownerLine = [userTitle, userName].filter(Boolean).join(' ') || userName;
+  const ownerLine =
+    [userTitle ? t(userTitle) : userTitle, userName]
+      .filter(Boolean)
+      .join(' ') || userName;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={[styles.navbar, isScrolled && styles.navbarScrolled]}>
         <View pointerEvents="none" style={styles.navTitleCenter}>
           <Animated.Text
-            style={[styles.navTitle, { opacity: navTitleOpacity, transform: [{ translateY: navTitleTy }] }]}>
-            Accounts
+            style={[
+              styles.navTitle,
+              language === 'am' && styles.amharicTitle,
+              {
+                opacity: navTitleOpacity,
+                transform: [{ translateY: navTitleTy }],
+              },
+            ]}
+          >
+            {t('Accounts')}
           </Animated.Text>
         </View>
         <LinearGradient
@@ -237,170 +268,188 @@ export function DashboardScreen({
                   { scale: largeTitleScale },
                 ],
               },
-            ]}>
-            <Text style={styles.largeTitle}>Accounts</Text>
+            ]}
+          >
+            <Text style={styles.largeTitle}>{t('Accounts')}</Text>
           </Animated.View>
 
           <View style={styles.greetRow}>
-        <View style={styles.lines}>
-          <Text style={styles.eyebrow}>Welcome back</Text>
-          <Text style={styles.name}>Hello, {userName}</Text>
-        </View>
-        <View style={styles.actions}>
-          <SearchBar onSearch={setSearchQuery} />
-        </View>
-      </View>
-
-        <View style={styles.balanceCard}>
-          <LinearGradient
-            colors={[GOLD.goldHighlight, GOLD.goldMid, GOLD.goldDeep]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.balanceGradient}
-          />
-
-          <View pointerEvents="none" style={[styles.blob, styles.blobTop]}>
-            <RadialGradient
-              type="radial"
-              colors={['rgba(216, 180, 92, 0.32)', 'rgba(216, 180, 92, 0)']}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-          <View pointerEvents="none" style={[styles.blob, styles.blobBottom]}>
-            <RadialGradient
-              type="radial"
-              colors={['rgba(216, 180, 92, 0.16)', 'rgba(216, 180, 92, 0)']}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-
-          <View pointerEvents="none" style={styles.goldBorder} />
-
-          <View style={styles.row1}>
-            <View style={styles.heroLabel}>
-              <WalletIcon size={13} />
-              <Text style={styles.balanceLabel}>Total combined balance</Text>
-            </View>
-            <View style={styles.badges}>
-              <View style={styles.pillCount}>
-                <BankIcon size={12} />
-                <Text style={styles.pillCountText}>{accounts.length}</Text>
-              </View>
-              <Pressable
-                onPress={onToggleBalanceHidden}
-                hitSlop={6}
-                style={styles.eyeToggle}
-                accessibilityRole="button"
-                accessibilityLabel={isBalanceHidden ? 'Show balances' : 'Hide balances'}>
-                {isBalanceHidden ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={styles.balanceRow}>
-            {isBalanceHidden ? (
-              <Text style={[styles.balanceValue, styles.balanceValueHidden]}>
-                {totalBalance.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+            <View style={styles.lines}>
+              <Text style={styles.eyebrow}>{t('Welcome back')}</Text>
+              <Text style={styles.name}>
+                {t('Hello,')} {userName}
               </Text>
-            ) : (
-              <CountUpNumber
-                value={totalBalance}
-                decimals={2}
-                style={styles.balanceValue}
-              />
-            )}
-            <Text style={styles.unit}>ETB</Text>
-          </View>
-
-          <View style={styles.row2}>
-            <Text style={styles.ownerName}>{ownerLine.toUpperCase()}</Text>
-            <Text style={styles.amharicLogo}>ሂሳብ</Text>
-          </View>
-        </View>
-
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, styles.statIconCredit]}>
-              <ArrowIcon size={13} />
             </View>
-            <View style={styles.statBody}>
-              <Text style={styles.statLabel}>Income</Text>
-              <CountUpNumber
-                value={credits}
-                decimals={2}
-                style={styles.statValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.6}
-                formatter={value =>
-                  `ETB ${value.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`
-                }
-              />
+            <View style={styles.actions}>
+              <SearchBar onSearch={setSearchQuery} />
             </View>
           </View>
 
-          <View style={styles.statCard}>
-            <View style={[styles.statIcon, styles.statIconDebit]}>
-              <ArrowDownIcon size={13} />
-            </View>
-            <View style={styles.statBody}>
-              <Text style={styles.statLabel}>Spent</Text>
-              <CountUpNumber
-                value={debits}
-                decimals={2}
-                style={styles.statValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.6}
-                formatter={value =>
-                  `ETB ${value.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}`
-                }
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Bank accounts</Text>
-          <Text style={styles.sectionHint}>
-            {filteredAccounts.length} {filteredAccounts.length === 1 ? 'bank' : 'banks'}
-          </Text>
-        </View>
-
-        <View style={styles.grid}>
-          {filteredAccounts.map(account => (
-            <BankChip
-              key={account.id}
-              ref={node => {
-                if (node) {
-                  chipRefs.current[account.id] = node;
-                } else {
-                  delete chipRefs.current[account.id];
-                }
-              }}
-              account={account}
-              customBankLogo={customBanks.find(b => b.bankId === account.bankId)?.logoBase64}
-              onPress={() => handleChipPress(account)}
+          <View style={styles.balanceCard}>
+            <LinearGradient
+              colors={[GOLD.goldHighlight, GOLD.goldMid, GOLD.goldDeep]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.balanceGradient}
             />
-          ))}
+
+            <View pointerEvents="none" style={[styles.blob, styles.blobTop]}>
+              <RadialGradient
+                type="radial"
+                colors={['rgba(216, 180, 92, 0.32)', 'rgba(216, 180, 92, 0)']}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+            <View pointerEvents="none" style={[styles.blob, styles.blobBottom]}>
+              <RadialGradient
+                type="radial"
+                colors={['rgba(216, 180, 92, 0.16)', 'rgba(216, 180, 92, 0)']}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+
+            <View pointerEvents="none" style={styles.goldBorder} />
+
+            <View style={styles.row1}>
+              <View style={styles.heroLabel}>
+                <WalletIcon size={13} />
+                <Text style={styles.balanceLabel}>
+                  {t('Total combined balance')}
+                </Text>
+              </View>
+              <View style={styles.badges}>
+                <View style={styles.pillCount}>
+                  <BankIcon size={12} />
+                  <Text style={styles.pillCountText}>{accounts.length}</Text>
+                </View>
+                <Pressable
+                  onPress={onToggleBalanceHidden}
+                  hitSlop={6}
+                  style={styles.eyeToggle}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isBalanceHidden ? t('Show balances') : t('Hide balances')
+                  }
+                >
+                  {isBalanceHidden ? (
+                    <EyeOffIcon size={15} />
+                  ) : (
+                    <EyeIcon size={15} />
+                  )}
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.balanceRow}>
+              {isBalanceHidden ? (
+                <Text style={[styles.balanceValue, styles.balanceValueHidden]}>
+                  {totalBalance.toLocaleString(getLocale(), {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              ) : (
+                <CountUpNumber
+                  value={totalBalance}
+                  decimals={2}
+                  style={styles.balanceValue}
+                />
+              )}
+              <Text style={styles.unit}>{t('ETB')}</Text>
+            </View>
+
+            <View style={styles.row2}>
+              <Text style={styles.ownerName}>{ownerLine.toUpperCase()}</Text>
+              <Text style={styles.amharicLogo}>ሂሳብ</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, styles.statIconCredit]}>
+                <ArrowIcon size={13} />
+              </View>
+              <View style={styles.statBody}>
+                <Text style={styles.statLabel}>{t('Income')}</Text>
+                <CountUpNumber
+                  value={credits}
+                  decimals={2}
+                  style={styles.statValue}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                  formatter={value =>
+                    `${t('ETB')} ${value.toLocaleString(getLocale(), {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`
+                  }
+                />
+              </View>
+            </View>
+
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, styles.statIconDebit]}>
+                <ArrowDownIcon size={13} />
+              </View>
+              <View style={styles.statBody}>
+                <Text style={styles.statLabel}>{t('Spent')}</Text>
+                <CountUpNumber
+                  value={debits}
+                  decimals={2}
+                  style={styles.statValue}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}
+                  formatter={value =>
+                    `${t('ETB')} ${value.toLocaleString(getLocale(), {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`
+                  }
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('Bank accounts')}</Text>
+            <Text style={styles.sectionHint}>
+              {filteredAccounts.length}{' '}
+              {filteredAccounts.length === 1 ? t('bank') : t('banks')}
+            </Text>
+          </View>
+
+          <View style={styles.grid}>
+            {filteredAccounts.map(account => (
+              <BankChip
+                key={account.id}
+                ref={node => {
+                  if (node) {
+                    chipRefs.current[account.id] = node;
+                  } else {
+                    delete chipRefs.current[account.id];
+                  }
+                }}
+                account={account}
+                customBankLogo={
+                  customBanks.find(b => b.bankId === account.bankId)?.logoBase64
+                }
+                onPress={() => handleChipPress(account)}
+              />
+            ))}
+          </View>
         </View>
-      </View>
       </Animated.ScrollView>
 
       <BankCardMorph
         account={morph?.account ?? null}
         fromRect={morph?.fromRect ?? null}
         transactionCount={
-          morph ? transactions.filter(t => t.accountId === morph.account.id).length : 0
+          morph
+            ? transactions.filter(item => item.accountId === morph.account.id)
+                .length
+            : 0
         }
         isBalanceHidden={!!(morph && accountBalanceHidden[morph.account.id])}
         onToggleBalanceHidden={() => {
@@ -423,6 +472,7 @@ export function DashboardScreen({
 }
 
 const styles = StyleSheet.create({
+  amharicTitle: { fontFamily: 'nokiapure', letterSpacing: 0 },
   safeArea: {
     flex: 1,
     backgroundColor: '#000000ff',

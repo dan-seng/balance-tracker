@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -143,7 +144,7 @@ export function BankCardMorph({
             style={StyleSheet.absoluteFill}
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Dismiss bank card"
+            accessibilityLabel={t('Dismiss bank card')}
           />
         </Animated.View>
 
@@ -176,13 +177,18 @@ export function BankCardMorph({
         )}
 
         <Animated.View
-          style={[styles.closeBtn, { top: CARD_Y - 42, opacity: chromeOpacity }]}>
+          style={[
+            styles.closeBtn,
+            { top: CARD_Y - 42, opacity: chromeOpacity },
+          ]}
+        >
           <Pressable
             onPress={onClose}
             hitSlop={12}
             style={styles.closeBtnInner}
             accessibilityRole="button"
-            accessibilityLabel="Close bank card">
+            accessibilityLabel={t('Close bank card')}
+          >
             <Svg
               width={14}
               height={14}
@@ -198,8 +204,14 @@ export function BankCardMorph({
         </Animated.View>
 
         <Animated.View
-          style={[styles.hint, { top: CARD_Y + CARD_H + 20, opacity: chromeOpacity }]}>
-          <Text style={styles.hintText}>Tap the card to view transactions</Text>
+          style={[
+            styles.hint,
+            { top: CARD_Y + CARD_H + 20, opacity: chromeOpacity },
+          ]}
+        >
+          <Text style={styles.hintText}>
+            {t('Tap the card to view transactions')}
+          </Text>
         </Animated.View>
       </View>
     </Modal>

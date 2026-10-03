@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n';
+import { t } from '../i18n';
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -413,7 +415,7 @@ function DotRow() {
 }
 
 const formatMoney = (value: number) =>
-  value.toLocaleString(undefined, {
+  value.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -432,10 +434,8 @@ export function BankCard({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        pressed && styles.cardPressed,
-      ]}>
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+    >
       <LinearGradient
         colors={[theme.color1, theme.color2]}
         start={{ x: 0, y: 0 }}
@@ -457,7 +457,7 @@ export function BankCard({
           </View>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
-              {transactionCount} TXNS
+              {transactionCount} {t('TXNS')}{' '}
             </Text>
           </View>
         </View>
@@ -467,21 +467,15 @@ export function BankCard({
         <View style={styles.bottomRow}>
           <View>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceLabel}>Balance</Text>
-              <Pressable
-                onPress={onToggleBalanceHidden}
-                hitSlop={10}>
-                {isBalanceHidden ? (
-                  <EyeOffIcon />
-                ) : (
-                  <EyeIcon />
-                )}
+              <Text style={styles.balanceLabel}>{t('Balance')}</Text>
+              <Pressable onPress={onToggleBalanceHidden} hitSlop={10}>
+                {isBalanceHidden ? <EyeOffIcon /> : <EyeIcon />}
               </Pressable>
             </View>
             <Text style={styles.balanceValue}>
               {isBalanceHidden
                 ? '••••••••'
-                : `ETB ${formatMoney(account.currentBalance)}`}
+                : `${t('ETB')} ${formatMoney(account.currentBalance)}`}
             </Text>
           </View>
 

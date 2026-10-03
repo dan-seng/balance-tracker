@@ -1,3 +1,4 @@
+import { getLocale } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleProp, TextStyle } from 'react-native';
 
@@ -67,7 +68,7 @@ export function CountUpNumber({
       minimumFontScale={minimumFontScale}>
       {formatter
         ? formatter(rounded)
-        : rounded.toLocaleString(undefined, {
+        : rounded.toLocaleString(getLocale(), {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals,
           })}
