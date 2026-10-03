@@ -1,6 +1,15 @@
+import { t, useLanguage, setLanguage, Language } from '../i18n';
+import { setAppLanguageInDb } from '../db';
+import { Alert } from 'react-native';
 import { useState } from 'react';
-import { StyleSheet, View, Pressable, Modal, Switch, TextInput } from 'react-native';
-import { AppText as Text } from '../components/AppText';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  Modal,
+  Switch,
+} from 'react-native';
+import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
 import { Screen } from '../components/Screen';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
@@ -61,8 +70,17 @@ type SettingsScreenProps = {
   onToggleLock: () => Promise<void>;
   autoLockTimeout: number;
   onAutoLockTimeoutChange: (minutes: number) => void;
-  customBanks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>;
-  onAddCustomBank: (bankName: string, senderId: string, logoBase64: string | null) => Promise<void>;
+  customBanks: Array<{
+    bankId: string;
+    bankName: string;
+    senderId: string;
+    logoBase64: string | null;
+  }>;
+  onAddCustomBank: (
+    bankName: string,
+    senderId: string,
+    logoBase64: string | null,
+  ) => Promise<void>;
   onDeleteCustomBank: (bankId: string) => Promise<void>;
   accounts: Array<{
     id: string;
@@ -88,6 +106,20 @@ export function SettingsScreen({
   onAddCustomBank: _onAddCustomBank,
   onDeleteCustomBank,
 }: SettingsScreenProps) {
+  const language = useLanguage();
+  const [savingLanguage, setSavingLanguage] = useState(false);
+  const changeLanguage = async (next: Language) => {
+    if (savingLanguage || next === language) return;
+    setSavingLanguage(true);
+    try {
+      await setAppLanguageInDb(next);
+      setLanguage(next);
+    } catch {
+      Alert.alert(t('Error'), t('Could not save your language. Try again.'));
+    } finally {
+      setSavingLanguage(false);
+    }
+  };
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState(userName);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
@@ -100,41 +132,41 @@ export function SettingsScreen({
   };
 
   const timeoutOptions = [
-    { label: 'Immediately', value: 0 },
-    { label: '1 minute', value: 1 },
-    { label: '5 minutes', value: 5 },
-    { label: '15 minutes', value: 15 },
-    { label: '30 minutes', value: 30 },
-    { label: 'Never', value: -1 },
+    { label: t('Immediately'), value: 0 },
+    { label: t('1 minute'), value: 1 },
+    { label: t('5 minutes'), value: 5 },
+    { label: t('15 minutes'), value: 15 },
+    { label: t('30 minutes'), value: 30 },
+    { label: t('Never'), value: -1 },
   ];
 
   const timeoutValue =
     autoLockTimeout === -1
-      ? 'Never'
+      ? t('Never')
       : autoLockTimeout === 0
-        ? 'Immediately'
-        : `${autoLockTimeout} min`;
+      ? t('Immediately')
+      : t('{minutes} min', { minutes: autoLockTimeout });
 
   return (
     <Screen scrollable>
       <View style={styles.container}>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{t('Settings')}</Text>
 
-        <Text style={styles.groupHeader}>Profile</Text>
+        <Text style={styles.groupHeader}>{t('Profile')}</Text>
         <View style={styles.group}>
           <View style={styles.row}>
             <View style={[styles.icon, styles.iconProfile]}>
               <UserIcon />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Your Name</Text>
+              <Text style={styles.rowLabel}>{t('Your Name')}</Text>
               {isEditingName ? (
                 <TextInput
                   style={styles.nameInput}
                   value={newName}
                   onChangeText={setNewName}
                   onSubmitEditing={handleNameSave}
-                  placeholder="Name"
+                  placeholder={t('Name')}
                   placeholderTextColor={LABEL3}
                   autoFocus
                   autoCapitalize="words"
@@ -154,24 +186,57 @@ export function SettingsScreen({
                   setIsEditingName(true);
                   setNewName(userName);
                 }
-              }}>
-              <Text style={styles.linkText}>{isEditingName ? 'Save' : 'Edit'}</Text>
+              }}
+            >
+              <Text style={styles.linkText}>
+                {isEditingName ? t('Save') : t('Edit')}
+              </Text>
             </Pressable>
           </View>
         </View>
 
-        <Text style={styles.groupHeader}>Security</Text>
+        <Text style={styles.groupHeader}>{t('Language')}</Text>
+        <View style={styles.group}>
+          <Text style={styles.languageHint}>
+            {t('Choose your app language')}
+          </Text>
+          {(['en', 'am'] as const).map((value, index) => (
+            <Pressable
+              key={value}
+              accessibilityRole="radio"
+              accessibilityLabel={value === 'am' ? 'አማርኛ' : 'English'}
+              accessibilityState={{
+                checked: language === value,
+                disabled: savingLanguage,
+              }}
+              disabled={savingLanguage}
+              onPress={() => changeLanguage(value)}
+              style={[
+                styles.row,
+                styles.languageRow,
+                index === 0 && styles.rowBorder,
+              ]}
+            >
+              <Text style={[styles.rowLabel, styles.languageLabel]}>
+                {value === 'am' ? 'አማርኛ' : 'English'}
+              </Text>
+              {language === value && <Text style={styles.linkText}>✓</Text>}
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.groupHeader}>{t('Security')}</Text>
         <View style={styles.group}>
           <View style={styles.row}>
             <View style={[styles.icon, { backgroundColor: GREEN }]}>
               <LockIcon />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>App Lock</Text>
-              <Text style={styles.rowDescription} numberOfLines={1}>
+              <Text style={styles.rowLabel}>{t('App Lock')}</Text>
+              <Text style={styles.rowDescription}>
                 {isAppLocked
-                  ? 'Enabled — requires biometric to open'
-                  : 'Disabled'}
+                  ? t('Enabled — requires biometric to open')
+                  : t('Disabled')}
               </Text>
             </View>
             <Switch
@@ -192,9 +257,9 @@ export function SettingsScreen({
               <TimerIcon />
             </View>
             <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>Auto-lock timeout</Text>
+              <Text style={styles.rowLabel}>{t('Auto-lock timeout')}</Text>
               <Text style={styles.rowDescription} numberOfLines={1}>
-                Lock after inactivity
+                {t('Lock after inactivity')}
               </Text>
             </View>
             <Text style={styles.rowValue}>{timeoutValue}</Text>
@@ -202,13 +267,13 @@ export function SettingsScreen({
           </Pressable>
         </View>
 
-        <Text style={styles.groupHeader}>Custom Banks</Text>
+        <Text style={styles.groupHeader}>{t('Custom Banks')}</Text>
         <View style={styles.group}>
           {customBanks.length === 0 ? (
             <View style={styles.row}>
               <View style={styles.rowBody}>
                 <Text style={styles.rowDescription}>
-                  No custom banks added yet.
+                  {t('No custom banks added yet.')}
                 </Text>
               </View>
             </View>
@@ -228,13 +293,16 @@ export function SettingsScreen({
                     {bank.bankName}
                   </Text>
                   <Text style={styles.rowDescription} numberOfLines={1}>
-                    Sender: {bank.senderId}
+                    {t('Sender:')} {bank.senderId}
                   </Text>
                 </View>
                 <Pressable
                   hitSlop={12}
                   onPress={() => onDeleteCustomBank(bank.bankId)}
-                  accessibilityLabel={`Delete ${bank.bankName}`}>
+                  accessibilityLabel={t('Delete {name}', {
+                    name: bank.bankName,
+                  })}
+                >
                   <TrashIcon />
                 </Pressable>
               </View>
@@ -243,7 +311,9 @@ export function SettingsScreen({
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Version 1.0 · Developed by SPDY</Text>
+          <Text style={styles.footerText}>
+            {t('Version 1.0 · Developed by SPDY')}
+          </Text>
         </View>
       </View>
 
@@ -256,7 +326,7 @@ export function SettingsScreen({
           style={styles.modalOverlay}
           onPress={() => setShowTimeoutModal(false)}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Auto-Lock</Text>
+            <Text style={styles.modalTitle}>{t('Auto-Lock')}</Text>
             {timeoutOptions.map((option, index) => {
               const selected = autoLockTimeout === option.value;
               const isLast = index === timeoutOptions.length - 1;
@@ -268,10 +338,8 @@ export function SettingsScreen({
                     onAutoLockTimeoutChange(option.value);
                     setShowTimeoutModal(false);
                   }}
-                  style={[
-                    styles.modalItem,
-                    !isLast && styles.modalItemBorder,
-                  ]}>
+                  style={[styles.modalItem, !isLast && styles.modalItemBorder]}
+                >
                   <Text
                     style={[
                       styles.modalItemText,
@@ -291,6 +359,9 @@ export function SettingsScreen({
 }
 
 const styles = StyleSheet.create({
+  languageHint: { color: LABEL2, fontSize: 14, padding: 16 },
+  languageRow: { minHeight: 52 },
+  languageLabel: { flex: 1 },
   container: {
     flex: 1,
     paddingTop: 8,

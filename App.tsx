@@ -1,3 +1,5 @@
+import { t, useLanguage, setLanguage } from './src/i18n';
+import { getAppLanguageFromDb } from './src/db';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StatusBar, Alert, View, AppState, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -15,7 +17,30 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AddBankScreen } from './src/screens/AddBankScreen';
 import { ShopScreen } from './src/screens/ShopScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
-import { clearAllAccountsFromDb, clearAllTransactionsFromDb, getAccountsFromDb, getTransactionsFromDb, initDatabase, saveAccountToDb, saveTransactionToDb, transactionExistsInDb, updateAccountBalanceInDb, setUserNameInDb, getUserNameFromDb, setBalanceHiddenInDb, getBalanceHiddenFromDb, setUserTitleInDb, getUserTitleFromDb, saveCustomBankInDb, getCustomBanksFromDb, deleteCustomBankFromDb, setAppLockedInDb, getAppLockedFromDb, setAutoLockTimeoutInDb, getAutoLockTimeoutFromDb } from './src/db';
+import {
+  clearAllAccountsFromDb,
+  clearAllTransactionsFromDb,
+  getAccountsFromDb,
+  getTransactionsFromDb,
+  initDatabase,
+  saveAccountToDb,
+  saveTransactionToDb,
+  transactionExistsInDb,
+  updateAccountBalanceInDb,
+  setUserNameInDb,
+  getUserNameFromDb,
+  setBalanceHiddenInDb,
+  getBalanceHiddenFromDb,
+  setUserTitleInDb,
+  getUserTitleFromDb,
+  saveCustomBankInDb,
+  getCustomBanksFromDb,
+  deleteCustomBankFromDb,
+  setAppLockedInDb,
+  getAppLockedFromDb,
+  setAutoLockTimeoutInDb,
+  getAutoLockTimeoutFromDb,
+} from './src/db';
 import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
 import { setCustomBanks as setCustomBanksInParser } from './src/parsers/genericParser';
@@ -104,6 +129,7 @@ function applyAccountIdentity(
 }
 
 function App() {
+  useLanguage();
   const [hasStarted, setHasStarted] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
@@ -119,7 +145,14 @@ function App() {
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [accountBalanceHidden, setAccountBalanceHidden] = useState<Record<string, boolean>>({});
   const [userTitle, setUserTitle] = useState<string | null>(null);
-  const [customBanks, setCustomBanks] = useState<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>>([]);
+  const [customBanks, setCustomBanks] = useState<
+    Array<{
+      bankId: string;
+      bankName: string;
+      senderId: string;
+      logoBase64: string | null;
+    }>
+  >([]);
   const accountsRef = useRef<Account[]>([]);
   const skipLockScreenRef = useRef(false);
   const hasSyncedRef = useRef(false);
@@ -141,8 +174,15 @@ function App() {
   }, [isAppLocked, hasStarted, userName, dbReady, isSyncing]);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active' && isAppLocked && hasStarted && userName && dbReady && !isSyncing) {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        nextAppState === 'active' &&
+        isAppLocked &&
+        hasStarted &&
+        userName &&
+        dbReady &&
+        !isSyncing
+      ) {
         // Check if auto-lock timeout has elapsed
         if (autoLockTimeout === -1) {
           // Never auto-lock, don't show lock screen on app return
@@ -162,13 +202,21 @@ function App() {
     });
 
     return () => subscription.remove();
-  }, [isAppLocked, hasStarted, userName, dbReady, isSyncing, autoLockTimeout, lastActiveTime]);
+  }, [
+    isAppLocked,
+    hasStarted,
+    userName,
+    dbReady,
+    isSyncing,
+    autoLockTimeout,
+    lastActiveTime,
+  ]);
 
   const handleUnlockWithBiometrics = async (): Promise<boolean> => {
     try {
       const result = await rnBiometrics.simplePrompt({
-        promptMessage: 'Authenticate to unlock Hisab',
-        cancelButtonText: 'Cancel',
+        promptMessage: t('Authenticate to unlock Hisab'),
+        cancelButtonText: t('Cancel'),
       });
 
       if (result.success) {
@@ -202,8 +250,8 @@ function App() {
       // Try to enable biometric authentication first
       try {
         const result = await rnBiometrics.simplePrompt({
-          promptMessage: 'Authenticate to enable app lock',
-          cancelButtonText: 'Cancel',
+          promptMessage: t('Authenticate to enable app lock'),
+          cancelButtonText: t('Cancel'),
         });
 
         if (result.success) {
@@ -213,8 +261,10 @@ function App() {
       } catch (error) {
         console.log('Failed to enable biometric lock:', error);
         Alert.alert(
-          'Authentication Failed',
-          'Could not enable app lock. Biometric authentication may not be available on this device.'
+          t('Authentication Failed'),
+          t(
+            'Could not enable app lock. Biometric authentication may not be available on this device.',
+          ),
         );
       }
     } else {
@@ -231,6 +281,7 @@ function App() {
   const initializeDatabase = async () => {
     try {
       await initDatabase();
+      setLanguage(await getAppLanguageFromDb());
       const savedName = await getUserNameFromDb();
       if (savedName) {
         setUserName(savedName);
@@ -261,7 +312,12 @@ function App() {
 
   const ensureCustomBankAccounts = useCallback(
     async (
-      banks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>,
+      banks: Array<{
+        bankId: string;
+        bankName: string;
+        senderId: string;
+        logoBase64: string | null;
+      }>,
       current: Account[],
     ): Promise<Account[]> => {
       let next = current;
@@ -287,13 +343,23 @@ function App() {
     [],
   );
 
-  const handleAddCustomBank = async (bankName: string, senderId: string, logoBase64: string | null) => {
+  const handleAddCustomBank = async (
+    bankName: string,
+    senderId: string,
+    logoBase64: string | null,
+  ) => {
     const bankId = `custom-${Date.now()}`;
     await saveCustomBankInDb(bankId, bankName, senderId, logoBase64);
-    const updatedBanks = [...customBanks, { bankId, bankName, senderId, logoBase64 }];
+    const updatedBanks = [
+      ...customBanks,
+      { bankId, bankName, senderId, logoBase64 },
+    ];
     setCustomBanks(updatedBanks);
 
-    const updatedAccounts = await ensureCustomBankAccounts(updatedBanks, accountsRef.current);
+    const updatedAccounts = await ensureCustomBankAccounts(
+      updatedBanks,
+      accountsRef.current,
+    );
     accountsRef.current = updatedAccounts;
     setAccounts(updatedAccounts);
   };
@@ -340,8 +406,8 @@ function App() {
 
       if (!granted) {
         Alert.alert(
-          'Permission Required',
-          'READ_SMS and RECEIVE_SMS are needed to import bank messages.',
+          t('Permission Required'),
+          t('READ_SMS and RECEIVE_SMS are needed to import bank messages.'),
         );
       }
     } catch (error) {
@@ -349,81 +415,91 @@ function App() {
     }
   }, []);
 
-  const ingestSmsMessages = useCallback(async (
-    smsMessages: Array<{ sender: string; message: string; timestamp: number; subId?: number | null }>,
-  ) => {
-    const currentAccounts = await getAccountsFromDb();
-    const orderedMessages = [...smsMessages].sort(
-      (left, right) => left.timestamp - right.timestamp,
-    );
+  const ingestSmsMessages = useCallback(
+    async (
+      smsMessages: Array<{
+        sender: string;
+        message: string;
+        timestamp: number;
+        subId?: number | null;
+      }>,
+    ) => {
+      const currentAccounts = await getAccountsFromDb();
+      const orderedMessages = [...smsMessages].sort(
+        (left, right) => left.timestamp - right.timestamp,
+      );
 
-    for (const sms of orderedMessages) {
-      const { sender, message, timestamp, subId } = sms;
-      const parsed = parseSms(message, sender);
-      if (!parsed || parsed.bankId === 'unknown') {
-        continue;
-      }
+      for (const sms of orderedMessages) {
+        const { sender, message, timestamp, subId } = sms;
+        const parsed = parseSms(message, sender);
+        if (!parsed || parsed.bankId === 'unknown') {
+          continue;
+        }
 
-      const hash = generateSmsHash(message, sender, timestamp);
-      const exists = await transactionExistsInDb(hash);
-      if (exists) {
-        continue;
-      }
+        const hash = generateSmsHash(message, sender, timestamp);
+        const exists = await transactionExistsInDb(hash);
+        if (exists) {
+          continue;
+        }
 
-      let account = findAccountForSms(currentAccounts, parsed, subId);
+        let account = findAccountForSms(currentAccounts, parsed, subId);
 
-      if (!account) {
-        const newAccount: Account = {
-          id: `${parsed.bankId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        if (!account) {
+          const newAccount: Account = {
+            id: `${parsed.bankId}-${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2, 8)}`,
+            bankId: parsed.bankId,
+            bankName: parsed.bankName,
+            accountNumber: toDisplayAccountNumber(parsed.accountNumberHint),
+            currentBalance: parsed.balance ?? 0,
+            currency: 'ETB',
+            lastUpdated: new Date(timestamp).toISOString(),
+            source: 'sms',
+            subId: subId != null ? subId : null,
+          };
+          account = newAccount;
+          await saveAccountToDb(newAccount);
+          currentAccounts.push(newAccount);
+        } else if (applyAccountIdentity(account, parsed, subId)) {
+          await saveAccountToDb(account);
+        }
+
+        let balanceAfter = parsed.balance;
+        if (balanceAfter == null) {
+          balanceAfter = calculateBalance(
+            account.currentBalance,
+            parsed.type,
+            parsed.amount,
+          );
+        }
+
+        await updateAccountBalanceInDb(account.id, balanceAfter);
+        account.currentBalance = balanceAfter;
+        account.lastUpdated = new Date(timestamp).toISOString();
+
+        const transaction: Transaction = {
+          id: `txn-${hash}`,
+          accountId: account.id,
           bankId: parsed.bankId,
           bankName: parsed.bankName,
-          accountNumber: toDisplayAccountNumber(parsed.accountNumberHint),
-          currentBalance: parsed.balance ?? 0,
-          currency: 'ETB',
-          lastUpdated: new Date(timestamp).toISOString(),
-          source: 'sms',
-          subId: subId != null ? subId : null,
+          type: parsed.type,
+          amount: parsed.amount,
+          balanceAfter,
+          date: new Date(timestamp).toISOString(),
+          rawSms: parsed.rawMessage,
+          hash,
+          currency: parsed.currency,
+          sender: parsed.sender,
         };
-        account = newAccount;
-        await saveAccountToDb(newAccount);
-        currentAccounts.push(newAccount);
-      } else if (applyAccountIdentity(account, parsed, subId)) {
-        await saveAccountToDb(account);
+
+        await saveTransactionToDb(transaction);
       }
 
-      let balanceAfter = parsed.balance;
-      if (balanceAfter == null) {
-        balanceAfter = calculateBalance(
-          account.currentBalance,
-          parsed.type,
-          parsed.amount,
-        );
-      }
-
-      await updateAccountBalanceInDb(account.id, balanceAfter);
-      account.currentBalance = balanceAfter;
-      account.lastUpdated = new Date(timestamp).toISOString();
-
-      const transaction: Transaction = {
-        id: `txn-${hash}`,
-        accountId: account.id,
-        bankId: parsed.bankId,
-        bankName: parsed.bankName,
-        type: parsed.type,
-        amount: parsed.amount,
-        balanceAfter,
-        date: new Date(timestamp).toISOString(),
-        rawSms: parsed.rawMessage,
-        hash,
-        currency: parsed.currency,
-        sender: parsed.sender,
-      };
-
-      await saveTransactionToDb(transaction);
-    }
-
-    return currentAccounts;
-  }, []);
+      return currentAccounts;
+    },
+    [],
+  );
 
   const syncSmsState = useCallback(async () => {
     setIsSyncing(true);
@@ -440,7 +516,10 @@ function App() {
       }
       const rebuiltAccounts = await ingestSmsMessages(smsData);
 
-      const mergedAccounts = await ensureCustomBankAccounts(customBanks, rebuiltAccounts);
+      const mergedAccounts = await ensureCustomBankAccounts(
+        customBanks,
+        rebuiltAccounts,
+      );
       accountsRef.current = mergedAccounts;
       setAccounts(mergedAccounts);
       await loadTransactions();
@@ -450,7 +529,12 @@ function App() {
     } finally {
       setIsSyncing(false);
     }
-  }, [ingestSmsMessages, loadTransactions, customBanks, ensureCustomBankAccounts]);
+  }, [
+    ingestSmsMessages,
+    loadTransactions,
+    customBanks,
+    ensureCustomBankAccounts,
+  ]);
 
   const handleRenameAccount = useCallback(
     async (accountId: string, newBankName: string) => {
@@ -484,8 +568,11 @@ function App() {
 
   useEffect(() => {
     initializeDatabase();
-    requestSmsPermissions();
-  }, [requestSmsPermissions]);
+  }, []);
+
+  useEffect(() => {
+    if (dbReady) requestSmsPermissions();
+  }, [dbReady, requestSmsPermissions]);
 
   useEffect(() => {
     if (!dbReady || !smsPermissionsGranted) return;
@@ -602,7 +689,9 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" />
-      {showLockScreen ? (
+      {!dbReady ? (
+        <View style={styles.startup} />
+      ) : showLockScreen ? (
         <LockScreen
           onUnlock={() => setShowLockScreen(false)}
           onUnlockWithBiometrics={handleUnlockWithBiometrics}
@@ -610,13 +699,15 @@ function App() {
       ) : !hasStarted ? (
         <WelcomeScreen onContinue={() => setHasStarted(true)} />
       ) : !userName ? (
-        <NameEntryScreen onNameSubmit={async (name, title) => {
-          await setUserNameInDb(name);
-          await setUserTitleInDb(title);
-          setUserName(name);
-          setUserTitle(title);
-        }} />
-      ) : !dbReady || isSyncing ? (
+        <NameEntryScreen
+          onNameSubmit={async (name, title) => {
+            await setUserNameInDb(name);
+            await setUserTitleInDb(title);
+            setUserName(name);
+            setUserTitle(title);
+          }}
+        />
+      ) : isSyncing ? (
         <SyncingScreen />
       ) : (
         <View style={styles.tabContainer}>
@@ -649,7 +740,7 @@ function App() {
           ) : (
             <SettingsScreen
               userName={userName!}
-              onNameChange={async (name) => {
+              onNameChange={async name => {
                 skipLockScreenRef.current = true;
                 await setUserNameInDb(name);
                 setUserName(name);
@@ -657,7 +748,7 @@ function App() {
               isAppLocked={isAppLocked}
               onToggleLock={handleToggleLock}
               autoLockTimeout={autoLockTimeout}
-              onAutoLockTimeoutChange={async (timeout) => {
+              onAutoLockTimeoutChange={async timeout => {
                 setAutoLockTimeout(timeout);
                 await setAutoLockTimeoutInDb(timeout);
               }}
@@ -679,6 +770,7 @@ function App() {
 export default App;
 
 const styles = StyleSheet.create({
+  startup: { flex: 1, backgroundColor: '#000000' },
   tabContainer: {
     flex: 1,
   },
