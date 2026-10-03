@@ -1,3 +1,4 @@
+import { getLocale, t } from '../i18n';
 import { Transaction } from '../models';
 import { categorizeTransaction } from './categoryUtils';
 
@@ -85,7 +86,7 @@ export function extractMerchant(transaction: Transaction): string {
     return titleCase(transaction.sender.trim());
   }
 
-  return 'Unknown';
+  return t('Unknown');
 }
 
 export function classifySpend(transaction: Transaction): SpendCategory {
@@ -140,13 +141,16 @@ function bucketWithAge(
   labelFor: (index: number, day: Date) => string,
   now: number,
 ): InsightBar[] {
-  const buckets: InsightBar[] = Array.from({ length: bucketCount }, (_, index) => ({
-    label: labelFor(
-      index,
-      new Date(now - (bucketCount - 1 - index) * daysPerBucket * DAY_MS),
-    ),
-    value: 0,
-  }));
+  const buckets: InsightBar[] = Array.from(
+    { length: bucketCount },
+    (_, index) => ({
+      label: labelFor(
+        index,
+        new Date(now - (bucketCount - 1 - index) * daysPerBucket * DAY_MS),
+      ),
+      value: 0,
+    }),
+  );
 
   for (const item of transactions) {
     const stamp = parseStamp(item);
@@ -166,10 +170,7 @@ function bucketWithAge(
   return buckets;
 }
 
-function bucketByMonth(
-  transactions: Transaction[],
-  now: number,
-): InsightBar[] {
+function bucketByMonth(transactions: Transaction[], now: number): InsightBar[] {
   const current = new Date(now);
   const buckets: InsightBar[] = Array.from({ length: 12 }, (_, index) => {
     const monthDate = new Date(
@@ -178,7 +179,7 @@ function bucketByMonth(
       1,
     );
     return {
-      label: monthDate.toLocaleDateString(undefined, { month: 'short' }),
+      label: monthDate.toLocaleDateString(getLocale(), { month: 'short' }),
       value: 0,
     };
   });
@@ -194,7 +195,10 @@ function bucketByMonth(
     const date = new Date(stamp);
     const key = monthKey(date);
     const index = buckets.findIndex(
-      (_, i) => monthKey(new Date(current.getFullYear(), current.getMonth() - (11 - i), 1)) === key,
+      (_, i) =>
+        monthKey(
+          new Date(current.getFullYear(), current.getMonth() - (11 - i), 1),
+        ) === key,
     );
     if (index >= 0) {
       buckets[index].value += item.amount;
@@ -255,8 +259,8 @@ export function getInsights(
       range === 'week' ? 1 : 6,
       (index, day) =>
         range === 'week'
-          ? day.toLocaleDateString(undefined, { weekday: 'short' })
-          : `W${index + 1}`,
+          ? day.toLocaleDateString(getLocale(), { weekday: 'short' })
+          : t('W{number}', { number: index + 1 }),
       now,
     );
   }
@@ -303,7 +307,9 @@ export function getInsights(
 
   let delta: Insights['delta'] = null;
   if (previousSpend > 0) {
-    const pct = Math.abs(Math.round(((totalSpend - previousSpend) / previousSpend) * 100));
+    const pct = Math.abs(
+      Math.round(((totalSpend - previousSpend) / previousSpend) * 100),
+    );
     delta = {
       pct,
       isUp: totalSpend > previousSpend,

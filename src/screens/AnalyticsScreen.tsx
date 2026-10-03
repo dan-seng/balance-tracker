@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { getLocale } from '../i18n';
+import { t, useLanguage } from '../i18n';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -29,7 +31,7 @@ const CHART_HEIGHT = 104;
 
 function compact(value: number): string {
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+    return t('{amount}k', { amount: (value / 1000).toFixed(1).replace(/\.0$/, '') });
   }
   if (value >= 100) {
     return Math.round(value / 10) * 10 + '';
@@ -38,7 +40,7 @@ function compact(value: number): string {
 }
 
 function fmt(value: number): string {
-  return value.toLocaleString(undefined, {
+  return value.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -50,8 +52,14 @@ function DeltaPill({ pct, isUp }: { pct: number; isUp: boolean }) {
       style={[
         styles.deltaPill,
         isUp ? styles.deltaPillRed : styles.deltaPillGreen,
-      ]}>
-      <Text style={[styles.deltaText, isUp ? styles.deltaTextRed : styles.deltaTextGreen]}>
+      ]}
+    >
+      <Text
+        style={[
+          styles.deltaText,
+          isUp ? styles.deltaTextRed : styles.deltaTextGreen,
+        ]}
+      >
         {isUp ? '↑' : '↓'} {pct}%
       </Text>
     </View>
@@ -63,15 +71,13 @@ type AnalyticsScreenProps = {
 };
 
 export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
+  useLanguage();
   const [rangeIndex, setRangeIndex] = useState(0);
   const [selectedBar, setSelectedBar] = useState(6);
 
   const range = RANGES[rangeIndex];
 
-  const insights = useMemo(() => getInsights(transactions, range), [
-    transactions,
-    range,
-  ]);
+  const insights = getInsights(transactions, range);
 
   const { bars, maxBar, categories, merchants } = insights;
   const isEmpty =
@@ -86,8 +92,10 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
     <Screen scrollable>
       <View style={styles.wrapper}>
         <View style={styles.header}>
-          <Text style={styles.title}>Analytics</Text>
-          <Text style={styles.subtitle}>{insights.periodLabel} spending</Text>
+          <Text style={styles.title}>{t('Analytics')}</Text>
+          <Text style={styles.subtitle}>
+            {t(insights.periodLabel)} {t('spending')}
+          </Text>
         </View>
 
         <View style={styles.segmentWrap}>
@@ -95,19 +103,19 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
             options={RANGE_OPTIONS}
             value={rangeIndex}
             onChange={handleRangeChange}
-            accessibilityLabel="Analytics range"
+            accessibilityLabel={t('Analytics range')}
           />
         </View>
 
         <View style={styles.totalCard}>
           <View style={styles.totalHeader}>
-            <Text style={styles.cardTitle}>Total spent</Text>
+            <Text style={styles.cardTitle}>{t('Total spent')}</Text>
             {insights.delta && (
               <DeltaPill pct={insights.delta.pct} isUp={insights.delta.isUp} />
             )}
           </View>
           <View style={styles.totalValueRow}>
-            <Text style={styles.totalCurrency}>ETB</Text>
+            <Text style={styles.totalCurrency}>{t('ETB')}</Text>
             <CountUpNumber
               value={insights.totalSpend}
               decimals={2}
@@ -116,41 +124,54 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
           </View>
           <Text style={styles.totalCaption}>
             {insights.spentPct != null
-              ? `${Math.round(insights.spentPct)}% of income earned`
-              : 'No income recorded yet'}
+              ? t('{percent}% of income earned', {
+                  percent: Math.round(insights.spentPct),
+                })
+              : t('No income recorded yet')}
           </Text>
         </View>
 
         {isEmpty ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Nothing to show yet</Text>
+            <Text style={styles.emptyTitle}>{t('Nothing to show yet')}</Text>
             <Text style={styles.emptyText}>
-              Once bank messages land, spending builds itself into
-              daily bars, a spend ring and top merchants.
+              {t(
+                'Once bank messages land, spending builds itself into daily bars, a spend ring and top merchants.',
+              )}
             </Text>
           </View>
         ) : (
           <>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>{insights.barsTitle}</Text>
+              <Text style={styles.cardTitle}>{t(insights.barsTitle)}</Text>
               <View style={styles.bars}>
                 {bars.map((bar, index) => {
                   const active = index === selectedBar;
                   const height =
                     maxBar > 0
-                      ? Math.max(4, Math.round((bar.value / maxBar) * CHART_HEIGHT))
+                      ? Math.max(
+                          4,
+                          Math.round((bar.value / maxBar) * CHART_HEIGHT),
+                        )
                       : 4;
 
                   return (
                     <Pressable
                       key={`${bar.label}-${index}`}
                       accessibilityRole="button"
-                      accessibilityLabel={`${bar.label}, ETB ${fmt(bar.value)}`}
+                      accessibilityLabel={`${bar.label}, ${t('ETB')} ${fmt(
+                        bar.value,
+                      )}`}
                       onPress={() => setSelectedBar(index)}
                       style={styles.barColumn}>
                       <View style={styles.tooltipSlot}>
                         {active ? (
-                          <Text style={[styles.tooltip, active && styles.tooltipActive]}>
+                          <Text
+                            style={[
+                              styles.tooltip,
+                              active && styles.tooltipActive,
+                            ]}
+                          >
                             {compact(bar.value)}
                           </Text>
                         ) : null}
@@ -185,7 +206,7 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Spent vs earned</Text>
+              <Text style={styles.cardTitle}>{t('Spent vs earned')}</Text>
               <View style={styles.ringRow}>
                 <View style={styles.ringWrap}>
                   <DoughnutChart
@@ -200,26 +221,29 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                     <Text style={styles.ringPct}>
                       {Math.round(insights.spentPct ?? 0)}%
                     </Text>
-                    <Text style={styles.ringCaption}>spent</Text>
+                    <Text style={styles.ringCaption}>{t('spent')}</Text>
                   </View>
                 </View>
 
                 <View style={styles.legend}>
                   {categories.length === 0 ? (
                     <Text style={styles.legendEmpty}>
-                      No spending in your categories yet.
+                      {t('No spending in your categories yet.')}
                     </Text>
                   ) : (
                     categories.map(category => (
-                      <View key={category.name} style={styles.legendRow}>
+                      <View key={t(category.name)} style={styles.legendRow}>
                         <View
                           style={[
                             styles.legendDot,
-                            { backgroundColor: SPEND_CATEGORY_COLORS[category.name] },
+                            {
+                              backgroundColor:
+                                SPEND_CATEGORY_COLORS[category.name],
+                            },
                           ]}
                         />
                         <Text style={styles.legendName} numberOfLines={1}>
-                          {category.name}
+                          {t(category.name)}
                         </Text>
                         <Text style={styles.legendValue}>
                           {fmt(category.amount)}
@@ -232,9 +256,9 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
             </View>
 
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Top merchants</Text>
+              <Text style={styles.cardTitle}>{t('Top merchants')}</Text>
               {merchants.length === 0 ? (
-                <Text style={styles.legendEmpty}>No merchants yet.</Text>
+                <Text style={styles.legendEmpty}>{t('No merchants yet.')}</Text>
               ) : (
                 merchants.map((merchant, index) => {
                   const color = SPEND_CATEGORY_COLORS[merchant.category];
@@ -261,11 +285,12 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                           {merchant.name}
                         </Text>
                         <Text style={styles.merchantMeta}>
-                          {merchant.count} TXNS · {Math.round(merchant.pct)}%
+                          {merchant.count} {t('TXNS ·')}{' '}
+                          {Math.round(merchant.pct)}%
                         </Text>
                       </View>
                       <Text style={styles.merchantAmount}>
-                        ETB {fmt(merchant.amount)}
+                        {t('ETB')} {fmt(merchant.amount)}
                       </Text>
                     </View>
                   );
