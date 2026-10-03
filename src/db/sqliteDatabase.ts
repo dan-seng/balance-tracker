@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import SQLite from './sqliteRuntime';
 import { Account, Transaction } from '../models';
 
@@ -20,7 +21,7 @@ export async function initDatabase(): Promise<void> {
 }
 
 async function createTables(): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
   // Create accounts table
   await db.executeSql(`
@@ -64,9 +65,15 @@ async function createTables(): Promise<void> {
   `);
 
   // Create indexes for better query performance
-  await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);`);
-  await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);`);
-  await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_transactions_hash ON transactions(hash);`);
+  await db.executeSql(
+    `CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);`,
+  );
+  await db.executeSql(
+    `CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);`,
+  );
+  await db.executeSql(
+    `CREATE INDEX IF NOT EXISTS idx_transactions_hash ON transactions(hash);`,
+  );
 
   // Migration: add sub_id (SIM/subscription id) to accounts for existing installs
   const [cols] = await db.executeSql('PRAGMA table_info(accounts);');
@@ -78,33 +85,39 @@ async function createTables(): Promise<void> {
     }
   }
   if (!hasSubId) {
-    await db.executeSql('ALTER TABLE accounts ADD COLUMN sub_id INTEGER DEFAULT NULL;');
+    await db.executeSql(
+      'ALTER TABLE accounts ADD COLUMN sub_id INTEGER DEFAULT NULL;',
+    );
   }
 }
 
 export async function saveAccount(account: Account): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
   await db.executeSql(`
     INSERT OR REPLACE INTO accounts (id, bank_id, bank_name, account_number, current_balance, currency, last_updated, source, sub_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `, [
-    account.id,
-    account.bankId,
-    account.bankName,
-    account.accountNumber,
-    account.currentBalance,
-    account.currency,
-    account.lastUpdated,
-    account.source,
-    account.subId != null ? account.subId : null,
-  ]);
+  `,
+    [
+      account.id,
+      account.bankId,
+      account.bankName,
+      account.accountNumber,
+      account.currentBalance,
+      account.currency,
+      account.lastUpdated,
+      account.source,
+      account.subId != null ? account.subId : null,
+    ],
+  );
 }
 
 export async function getAccounts(): Promise<Account[]> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
-  const [results] = await db.executeSql('SELECT * FROM accounts ORDER BY last_updated DESC;');
+  const [results] = await db.executeSql(
+    'SELECT * FROM accounts ORDER BY last_updated DESC;',
+  );
 
   const accounts: Account[] = [];
   for (let i = 0; i < results.rows.length; i++) {
@@ -126,9 +139,12 @@ export async function getAccounts(): Promise<Account[]> {
 }
 
 export async function getAccountById(id: string): Promise<Account | null> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
-  const [results] = await db.executeSql('SELECT * FROM accounts WHERE id = ?;', [id]);
+  const [results] = await db.executeSql(
+    'SELECT * FROM accounts WHERE id = ?;',
+    [id],
+  );
 
   if (results.rows.length === 0) {
     return null;
@@ -148,14 +164,19 @@ export async function getAccountById(id: string): Promise<Account | null> {
   };
 }
 
-export async function updateAccountBalance(accountId: string, newBalance: number): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+export async function updateAccountBalance(
+  accountId: string,
+  newBalance: number,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
 
   await db.executeSql(`
     UPDATE accounts
     SET current_balance = ?, last_updated = ?
     WHERE id = ?
-  `, [newBalance, new Date().toISOString(), accountId]);
+  `,
+    [newBalance, new Date().toISOString(), accountId],
+  );
 }
 
 function accountDigits(raw: string | null | undefined): string | null {
@@ -164,19 +185,35 @@ function accountDigits(raw: string | null | undefined): string | null {
   return digits.length >= 4 ? digits : null;
 }
 
-export async function renameAccountInDb(accountId: string, newBankName: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
-  await db.executeSql(`UPDATE accounts SET bank_name = ? WHERE id = ?;`, [newBankName.trim(), accountId]);
+export async function renameAccountInDb(
+  accountId: string,
+  newBankName: string,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
+  await db.executeSql(`UPDATE accounts SET bank_name = ? WHERE id = ?;`, [
+    newBankName.trim(),
+    accountId,
+  ]);
 }
 
-export async function mergeAccountsInDb(sourceId: string, targetId: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
-  if (sourceId === targetId) throw new Error('Cannot merge an account into itself');
+export async function mergeAccountsInDb(
+  sourceId: string,
+  targetId: string,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
+  if (sourceId === targetId)
+    throw new Error(t('Cannot merge an account into itself'));
 
-  const [sourceRows] = await db.executeSql('SELECT * FROM accounts WHERE id = ?;', [sourceId]);
-  const [targetRows] = await db.executeSql('SELECT * FROM accounts WHERE id = ?;', [targetId]);
+  const [sourceRows] = await db.executeSql(
+    'SELECT * FROM accounts WHERE id = ?;',
+    [sourceId],
+  );
+  const [targetRows] = await db.executeSql(
+    'SELECT * FROM accounts WHERE id = ?;',
+    [targetId],
+  );
   if (sourceRows.rows.length === 0 || targetRows.rows.length === 0) {
-    throw new Error('One of the accounts no longer exists');
+    throw new Error(t('One of the accounts no longer exists'));
   }
 
   const source = sourceRows.rows.item(0);
@@ -208,45 +245,50 @@ export async function mergeAccountsInDb(sourceId: string, targetId: string): Pro
 
   await db.executeSql(
     'UPDATE accounts SET bank_name = ?, account_number = ?, current_balance = ?, last_updated = ?, sub_id = ? WHERE id = ?;',
-    [bankName, accountNumber, balance, lastUpdated, subId, targetId]
+    [bankName, accountNumber, balance, lastUpdated, subId, targetId],
   );
 
   // Re-point every transaction from the source onto the merged account.
   await db.executeSql(
-    'UPDATE transactions SET account_id = ? WHERE account_id = ?;', [targetId, sourceId]
+    'UPDATE transactions SET account_id = ? WHERE account_id = ?;',
+    [targetId, sourceId],
   );
 
   // The source account is now fully absorbed.
   await db.executeSql('DELETE FROM accounts WHERE id = ?;', [sourceId]);
 }
 
-
 export async function saveTransaction(transaction: Transaction): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
-  await db.executeSql(`
+  await db.executeSql(
+    `
     INSERT OR REPLACE INTO transactions (id, account_id, bank_id, bank_name, type, amount, balance_after, date, raw_sms, hash, currency, sender)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `, [
-    transaction.id,
-    transaction.accountId,
-    transaction.bankId,
-    transaction.bankName,
-    transaction.type,
-    transaction.amount,
-    transaction.balanceAfter,
-    transaction.date,
-    transaction.rawSms,
-    transaction.hash,
-    transaction.currency,
-    transaction.sender,
-  ]);
+  `,
+    [
+      transaction.id,
+      transaction.accountId,
+      transaction.bankId,
+      transaction.bankName,
+      transaction.type,
+      transaction.amount,
+      transaction.balanceAfter,
+      transaction.date,
+      transaction.rawSms,
+      transaction.hash,
+      transaction.currency,
+      transaction.sender,
+    ],
+  );
 }
 
 export async function getTransactions(): Promise<Transaction[]> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
-  const [results] = await db.executeSql('SELECT * FROM transactions ORDER BY date DESC;');
+  const [results] = await db.executeSql(
+    'SELECT * FROM transactions ORDER BY date DESC;',
+  );
 
   const transactions: Transaction[] = [];
   for (let i = 0; i < results.rows.length; i++) {
@@ -270,10 +312,15 @@ export async function getTransactions(): Promise<Transaction[]> {
   return transactions;
 }
 
-export async function getTransactionsForAccount(accountId: string): Promise<Transaction[]> {
-  if (!db) throw new Error('Database not initialized');
+export async function getTransactionsForAccount(
+  accountId: string,
+): Promise<Transaction[]> {
+  if (!db) throw new Error(t('Database not initialized'));
 
-  const [results] = await db.executeSql('SELECT * FROM transactions WHERE account_id = ? ORDER BY date DESC;', [accountId]);
+  const [results] = await db.executeSql(
+    'SELECT * FROM transactions WHERE account_id = ? ORDER BY date DESC;',
+    [accountId],
+  );
 
   const transactions: Transaction[] = [];
   for (let i = 0; i < results.rows.length; i++) {
@@ -298,28 +345,31 @@ export async function getTransactionsForAccount(accountId: string): Promise<Tran
 }
 
 export async function transactionExists(hash: string): Promise<boolean> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
-  const [results] = await db.executeSql('SELECT COUNT(*) as count FROM transactions WHERE hash = ?;', [hash]);
+  const [results] = await db.executeSql(
+    'SELECT COUNT(*) as count FROM transactions WHERE hash = ?;',
+    [hash],
+  );
   const row = results.rows.item(0);
 
   return row.count > 0;
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
   await db.executeSql('DELETE FROM transactions WHERE id = ?;', [id]);
 }
 
 export async function deleteAllTransactions(): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
   await db.executeSql('DELETE FROM transactions;');
 }
 
 export async function deleteAllAccounts(): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
 
   await db.executeSql('DELETE FROM accounts;');
 }
@@ -332,17 +382,17 @@ export async function closeDatabase(): Promise<void> {
 }
 
 export async function setUserName(name: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
     `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('username', ?)`,
-    [name]
+    [name],
   );
 }
 
 export async function getUserName(): Promise<string | null> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT value FROM user_settings WHERE key = 'username';`
+    `SELECT value FROM user_settings WHERE key = 'username';`,
   );
   if (results.rows.length === 0) {
     return null;
@@ -351,17 +401,17 @@ export async function getUserName(): Promise<string | null> {
 }
 
 export async function setBalanceHidden(isHidden: boolean): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
     `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('balance_hidden', ?)`,
-    [isHidden ? '1' : '0']
+    [isHidden ? '1' : '0'],
   );
 }
 
 export async function getBalanceHidden(): Promise<boolean> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT value FROM user_settings WHERE key = 'balance_hidden';`
+    `SELECT value FROM user_settings WHERE key = 'balance_hidden';`,
   );
   if (results.rows.length === 0) {
     return false;
@@ -370,17 +420,17 @@ export async function getBalanceHidden(): Promise<boolean> {
 }
 
 export async function setAppLocked(isLocked: boolean): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
-    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('app_locked', ?)` ,
-    [isLocked ? '1' : '0']
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('app_locked', ?)`,
+    [isLocked ? '1' : '0'],
   );
 }
 
 export async function getAppLocked(): Promise<boolean> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT value FROM user_settings WHERE key = 'app_locked';`
+    `SELECT value FROM user_settings WHERE key = 'app_locked';`,
   );
   if (results.rows.length === 0) {
     return false;
@@ -389,17 +439,17 @@ export async function getAppLocked(): Promise<boolean> {
 }
 
 export async function setAutoLockTimeout(timeout: number): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
-    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('auto_lock_timeout', ?)` ,
-    [timeout.toString()]
+    `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('auto_lock_timeout', ?)`,
+    [timeout.toString()],
   );
 }
 
 export async function getAutoLockTimeout(): Promise<number> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT value FROM user_settings WHERE key = 'auto_lock_timeout';`
+    `SELECT value FROM user_settings WHERE key = 'auto_lock_timeout';`,
   );
   if (results.rows.length === 0) {
     return 0; // Default: 0 (immediately)
@@ -408,17 +458,17 @@ export async function getAutoLockTimeout(): Promise<number> {
 }
 
 export async function setUserTitle(title: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
     `INSERT OR REPLACE INTO user_settings (key, value) VALUES ('user_title', ?)`,
-    [title]
+    [title],
   );
 }
 
 export async function getUserTitle(): Promise<string | null> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT value FROM user_settings WHERE key = 'user_title';`
+    `SELECT value FROM user_settings WHERE key = 'user_title';`,
   );
   if (results.rows.length === 0) {
     return null;
@@ -426,26 +476,51 @@ export async function getUserTitle(): Promise<string | null> {
   return results.rows.item(0).value;
 }
 
-export async function saveCustomBank(bankId: string, bankName: string, senderId: string, logoBase64: string | null): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+export async function saveCustomBank(
+  bankId: string,
+  bankName: string,
+  senderId: string,
+  logoBase64: string | null,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
     `INSERT OR REPLACE INTO user_settings (key, value) VALUES (?, ?)`,
-    [`custom_bank_${bankId}`, JSON.stringify({ bankName, senderId, logoBase64 })]
+    [
+      `custom_bank_${bankId}`,
+      JSON.stringify({ bankName, senderId, logoBase64 }),
+    ],
   );
 }
 
-export async function getCustomBanks(): Promise<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>> {
-  if (!db) throw new Error('Database not initialized');
+export async function getCustomBanks(): Promise<
+  Array<{
+    bankId: string;
+    bankName: string;
+    senderId: string;
+    logoBase64: string | null;
+  }>
+> {
+  if (!db) throw new Error(t('Database not initialized'));
   const [results] = await db.executeSql(
-    `SELECT key, value FROM user_settings WHERE key LIKE 'custom_bank_%';`
+    `SELECT key, value FROM user_settings WHERE key LIKE 'custom_bank_%';`,
   );
-  const banks: Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }> = [];
+  const banks: Array<{
+    bankId: string;
+    bankName: string;
+    senderId: string;
+    logoBase64: string | null;
+  }> = [];
   for (let i = 0; i < results.rows.length; i++) {
     const row = results.rows.item(i);
     const bankId = row.key.replace('custom_bank_', '');
     try {
       const data = JSON.parse(row.value);
-      banks.push({ bankId, bankName: data.bankName, senderId: data.senderId, logoBase64: data.logoBase64 || null });
+      banks.push({
+        bankId,
+        bankName: data.bankName,
+        senderId: data.senderId,
+        logoBase64: data.logoBase64 || null,
+      });
     } catch (e) {
       console.error('Failed to parse custom bank data:', e);
     }
@@ -454,9 +529,25 @@ export async function getCustomBanks(): Promise<Array<{ bankId: string; bankName
 }
 
 export async function deleteCustomBank(bankId: string): Promise<void> {
-  if (!db) throw new Error('Database not initialized');
+  if (!db) throw new Error(t('Database not initialized'));
+  await db.executeSql(`DELETE FROM user_settings WHERE key = ?;`, [
+    `custom_bank_${bankId}`,
+  ]);
+}
+
+export async function getAppLanguage(): Promise<'en' | 'am'> {
+  if (!db) throw new Error(t('Database not initialized'));
+  const [result] = await db.executeSql(
+    "SELECT value FROM user_settings WHERE key = 'language'",
+  );
+  const value = result.rows.length ? result.rows.item(0).value : null;
+  return value === 'am' ? 'am' : 'en';
+}
+
+export async function setAppLanguage(language: 'en' | 'am'): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
   await db.executeSql(
-    `DELETE FROM user_settings WHERE key = ?;`,
-    [`custom_bank_${bankId}`]
+    "INSERT OR REPLACE INTO user_settings (key, value) VALUES ('language', ?)",
+    [language],
   );
 }

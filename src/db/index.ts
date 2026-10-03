@@ -1,5 +1,7 @@
 import { Transaction, Account } from '../models';
 import {
+  getAppLanguage,
+  setAppLanguage,
   initDatabase,
   saveAccount,
   getAccounts,
@@ -51,12 +53,17 @@ export async function getAccountsFromDb(): Promise<Account[]> {
   return getAccounts();
 }
 
-export async function getAccountByIdFromDb(id: string): Promise<Account | null> {
+export async function getAccountByIdFromDb(
+  id: string,
+): Promise<Account | null> {
   await ensureDatabaseInitialized();
   return getAccountById(id);
 }
 
-export async function updateAccountBalanceInDb(accountId: string, newBalance: number) {
+export async function updateAccountBalanceInDb(
+  accountId: string,
+  newBalance: number,
+) {
   await ensureDatabaseInitialized();
   return updateAccountBalance(accountId, newBalance);
 }
@@ -71,7 +78,9 @@ export async function getTransactionsFromDb(): Promise<Transaction[]> {
   return getTransactions();
 }
 
-export async function getTransactionsForAccountFromDb(accountId: string): Promise<Transaction[]> {
+export async function getTransactionsForAccountFromDb(
+  accountId: string,
+): Promise<Transaction[]> {
   await ensureDatabaseInitialized();
   return getTransactionsForAccount(accountId);
 }
@@ -126,12 +135,24 @@ export async function getUserTitleFromDb(): Promise<string | null> {
   return getUserTitle();
 }
 
-export async function saveCustomBankInDb(bankId: string, bankName: string, senderId: string, logoBase64: string | null) {
+export async function saveCustomBankInDb(
+  bankId: string,
+  bankName: string,
+  senderId: string,
+  logoBase64: string | null,
+) {
   await ensureDatabaseInitialized();
   return saveCustomBank(bankId, bankName, senderId, logoBase64);
 }
 
-export async function getCustomBanksFromDb(): Promise<Array<{ bankId: string; bankName: string; senderId: string; logoBase64: string | null }>> {
+export async function getCustomBanksFromDb(): Promise<
+  Array<{
+    bankId: string;
+    bankName: string;
+    senderId: string;
+    logoBase64: string | null;
+  }>
+> {
   await ensureDatabaseInitialized();
   return getCustomBanks();
 }
@@ -161,12 +182,28 @@ export async function getAutoLockTimeoutFromDb(): Promise<number> {
   return getAutoLockTimeout();
 }
 
-export async function renameAccountToDb(accountId: string, newBankName: string): Promise<void> {
+export async function renameAccountToDb(
+  accountId: string,
+  newBankName: string,
+): Promise<void> {
   await ensureDatabaseInitialized();
   return renameAccountInDb(accountId, newBankName);
 }
 
-export async function mergeAccountsToDb(sourceId: string, targetId: string): Promise<void> {
+export async function mergeAccountsToDb(
+  sourceId: string,
+  targetId: string,
+): Promise<void> {
   await ensureDatabaseInitialized();
   return mergeAccountsInDb(sourceId, targetId);
+}
+
+export async function getAppLanguageFromDb(): Promise<'en' | 'am'> {
+  await ensureDatabaseInitialized();
+  return getAppLanguage();
+}
+
+export async function setAppLanguageInDb(language: 'en' | 'am'): Promise<void> {
+  await ensureDatabaseInitialized();
+  return setAppLanguage(language);
 }
