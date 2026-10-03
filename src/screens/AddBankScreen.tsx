@@ -1,6 +1,10 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import { StyleSheet, View, Pressable, Alert } from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
+import {
+  AppText as Text,
+  AppTextInput as TextInput,
+} from '../components/AppText';
 import { Screen } from '../components/Screen';
 
 const BLUE = '#0A84FF';
@@ -10,7 +14,11 @@ const GROUPED1 = '#1C1C1E';
 const SEPARATOR = 'rgba(84, 84, 88, 0.55)';
 
 type AddBankScreenProps = {
-  onAddBank: (bankName: string, senderId: string, logoBase64: string | null) => Promise<void>;
+  onAddBank: (
+    bankName: string,
+    senderId: string,
+    logoBase64: string | null,
+  ) => Promise<void>;
   onCancel: () => void;
 };
 
@@ -20,11 +28,11 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
 
   const handleAdd = async () => {
     if (!bankName.trim()) {
-      Alert.alert('Error', 'Please enter a bank name');
+      Alert.alert(t('Error'), t('Please enter a bank name'));
       return;
     }
     if (!senderId.trim()) {
-      Alert.alert('Error', 'Please enter a sender ID');
+      Alert.alert(t('Error'), t('Please enter a sender ID'));
       return;
     }
 
@@ -34,25 +42,27 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
   return (
     <Screen scrollable>
       <View style={styles.container}>
-        <Text style={styles.title}>Add Bank</Text>
-        <Text style={styles.subtitle}>Track transactions from SMS messages</Text>
+        <Text style={styles.title}>{t('Add Bank')}</Text>
+        <Text style={styles.subtitle}>
+          {t('Track transactions from SMS messages')}
+        </Text>
 
         <View style={styles.group}>
           <View style={styles.groupHeader}>
-            <Text style={styles.fieldLabel}>Bank Name</Text>
+            <Text style={styles.fieldLabel}>{t('Bank Name')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g., Abyssinia Bank"
+              placeholder={t('e.g., Abyssinia Bank')}
               placeholderTextColor={LABEL3}
               value={bankName}
               onChangeText={setBankName}
             />
           </View>
           <View style={styles.groupDivider}>
-            <Text style={styles.fieldLabel}>Sender ID</Text>
+            <Text style={styles.fieldLabel}>{t('Sender ID')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g., 127, CBE, BOA"
+              placeholder={t('e.g., 127, CBE, BOA')}
               placeholderTextColor={LABEL3}
               value={senderId}
               onChangeText={setSenderId}
@@ -63,15 +73,16 @@ export function AddBankScreen({ onAddBank, onCancel }: AddBankScreenProps) {
 
         <View style={styles.buttons}>
           <Pressable onPress={onCancel} hitSlop={10}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t('Cancel')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [
               styles.primaryButton,
               pressed && styles.primaryButtonPressed,
             ]}
-            onPress={handleAdd}>
-            <Text style={styles.primaryButtonText}>Add Bank</Text>
+            onPress={handleAdd}
+          >
+            <Text style={styles.primaryButtonText}>{t('Add Bank')}</Text>
           </Pressable>
         </View>
       </View>

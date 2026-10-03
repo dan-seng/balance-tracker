@@ -1,5 +1,14 @@
+import { t } from '../i18n';
 import { useState } from 'react';
-import { StyleSheet, View, Pressable, LayoutAnimation, Platform, UIManager, Dimensions } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  Dimensions,
+} from 'react-native';
 import { AppTextInput } from './AppText';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -25,7 +34,10 @@ type SearchBarProps = {
   placeholder?: string;
 };
 
-export function SearchBar({ onSearch, placeholder = 'Bank, account, balance' }: SearchBarProps) {
+export function SearchBar({
+  onSearch,
+  placeholder = t('Bank, account, balance'),
+}: SearchBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -50,7 +62,12 @@ export function SearchBar({ onSearch, placeholder = 'Bank, account, balance' }: 
 
   return (
     <View style={styles.container}>
-      <Pressable onPress={handlePress} style={styles.iconContainer} accessibilityRole="button" accessibilityLabel="Search accounts">
+      <Pressable
+        onPress={handlePress}
+        style={styles.iconContainer}
+        accessibilityRole="button"
+        accessibilityLabel={t('Search accounts')}
+      >
         <SearchIcon color={isExpanded ? 'transparent' : '#FFFFFF'} />
       </Pressable>
 
@@ -59,7 +76,7 @@ export function SearchBar({ onSearch, placeholder = 'Bank, account, balance' }: 
           <SearchIcon color="rgba(235,235,245,0.60)" size={16} />
           <AppTextInput
             style={styles.input}
-            placeholder={placeholder}
+            placeholder={t(placeholder)}
             placeholderTextColor="rgba(235, 235, 245, 0.30)"
             value={query}
             onChangeText={handleChangeText}

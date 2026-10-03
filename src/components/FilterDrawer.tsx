@@ -1,5 +1,6 @@
+import { t } from '../i18n';
 import { Modal, Pressable, StyleSheet, View, ScrollView } from 'react-native';
-import { AppText as Text } from './AppText';;
+import { AppText as Text } from './AppText';
 
 type FilterDrawerProps = {
   visible: boolean;
@@ -28,18 +29,18 @@ export function FilterDrawer({
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.drawer} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.drawer} onPress={e => e.stopPropagation()}>
           <View style={styles.header}>
-            <Text style={styles.title}>Filter Transactions</Text>
+            <Text style={styles.title}>{t('Filter Transactions')}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
               <Text style={styles.close}>✕</Text>
             </Pressable>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Banks</Text>
+            <Text style={styles.sectionTitle}>{t('Banks')}</Text>
             <ScrollView style={styles.bankList}>
-              {banks.map((bank) => (
+              {banks.map(bank => (
                 <Pressable
                   key={bank}
                   style={[
@@ -65,38 +66,51 @@ export function FilterDrawer({
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Date Range</Text>
+            <Text style={styles.sectionTitle}>{t('Date Range')}</Text>
             <View style={styles.dateButtons}>
               <Pressable
                 style={styles.dateButton}
-                onPress={() => onDateRangeChange({ start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), end: new Date() })}
+                onPress={() =>
+                  onDateRangeChange({
+                    start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                    end: new Date(),
+                  })
+                }
               >
-                <Text style={styles.dateButtonText}>Last 7 days</Text>
+                <Text style={styles.dateButtonText}>{t('Last 7 days')}</Text>
               </Pressable>
               <Pressable
                 style={styles.dateButton}
-                onPress={() => onDateRangeChange({ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), end: new Date() })}
+                onPress={() =>
+                  onDateRangeChange({
+                    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                    end: new Date(),
+                  })
+                }
               >
-                <Text style={styles.dateButtonText}>Last 30 days</Text>
+                <Text style={styles.dateButtonText}>{t('Last 30 days')}</Text>
               </Pressable>
               <Pressable
                 style={styles.dateButton}
                 onPress={() => onDateRangeChange({ start: null, end: null })}
               >
-                <Text style={styles.dateButtonText}>All time</Text>
+                <Text style={styles.dateButtonText}>{t('All time')}</Text>
               </Pressable>
             </View>
           </View>
 
-          <Pressable style={styles.resetButton} onPress={() => {
-            banks.forEach(bank => {
-              if (selectedBanks.includes(bank)) {
-                onBankToggle(bank);
-              }
-            });
-            onDateRangeChange({ start: null, end: null });
-          }}>
-            <Text style={styles.resetButtonText}>Reset Filters</Text>
+          <Pressable
+            style={styles.resetButton}
+            onPress={() => {
+              banks.forEach(bank => {
+                if (selectedBanks.includes(bank)) {
+                  onBankToggle(bank);
+                }
+              });
+              onDateRangeChange({ start: null, end: null });
+            }}
+          >
+            <Text style={styles.resetButtonText}>{t('Reset Filters')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
