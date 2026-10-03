@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator } from 'react-native';
 import { AppText as Text } from '../components/AppText';
@@ -14,7 +15,9 @@ const GOLD = {
   border: 'rgba(216, 180, 92, 0.18)',
 };
 
-type LGProps = ComponentProps<typeof LinearGradient> & { type?: 'linear' | 'radial' };
+type LGProps = ComponentProps<typeof LinearGradient> & {
+  type?: 'linear' | 'radial';
+};
 const RadialGradient = LinearGradient as unknown as ComponentType<LGProps>;
 
 const FingerprintIcon = ({ size = 84, color = GOLD.gold }) => (
@@ -32,7 +35,10 @@ type LockScreenProps = {
   onUnlockWithBiometrics: () => Promise<boolean>;
 };
 
-export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps) {
+export function LockScreen({
+  onUnlock,
+  onUnlockWithBiometrics,
+}: LockScreenProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const attemptBiometricUnlock = async () => {
@@ -59,8 +65,8 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
       <View style={styles.content}>
         <Text style={styles.brand}>ሂሳብ</Text>
 
-        <Text style={styles.eyebrow}>Authentication required</Text>
-        <Text style={styles.title}>Unlock Hisab</Text>
+        <Text style={styles.eyebrow}>{t('Authentication required')}</Text>
+        <Text style={styles.title}>{t('Unlock Hisab')}</Text>
 
         <View style={styles.iconCard}>
           <LinearGradient
@@ -104,11 +110,13 @@ export function LockScreen({ onUnlock, onUnlockWithBiometrics }: LockScreenProps
           onPress={attemptBiometricUnlock}
           disabled={isAuthenticating}>
           <Text style={styles.unlockButtonText}>
-            {isAuthenticating ? 'Authenticating...' : 'Unlock Now'}
+            {isAuthenticating ? t('Authenticating...') : t('Unlock Now')}
           </Text>
         </Pressable>
 
-        <Text style={styles.hint}>Tap the fingerprint or press unlock to enter</Text>
+        <Text style={styles.hint}>
+          {t('Tap the fingerprint or press unlock to enter')}
+        </Text>
       </View>
     </View>
   );

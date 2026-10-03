@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { AppText as Text } from '../components/AppText';
 import { theme } from '../theme';
@@ -8,7 +9,7 @@ export function SyncingScreen() {
     <Screen>
       <View style={styles.wrapper}>
         <ActivityIndicator color="#FFFFFF" size="large" />
-        <Text style={styles.loaderText}>Loading...</Text>
+        <Text style={styles.loaderText}>{t('Loading...')}</Text>
       </View>
     </Screen>
   );

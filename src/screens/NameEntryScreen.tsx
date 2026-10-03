@@ -1,6 +1,10 @@
+import { t } from '../i18n';
 import { useState } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
+import {
+  AppText as Text,
+  AppTextInput as TextInput,
+} from '../components/AppText';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Screen } from '../components/Screen';
@@ -15,50 +19,70 @@ export function NameEntryScreen({ onNameSubmit }: NameEntryScreenProps) {
 
   return (
     <Screen>
-     <KeyboardAvoidingView
-      style={styles.fill}
-      behavior={Platform.OS === 'android' ? 'height' : 'padding'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.fill}
+        behavior={Platform.OS === 'android' ? 'height' : 'padding'}
       >
-      <View style={styles.wrapper}>
-        <View style={styles.content}>
-          <Text style={styles.badge}>ሒሳብ</Text>
-          <Text style={styles.title}>What shall we call you?</Text>
-          <View style={styles.titleSelector}>
-            <Pressable
-              style={[styles.titleOption, title === 'Mr.' && styles.titleOptionActive]}
-              onPress={() => setTitle('Mr.')}
-            >
-              <Text style={[styles.titleOptionText, title === 'Mr.' && styles.titleOptionTextActive]}>Mr.</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.titleOption, title === 'Ms.' && styles.titleOptionActive]}
-              onPress={() => setTitle('Ms.')}
-            >
-              <Text style={[styles.titleOptionText, title === 'Ms.' && styles.titleOptionTextActive]}>Ms.</Text>
-            </Pressable>
-          </View>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Your first name"
-            placeholderTextColor="#65776B"
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            maxLength={20}
-          />
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.wrapper}>
+            <View style={styles.content}>
+              <Text style={styles.badge}>ሒሳብ</Text>
+              <Text style={styles.title}>{t('What shall we call you?')}</Text>
+              <View style={styles.titleSelector}>
+                <Pressable
+                  style={[
+                    styles.titleOption,
+                    title === 'Mr.' && styles.titleOptionActive,
+                  ]}
+                  onPress={() => setTitle('Mr.')}
+                >
+                  <Text
+                    style={[
+                      styles.titleOptionText,
+                      title === 'Mr.' && styles.titleOptionTextActive,
+                    ]}
+                  >
+                    {t('Mr.')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.titleOption,
+                    title === 'Ms.' && styles.titleOptionActive,
+                  ]}
+                  onPress={() => setTitle('Ms.')}
+                >
+                  <Text
+                    style={[
+                      styles.titleOptionText,
+                      title === 'Ms.' && styles.titleOptionTextActive,
+                    ]}
+                  >
+                    {t('Ms.')}
+                  </Text>
+                </Pressable>
+              </View>
 
-        <PrimaryButton
-          label="Continue"
-          onPress={() => onNameSubmit(name.trim() || 'User', title)}
-        />
-      </View>
-      </ScrollView>
+              <TextInput
+                style={styles.input}
+                placeholder={t('Your first name')}
+                placeholderTextColor="#65776B"
+                value={name}
+                onChangeText={setName}
+                autoFocus
+                maxLength={20}
+              />
+            </View>
+
+            <PrimaryButton
+              label={t('Continue')}
+              onPress={() => onNameSubmit(name.trim() || t('User'), title)}
+            />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -89,7 +113,7 @@ const styles = StyleSheet.create({
     fontSize: 38,
     letterSpacing: 1.5,
     marginBottom: 28,
-    fontFamily: 'nokiapure'
+    fontFamily: 'nokiapure',
   },
   title: {
     color: '#FFFFFF',
@@ -132,5 +156,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
     borderBottomColor: '#2A5A4A',
     paddingVertical: 8,
-  }
+  },
 });

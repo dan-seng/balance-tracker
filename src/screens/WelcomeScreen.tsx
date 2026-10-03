@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -6,12 +7,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { AppText as Text } from '../components/AppText';
 import { Screen } from '../components/Screen';
 import { theme } from '../theme';
 
@@ -56,14 +57,16 @@ function ChatBubbleVisual() {
         </View>
         <View style={styles.bubbleMeta}>
           <Text style={styles.bubbleSender}>CBE</Text>
-          <Text style={styles.bubbleLabel}>Transaction message</Text>
+          <Text style={styles.bubbleLabel}>{t('Transaction message')}</Text>
         </View>
       </View>
       <View style={styles.bubbleDivider} />
-      <Text style={styles.bubbleAmount}>ETB 1,500.00</Text>
-      <Text style={styles.bubbleNote}>Credited • Available 24,342.00</Text>
+      <Text style={styles.bubbleAmount}>{t('ETB 1,500.00')}</Text>
+      <Text style={styles.bubbleNote}>
+        {t('Credited • Available 24,342.00')}
+      </Text>
       <View style={styles.trackedPill}>
-        <Text style={styles.trackedPillText}>TRACKED</Text>
+        <Text style={styles.trackedPillText}>{t('TRACKED')}</Text>
       </View>
     </View>
   );
@@ -79,10 +82,10 @@ function BankCardsVisual() {
           styles.walletCardBackLeft,
         ]}>
         <View style={styles.cardSheen} />
-        <Text style={styles.abyssiniaName}>ABYSSINIA BANK</Text>
-        <Text style={styles.bankCardSub}>SINCE 1996</Text>
+        <Text style={styles.abyssiniaName}>{t('ABYSSINIA BANK')}</Text>
+        <Text style={styles.bankCardSub}>{t('SINCE 1996')}</Text>
         <Text style={styles.bankCardNumber}>•••• •••• •••• 0427</Text>
-        <Text style={styles.bankCardFooterTag}>DEBIT</Text>
+        <Text style={styles.bankCardFooterTag}>{t('DEBIT')}</Text>
       </View>
       <View
         style={[
@@ -95,13 +98,13 @@ function BankCardsVisual() {
           <View style={styles.telebirrMarkBox}>
             <Text style={styles.telebirrMarkText}>T</Text>
           </View>
-          <Text style={styles.telebirrName}>Telebirr</Text>
+          <Text style={styles.telebirrName}>{t('Telebirr')}</Text>
         </View>
         <View>
-          <Text style={styles.telebirrLabel}>Balance</Text>
-          <Text style={styles.telebirrBalance}>ETB 1,250.00</Text>
+          <Text style={styles.telebirrLabel}>{t('Balance')}</Text>
+          <Text style={styles.telebirrBalance}>{t('ETB 1,250.00')}</Text>
         </View>
-        <Text style={styles.bankCardFooterTag}>MOBILE MONEY</Text>
+        <Text style={styles.bankCardFooterTag}>{t('MOBILE MONEY')}</Text>
       </View>
       <View
         style={[styles.walletBankCard, styles.cbeCard, styles.walletCardFront]}>
@@ -109,7 +112,9 @@ function BankCardsVisual() {
         <View style={styles.cardFrontTop}>
           <View>
             <Text style={styles.cbeName}>CBE</Text>
-            <Text style={styles.bankCardSub}>COMMERCIAL BANK OF ETHIOPIA</Text>
+            <Text style={styles.bankCardSub}>
+              {t('COMMERCIAL BANK OF ETHIOPIA')}
+            </Text>
           </View>
           <View style={styles.cardChip}>
             <View style={styles.cardChipLine} />
@@ -118,8 +123,8 @@ function BankCardsVisual() {
         </View>
         <Text style={styles.bankCardNumber}>•••• •••• •••• 0423</Text>
         <View style={styles.cardFrontBottom}>
-          <Text style={styles.bankCardFooterTag}>DEBIT</Text>
-          <Text style={styles.bankCardFooterTag}>ETB</Text>
+          <Text style={styles.bankCardFooterTag}>{t('DEBIT')}</Text>
+          <Text style={styles.bankCardFooterTag}>{t('ETB')}</Text>
         </View>
       </View>
     </View>
@@ -142,7 +147,7 @@ function LockVisual() {
         <Path d="M9.2 12l2 2 3.6-4" />
       </Svg>
       <View style={styles.onDevicePill}>
-        <Text style={styles.onDevicePillText}>NO CLOUD</Text>
+        <Text style={styles.onDevicePillText}>{t('NO CLOUD')}</Text>
       </View>
     </View>
   );
@@ -238,15 +243,16 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
               style={styles.brandIcon}
               accessible={false}
             />
-            <Text style={styles.brandName}>Hisab</Text>
+            <Text style={styles.brandName}>{t('Hisab')}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Skip introduction"
+            accessibilityLabel={t('Skip introduction')}
             onPress={onContinue}
             hitSlop={12}
-            style={({ pressed }) => [pressed && styles.pressedDim]}>
-            <Text style={styles.skip}>Skip</Text>
+            style={({ pressed }) => [pressed && styles.pressedDim]}
+          >
+            <Text style={styles.skip}>{t('Skip')}</Text>
           </Pressable>
         </View>
 
@@ -271,7 +277,9 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
           }}>
           {slides.map((slide, index) => {
             const current = index * pagerWidth;
-            const opacity = scrollX.interpolate(gear([current - pagerWidth, current, current + pagerWidth]));
+            const opacity = scrollX.interpolate(
+              gear([current - pagerWidth, current, current + pagerWidth]),
+            );
             const translateX = scrollX.interpolate({
               inputRange: [current - pagerWidth, current, current + pagerWidth],
               outputRange: [pagerWidth * 0.12, 0, -pagerWidth * 0.12],
@@ -290,10 +298,18 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
                   <View style={styles.visualZone}>
                     <SlideVisual name={slide.key} />
                   </View>
-                  <Text accessibilityRole="header" style={[styles.slideTitle, isCompact && styles.slideTitleCompact]}>
-                    {slide.title}
+                  <Text
+                    accessibilityRole="header"
+                    style={[
+                      styles.slideTitle,
+                      isCompact && styles.slideTitleCompact,
+                    ]}
+                  >
+                    {t(slide.title)}
                   </Text>
-                  <Text style={styles.slideDescription}>{slide.description}</Text>
+                  <Text style={styles.slideDescription}>
+                    {t(slide.description)}
+                  </Text>
                 </Animated.View>
               </View>
             );
@@ -309,14 +325,14 @@ export function WelcomeScreen({ onContinue }: WelcomeScreenProps) {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={isLastSlide ? 'Get started' : 'Continue'}
+            accessibilityLabel={isLastSlide ? t('Get started') : t('Continue')}
             onPress={handleContinue}
             style={({ pressed }) => [
               styles.continueButton,
               pressed && styles.continueButtonPressed,
             ]}>
             <Text style={styles.continueLabel}>
-              {isLastSlide ? 'Get Started' : 'Continue'}
+              {isLastSlide ? t('Get Started') : t('Continue')}
             </Text>
           </Pressable>
         </View>
