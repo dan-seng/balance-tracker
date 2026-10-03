@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n';
+import { t } from '../i18n';
 /*
 THESIS: A daily ledger makes profit, collections and customer debt understandable at closing.
 OWN-WORLD: Hisab's black canvas, flat grouped surfaces, system type and restrained gold actions.
@@ -74,7 +76,7 @@ type Form = {
   sale?: ShopSale;
 };
 const dateLabel = (date: string) =>
-  new Date(date).toLocaleString(undefined, {
+  new Date(date).toLocaleString(getLocale(), {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -169,6 +171,7 @@ export function ShopScreen() {
   const [notice, setNotice] = useState('');
   const [section, setSection] = useState<Section>('overview');
   const [period, setPeriod] = useState<ShopPeriod>('today');
+  const [showGuide, setShowGuide] = useState(false);
   const [periodPicker, setPeriodPicker] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
@@ -183,7 +186,7 @@ export function ShopScreen() {
       }
     } catch {
       if (mounted.current)
-        setError('Could not open your shop ledger. Try again.');
+        setError(t('Could not open your shop ledger. Try again.'));
     } finally {
       if (mounted.current) setLoading(false);
     }
@@ -222,7 +225,7 @@ export function ShopScreen() {
   const openSale = () => {
     if (!data.products.some(p => p.quantity > 0)) {
       setSection('stock');
-      setNotice('Add a product with stock before recording a sale.');
+      setNotice(t('Add a product with stock before recording a sale.'));
       return;
     }
     setForm({ kind: 'sale' });
@@ -242,15 +245,16 @@ export function ShopScreen() {
         .filter(l => l.saleId === s.id)
         .map(l => `${l.name} × ${l.quantity}`)
         .join(', '),
-      detail: `Sale · ${
-        s.customerId
-          ? data.customers.find(c => c.id === s.customerId)?.name ?? 'Customer'
-          : 'Walk-in'
-      }${
-        remaining(s, data) > 0
-          ? ` · Unpaid ${money(remaining(s, data))}`
-          : ' · Paid'
-      }`,
+      detail: t('Sale · {customer}{status}', {
+        customer: s.customerId
+          ? data.customers.find(c => c.id === s.customerId)?.name ??
+            t('Customer')
+          : t('Walk-in'),
+        status:
+          remaining(s, data) > 0
+            ? t(' · Unpaid {amount}', { amount: money(remaining(s, data)) })
+            : t(' · Paid'),
+      }),
       amount: s.totalCents,
       kind: 'sale',
     })),
@@ -258,7 +262,7 @@ export function ShopScreen() {
       id: e.id,
       date: e.date,
       title: e.description,
-      detail: `Expense · ${e.category}`,
+      detail: t('Expense · {category}', { category: t(e.category) }),
       amount: -e.amountCents,
       kind: 'expense',
     })),
@@ -270,8 +274,8 @@ export function ShopScreen() {
         title:
           data.customers.find(
             c => c.id === data.sales.find(s => s.id === p.saleId)?.customerId,
-          )?.name ?? 'Customer',
-        detail: 'Customer repayment',
+          )?.name ?? t('Customer'),
+        detail: t('Customer repayment'),
         amount: p.amountCents,
         kind: 'payment',
       })),
@@ -280,10 +284,12 @@ export function ShopScreen() {
       .map(m => ({
         id: m.id,
         date: m.date,
-        title: data.products.find(p => p.id === m.productId)?.name ?? 'Product',
-        detail: `${m.kind === 'opening' ? 'Opening stock' : 'Restock'} · ${
-          m.quantity
-        } units`,
+        title:
+          data.products.find(p => p.id === m.productId)?.name ?? t('Product'),
+        detail: t('{kind} · {quantity} units', {
+          kind: m.kind === 'opening' ? t('Opening stock') : t('Buy stock'),
+          quantity: m.quantity,
+        }),
         amount: -m.amountCents,
         kind: 'stock',
       })),
@@ -335,20 +341,23 @@ export function ShopScreen() {
         <View style={styles.header}>
           <View>
             <Text allowFontScaling style={styles.title}>
-              Shop
+              {t('Shop')}
             </Text>
             <Text allowFontScaling style={styles.muted}>
-              Your daily ledger
+              {t('Your shop notebook')}
             </Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Reporting period: ${periodLabels[period]}. Tap to change.`}
+            accessibilityLabel={t(
+              'Reporting period: {period}. Tap to change.',
+              { period: t(periodLabels[period]) },
+            )}
             onPress={() => setPeriodPicker(true)}
             style={styles.period}
           >
             <Text allowFontScaling style={styles.rowTitle}>
-              {periodLabels[period]} ▾
+              {t(periodLabels[period])} ▾
             </Text>
           </Pressable>
         </View>
@@ -370,10 +379,10 @@ export function ShopScreen() {
                 style={[styles.tabText, section === key && styles.gold]}
               >
                 {key === 'overview'
-                  ? 'Overview'
+                  ? t('Daily totals')
                   : key === 'stock'
-                  ? 'Stock'
-                  : 'Customers'}
+                  ? t('Products')
+                  : t('Customers')}
               </Text>
             </Pressable>
           ))}
@@ -382,7 +391,7 @@ export function ShopScreen() {
           <View style={styles.empty}>
             <ActivityIndicator color={C.gold} />
             <Text allowFontScaling style={styles.muted}>
-              Opening your ledger…
+              {t('Opening your ledger…')}
             </Text>
           </View>
         ) : error ? (
@@ -395,7 +404,7 @@ export function ShopScreen() {
               {error}
             </Text>
             <Button
-              title="Try again"
+              title={t('Try again')}
               onPress={() => {
                 setLoading(true);
                 refresh();
@@ -415,9 +424,85 @@ export function ShopScreen() {
             )}
             {section === 'overview' && (
               <>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('How to use Shop')}
+                  accessibilityState={{ expanded: showGuide }}
+                  style={styles.guideToggle}
+                  onPress={() => setShowGuide(value => !value)}
+                >
+                  <Text allowFontScaling style={styles.gold}>
+                    {t('How to use Shop')}
+                  </Text>
+                  <Text allowFontScaling style={styles.gold}>
+                    {showGuide ? '−' : '+'}
+                  </Text>
+                </Pressable>
+                {showGuide && (
+                  <View style={styles.guide}>
+                    {[
+                      [
+                        t('1. Add your products'),
+                        t(
+                          'Enter what you sell, how many you have, and your buying and selling prices.',
+                        ),
+                      ],
+                      [
+                        t('2. Write down each sale'),
+                        t(
+                          'Choose the items sold and the money paid. If some money is still owed, choose a customer.',
+                        ),
+                      ],
+                      [
+                        t('3. Add purchases and expenses'),
+                        t(
+                          'Buy stock adds items to your shelf. Add expense records costs such as rent and transport.',
+                        ),
+                      ],
+                      [
+                        t('4. Check your totals'),
+                        t(
+                          'See your profit, money received and what customers owe. Open Customers when someone pays their debt.',
+                        ),
+                      ],
+                    ].map(([title, detail]) => (
+                      <View key={title} style={styles.guideStep}>
+                        <Text allowFontScaling style={styles.rowTitle}>
+                          {title}
+                        </Text>
+                        <Text allowFontScaling style={styles.muted}>
+                          {detail}
+                        </Text>
+                      </View>
+                    ))}
+                    <Text allowFontScaling style={styles.small}>
+                      {t(
+                        'Example: buy an item for 100 ETB and sell it for 150 ETB. Your profit is 50 ETB before shop expenses, even if the customer pays later.',
+                      )}
+                    </Text>
+                  </View>
+                )}
+                {!data.products.length && !activity.length && (
+                  <View style={styles.setup}>
+                    <Text allowFontScaling style={styles.heading}>
+                      {t('Start with what is on your shelf')}
+                    </Text>
+                    <Text allowFontScaling style={styles.muted}>
+                      {t(
+                        'Add one product and its quantity. Then you can record your first sale.',
+                      )}
+                    </Text>
+                    <Button
+                      title={t('Add your first product')}
+                      primary
+                      onPress={() => setForm({ kind: 'product' })}
+                    />
+                  </View>
+                )}
                 <View style={styles.summary}>
                   <Text allowFontScaling style={styles.label}>
-                    Profit · {periodLabels[period]}
+                    {totals.profitCents < 0 ? t('Loss ·') : t('Profit ·')}{' '}
+                    {t(periodLabels[period])}
                   </Text>
                   <Text
                     allowFontScaling
@@ -429,13 +514,13 @@ export function ShopScreen() {
                     {money(totals.profitCents)}
                   </Text>
                   <Text allowFontScaling style={styles.muted}>
-                    Sales − cost of goods − expenses
+                    {t('Sales − purchase cost of sold items − shop expenses')}
                   </Text>
                   <View style={styles.divider} />
                   {[
-                    ['Sales', totals.salesCents],
-                    ['Cost of goods sold', totals.costCents],
-                    ['Expenses', totals.expenseCents],
+                    [t('Sales'), totals.salesCents],
+                    [t('What sold items cost you'), totals.costCents],
+                    [t('Expenses'), totals.expenseCents],
                   ].map(([label, amount]) => (
                     <View key={String(label)} style={styles.totalRow}>
                       <Text allowFontScaling style={styles.muted}>
@@ -447,17 +532,23 @@ export function ShopScreen() {
                     </View>
                   ))}
                   <Text allowFontScaling style={styles.small}>
-                    Based on the sales and expenses you record.
+                    {t(
+                      'Profit includes sales customers have not paid for yet. It is not your cash balance.',
+                    )}
                   </Text>
                 </View>
-                <Button title="＋ Record sale" primary onPress={openSale} />
+                <Button
+                  title={t('＋ Record sale')}
+                  primary
+                  onPress={openSale}
+                />
                 <View style={styles.actions}>
                   <View style={styles.flex}>
-                    <Button title="Restock" onPress={openRestock} />
+                    <Button title={t('Buy stock')} onPress={openRestock} />
                   </View>
                   <View style={styles.flex}>
                     <Button
-                      title="Add expense"
+                      title={t('Add expense')}
                       onPress={() => setForm({ kind: 'expense' })}
                     />
                   </View>
@@ -465,7 +556,7 @@ export function ShopScreen() {
                 <View style={styles.collection}>
                   <View style={styles.flex}>
                     <Text allowFontScaling style={styles.label}>
-                      Collected · {periodLabels[period]}
+                      {t('Money received ·')} {t(periodLabels[period])}
                     </Text>
                     <Text
                       allowFontScaling
@@ -476,7 +567,7 @@ export function ShopScreen() {
                   </View>
                   <View style={styles.flex}>
                     <Text allowFontScaling style={styles.label}>
-                      Unpaid · all time
+                      {t('Customers owe · all time')}
                     </Text>
                     <Text allowFontScaling style={styles.collectionValue}>
                       {money(totals.outstandingCents)}
@@ -484,8 +575,9 @@ export function ShopScreen() {
                   </View>
                 </View>
                 <Text allowFontScaling style={styles.small}>
-                  Collected includes repayments received in this period. Unpaid
-                  includes all outstanding customer sales.
+                  {t(
+                    'Money received includes sale payments and debt payments in this period. Customers owe shows all unpaid sales.',
+                  )}
                 </Text>
                 {data.products.some(p => p.quantity <= p.lowStock) && (
                   <Pressable
@@ -498,31 +590,37 @@ export function ShopScreen() {
                         data.products.filter(p => p.quantity <= p.lowStock)
                           .length
                       }{' '}
-                      products need restocking ›
+                      {t('products need restocking ›')}{' '}
                     </Text>
                   </Pressable>
                 )}
-                <View style={styles.sectionHeader}>
-                  <Text allowFontScaling style={styles.heading}>
-                    Recent activity
-                  </Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={styles.link}
-                    onPress={() => setSection('history')}
-                  >
-                    <Text allowFontScaling style={styles.gold}>
-                      View all ›
-                    </Text>
-                  </Pressable>
-                </View>
-                {activity.length ? (
-                  rows(activity.slice(0, 5))
-                ) : (
-                  <Empty
-                    title="Your shop starts here"
-                    detail="Add your products and opening stock, then record the first sale. Your daily totals will update automatically."
-                  />
+                {(data.products.length > 0 || activity.length > 0) && (
+                  <>
+                    <View style={styles.sectionHeader}>
+                      <Text allowFontScaling style={styles.heading}>
+                        {t('Recent activity')}
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        style={styles.link}
+                        onPress={() => setSection('history')}
+                      >
+                        <Text allowFontScaling style={styles.gold}>
+                          {t('View all ›')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                    {activity.length ? (
+                      rows(activity.slice(0, 5))
+                    ) : (
+                      <Empty
+                        title={t('Ready for your first sale')}
+                        detail={t(
+                          'Tap Record sale, choose the items and enter what the customer paid. We will update stock and totals for you.',
+                        )}
+                      />
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -531,23 +629,24 @@ export function ShopScreen() {
                 <View style={styles.sectionHeader}>
                   <View>
                     <Text allowFontScaling style={styles.heading}>
-                      Products
+                      {t('Products')}
                     </Text>
                     <Text allowFontScaling style={styles.muted}>
-                      Stock value {money(totals.stockValueCents)}
+                      {t('Cost of items you still have')}{' '}
+                      {money(totals.stockValueCents)}
                     </Text>
                   </View>
                   <Button
-                    title="＋ Product"
+                    title={t('＋ Add product')}
                     primary
                     onPress={() => setForm({ kind: 'product' })}
                   />
                 </View>
                 <Field
-                  label="Search products"
+                  label={t('Search products')}
                   value={search}
                   onChange={setSearch}
-                  placeholder="Product name"
+                  placeholder={t('Product name')}
                 />
                 {products.length ? (
                   products.map(product => (
@@ -571,20 +670,20 @@ export function ShopScreen() {
                         </Text>
                       </View>
                       <Text allowFontScaling style={styles.muted}>
-                        Sell {money(product.priceCents)} · Average cost{' '}
-                        {money(product.costCents)}
+                        {t('Sell')} {money(product.priceCents)}{' '}
+                        {t('· Average buying price')} {money(product.costCents)}
                       </Text>
                       {product.quantity <= product.lowStock && (
                         <Text allowFontScaling style={styles.error}>
                           {product.quantity === 0
-                            ? 'Out of stock'
-                            : 'Low stock'}
+                            ? t('Out of stock')
+                            : t('Low stock')}
                         </Text>
                       )}
                       <View style={styles.actions}>
                         <View style={styles.flex}>
                           <Button
-                            title="Restock"
+                            title={t('Buy stock')}
                             onPress={() =>
                               setForm({ kind: 'restock', product })
                             }
@@ -592,7 +691,7 @@ export function ShopScreen() {
                         </View>
                         <View style={styles.flex}>
                           <Button
-                            title="Edit product"
+                            title={t('Edit product')}
                             onPress={() => setForm({ kind: 'edit', product })}
                           />
                         </View>
@@ -602,12 +701,16 @@ export function ShopScreen() {
                 ) : (
                   <Empty
                     title={
-                      query ? 'No matching products' : 'Add your first product'
+                      query
+                        ? t('No matching products')
+                        : t('Add your first product')
                     }
                     detail={
                       query
-                        ? 'Try a different product name.'
-                        : 'Enter its name, cost, selling price, and how many units you have.'
+                        ? t('Try a different product name.')
+                        : t(
+                            'Enter its name, cost, selling price, and how many units you have.',
+                          )
                     }
                   />
                 )}
@@ -617,19 +720,19 @@ export function ShopScreen() {
               <>
                 <View style={styles.sectionHeader}>
                   <Text allowFontScaling style={styles.heading}>
-                    Customers
+                    {t('Customers')}
                   </Text>
                   <Button
-                    title="＋ Customer"
+                    title={t('＋ Add customer')}
                     primary
                     onPress={() => setForm({ kind: 'customer' })}
                   />
                 </View>
                 <Field
-                  label="Search customers"
+                  label={t('Search customers')}
                   value={search}
                   onChange={setSearch}
-                  placeholder="Name or phone"
+                  placeholder={t('Name or phone')}
                 />
                 {data.customers
                   .filter(c =>
@@ -647,7 +750,7 @@ export function ShopScreen() {
                           {c.name}
                         </Text>
                         <Text allowFontScaling style={styles.muted}>
-                          {c.phone || 'No phone number'}
+                          {c.phone || t('No phone number')}
                         </Text>
                       </View>
                       <View>
@@ -659,15 +762,17 @@ export function ShopScreen() {
                           )}
                         </Text>
                         <Text allowFontScaling style={styles.small}>
-                          Unpaid ›
+                          {t('Unpaid ›')}
                         </Text>
                       </View>
                     </Pressable>
                   ))}
                 {!data.customers.length && (
                   <Empty
-                    title="Keep track of customer credit"
-                    detail="Add a customer before recording a sale with an unpaid balance. Record their repayments here."
+                    title={t('Keep track of customer credit')}
+                    detail={t(
+                      'Add a customer before recording a sale with an unpaid balance. Record their repayments here.',
+                    )}
                   />
                 )}
                 {!!data.customers.length &&
@@ -675,8 +780,8 @@ export function ShopScreen() {
                     `${c.name} ${c.phone}`.toLowerCase().includes(query),
                   ) && (
                     <Empty
-                      title="No matching customers"
-                      detail="Try a different name or phone number."
+                      title={t('No matching customers')}
+                      detail={t('Try a different name or phone number.')}
                     />
                   )}
               </>
@@ -684,18 +789,20 @@ export function ShopScreen() {
             {section === 'history' && (
               <>
                 <Button
-                  title="‹ Back to overview"
+                  title={t('‹ Back to overview')}
                   onPress={() => setSection('overview')}
                 />
                 <Text allowFontScaling style={styles.heading}>
-                  All activity
+                  {t('All activity')}
                 </Text>
                 {activity.length ? (
                   rows(activity)
                 ) : (
                   <Empty
-                    title="No activity yet"
-                    detail="Sales, stock purchases, expenses and repayments will appear here."
+                    title={t('No activity yet')}
+                    detail={t(
+                      'Sales, stock purchases, expenses and repayments will appear here.',
+                    )}
                   />
                 )}
               </>
@@ -712,19 +819,24 @@ export function ShopScreen() {
         <View style={styles.dialogBackdrop}>
           <View style={styles.dialog}>
             <Text allowFontScaling style={styles.heading}>
-              Reporting period
+              {t('Reporting period')}
             </Text>
             {(['today', 'month', 'all'] as ShopPeriod[]).map(value => (
               <Button
                 key={value}
-                title={`${period === value ? '✓ ' : ''}${periodLabels[value]}`}
+                title={`${period === value ? '✓ ' : ''}${t(
+                  periodLabels[value],
+                )}`}
                 onPress={() => {
                   setPeriod(value);
                   setPeriodPicker(false);
                 }}
               />
             ))}
-            <Button title="Cancel" onPress={() => setPeriodPicker(false)} />
+            <Button
+              title={t('Cancel')}
+              onPress={() => setPeriodPicker(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -736,18 +848,18 @@ export function ShopScreen() {
         <SafeAreaView style={styles.screen}>
           <ScrollView contentContainerStyle={styles.content}>
             <Button
-              title="‹ Back to customers"
+              title={t('‹ Back to customers')}
               onPress={() => setCustomer(null)}
             />
             <Text allowFontScaling style={styles.title}>
               {customer?.name}
             </Text>
             <Text allowFontScaling style={styles.muted}>
-              {customer?.phone || 'Customer ledger'}
+              {customer?.phone || t('Customer ledger')}
             </Text>
             <View style={styles.summary}>
               <Text allowFontScaling style={styles.label}>
-                Total unpaid
+                {t('This customer owes')}
               </Text>
               <Text allowFontScaling style={styles.profit}>
                 {money(
@@ -756,7 +868,7 @@ export function ShopScreen() {
               </Text>
             </View>
             <Text allowFontScaling style={styles.heading}>
-              Sales & repayments
+              {t('Sales & debt payments')}
             </Text>
             {customerSales.length ? (
               customerSales.map(sale => (
@@ -768,21 +880,23 @@ export function ShopScreen() {
                       .join(', ')}
                   </Text>
                   <Text allowFontScaling style={styles.muted}>
-                    {dateLabel(sale.date)} · Sale {money(sale.totalCents)}
+                    {dateLabel(sale.date)} {t('· Sale')}{' '}
+                    {money(sale.totalCents)}
                   </Text>
                   <Text allowFontScaling style={styles.rowTitle}>
-                    Unpaid {money(remaining(sale, data))}
+                    {t('Unpaid')} {money(remaining(sale, data))}
                   </Text>
                   {data.payments
                     .filter(p => p.saleId === sale.id)
                     .map(p => (
                       <Text allowFontScaling key={p.id} style={styles.small}>
-                        Received {money(p.amountCents)} · {dateLabel(p.date)}
+                        {t('Received')} {money(p.amountCents)} ·{' '}
+                        {dateLabel(p.date)}
                       </Text>
                     ))}
                   {remaining(sale, data) > 0 && (
                     <Button
-                      title="Record repayment"
+                      title={t('Record debt payment')}
                       primary
                       onPress={() => {
                         setCustomer(null);
@@ -794,8 +908,10 @@ export function ShopScreen() {
               ))
             ) : (
               <Empty
-                title="No sales for this customer"
-                detail="Choose this customer when recording their next sale."
+                title={t('No sales for this customer')}
+                detail={t(
+                  'Choose this customer when recording their next sale.',
+                )}
               />
             )}
           </ScrollView>
@@ -812,7 +928,7 @@ export function ShopScreen() {
           onSaved={async () => {
             setForm(null);
             await refresh();
-            setNotice('Saved to your shop ledger.');
+            setNotice(t('Saved to your shop notebook.'));
           }}
         />
       )}
@@ -833,7 +949,7 @@ function ShopForm({
 }) {
   const [values, setValues] = useState<Record<string, string>>({
     name: form.product?.name ?? '',
-    unit: form.product?.unit ?? 'pieces',
+    unit: form.product?.unit ?? t('pieces'),
     quantity: '0',
     cost: form.product ? String(form.product.costCents / 100) : '',
     price: form.product ? String(form.product.priceCents / 100) : '',
@@ -873,13 +989,13 @@ function ShopForm({
     />
   );
   const titles = {
-    product: 'Add product',
-    edit: 'Edit product',
-    restock: 'Restock',
-    sale: 'Record sale',
-    expense: 'Add expense',
-    customer: 'Add customer',
-    repayment: 'Record repayment',
+    product: t('Add product'),
+    edit: t('Edit product'),
+    restock: t('Buy stock'),
+    sale: t('Record sale'),
+    expense: t('Add expense'),
+    customer: t('Add customer'),
+    repayment: t('Record debt payment'),
   };
   const close = () => {
     if (saving.current) return;
@@ -887,10 +1003,14 @@ function ShopForm({
       onClose();
       return;
     }
-    Alert.alert('Discard this entry?', 'Your unsaved changes will be lost.', [
-      { text: 'Keep editing', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: onClose },
-    ]);
+    Alert.alert(
+      t('Discard this entry?'),
+      t('Your unsaved changes will be lost.'),
+      [
+        { text: t('Keep editing'), style: 'cancel' },
+        { text: t('Discard'), style: 'destructive', onPress: onClose },
+      ],
+    );
   };
   const total = lines.reduce((sum, l) => sum + l.quantity * l.priceCents, 0);
   const chooseProduct = (product: ShopProduct) => {
@@ -900,17 +1020,22 @@ function ShopForm({
   };
   const addLine = () => {
     try {
-      if (!productId) throw new Error('Choose a product.');
+      if (!productId) throw new Error(t('Choose a product.'));
       const quantity = parseQuantity(lineQuantity);
       const priceCents = parseMoney(linePrice);
       const product = data.products.find(p => p.id === productId)!;
       if (!quantity || quantity > product.quantity)
         throw new Error(
-          `Available stock: ${product.quantity} ${product.unit}.`,
+          t('Available stock: {quantity} {unit}.', {
+            quantity: product.quantity,
+            unit: product.unit,
+          }),
         );
       if (lines.some(l => l.productId === productId))
         throw new Error(
-          'This product is already in the sale. Remove its line to change the quantity.',
+          t(
+            'This product is already in the sale. Remove its line to change the quantity.',
+          ),
         );
       setLines(prev => [...prev, { productId, quantity, priceCents }]);
       setProductId('');
@@ -919,7 +1044,9 @@ function ShopForm({
       setDirty(true);
       setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Check the sale line.');
+      setError(
+        cause instanceof Error ? cause.message : t('Check the sale line.'),
+      );
     }
   };
   const save = async () => {
@@ -970,10 +1097,12 @@ function ShopForm({
           break;
         case 'sale': {
           if (creatingCustomer)
-            throw new Error('Save the new customer first, then save the sale.');
+            throw new Error(
+              t('Save the new customer first, then save the sale.'),
+            );
           if (productId)
             throw new Error(
-              'Tap Add to sale for the selected product before saving.',
+              t('Tap Add to sale for the selected product before saving.'),
             );
           await recordSale(
             lines,
@@ -988,7 +1117,7 @@ function ShopForm({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Could not save. Your entry is still here; please try again.',
+          : t('Could not save. Your entry is still here; please try again.'),
       );
       saving.current = false;
       setBusy(false);
@@ -1012,7 +1141,7 @@ function ShopForm({
       setError(
         cause instanceof Error
           ? cause.message
-          : 'Could not save the customer. Try again.',
+          : t('Could not save the customer. Try again.'),
       );
     } finally {
       saving.current = false;
@@ -1034,50 +1163,102 @@ function ShopForm({
               <Text allowFontScaling style={[styles.heading, styles.flex]}>
                 {titles[form.kind]}
               </Text>
-              <Button title="Cancel" disabled={busy} onPress={close} />
+              <Button title={t('Cancel')} disabled={busy} onPress={close} />
             </View>
+            <Text allowFontScaling style={styles.muted}>
+              {form.kind === 'sale'
+                ? t(
+                    'Choose what you sold, add it to the sale, then enter how much the customer paid.',
+                  )
+                : form.kind === 'restock'
+                ? t(
+                    'Use this when you buy more items to sell. Enter the quantity and the price you paid for one.',
+                  )
+                : form.kind === 'repayment'
+                ? t(
+                    'Record a payment for this past sale. You cannot enter more than the customer owes.',
+                  )
+                : form.kind === 'expense'
+                ? t(
+                    'Record money spent to run your shop. Product purchases go under Buy stock.',
+                  )
+                : form.kind === 'customer'
+                ? t(
+                    'Add someone who buys on credit so you can track what they owe.',
+                  )
+                : form.kind === 'product'
+                ? t(
+                    'Add an item you sell. Prices are for one piece, pack or bottle, not the whole stock.',
+                  )
+                : t(
+                    'Update this product for future sales. Past sales will stay the same.',
+                  )}
+            </Text>
             {(form.kind === 'product' || form.kind === 'edit') && (
               <>
-                {input('name', 'Product name', false, 'e.g. Coffee')}
+                {input('name', t('Product name'), false, t('e.g. Coffee'))}
                 {input(
                   'unit',
-                  'Unit label',
+                  t('How do you count this item?'),
                   false,
-                  'e.g. pieces, packs, bottles',
+                  t('e.g. pieces, packs, bottles'),
                 )}
                 {form.kind === 'product' && (
                   <>
-                    {input('quantity', 'Opening stock (whole units)', true)}
-                    {input('cost', 'Cost per unit (ETB)', true, '0.00')}
+                    {input('quantity', t('How many do you have now?'), true)}
+                    {input(
+                      'cost',
+                      t('What did one cost you? (ETB)'),
+                      true,
+                      '0.00',
+                    )}
                   </>
                 )}
-                {input('price', 'Selling price per unit (ETB)', true, '0.00')}
-                {input('lowStock', 'Low-stock alert at or below', true)}
+                {input(
+                  'price',
+                  t('What do you sell one for? (ETB)'),
+                  true,
+                  '0.00',
+                )}
+                {input(
+                  'lowStock',
+                  t('Remind me when only this many are left'),
+                  true,
+                )}
                 <Text allowFontScaling style={styles.muted}>
                   {form.kind === 'edit'
-                    ? 'New names, units and prices apply to future sales. Past sales keep their original details.'
-                    : 'Opening stock is stock you already own. Buy more using Restock; its cost is counted in profit as items sell.'}
+                    ? t(
+                        'New names, units and prices apply to future sales. Past sales keep their original details.',
+                      )
+                    : t(
+                        'Enter the items already on your shelf. Use Buy stock for later purchases. Use whole numbers for quantities.',
+                      )}
                 </Text>
               </>
             )}
             {form.kind === 'customer' && (
               <>
-                {input('name', 'Customer name')}
-                {input('phone', 'Phone (optional)', false, 'Phone number')}
+                {input('name', t('Customer name'))}
+                {input(
+                  'phone',
+                  t('Phone (optional)'),
+                  false,
+                  t('Phone number'),
+                )}
                 <Text allowFontScaling style={styles.muted}>
-                  Customers let you record unpaid sales and repayments.
+                  {t('Customers let you record unpaid sales and repayments.')}
                 </Text>
               </>
             )}
             {(form.kind === 'restock' || form.kind === 'sale') && (
               <>
                 <Text allowFontScaling style={styles.heading}>
-                  Choose a product
+                  {t('Choose a product')}
                 </Text>
                 {form.kind === 'restock' && !!form.product ? (
                   <Text allowFontScaling style={styles.rowTitle}>
                     {form.product.name} · {form.product.quantity}{' '}
-                    {form.product.unit} in stock
+                    {form.product.unit} {t('in stock')}{' '}
                   </Text>
                 ) : (
                   <View style={styles.choices}>
@@ -1109,20 +1290,17 @@ function ShopForm({
                 )}
                 {form.kind === 'restock' ? (
                   <>
-                    {input(
-                      'quantity',
-                      'Purchased quantity (whole units)',
-                      true,
-                    )}
+                    {input('quantity', t('How many did you buy?'), true)}
                     {input(
                       'cost',
-                      'Purchase cost per unit (ETB)',
+                      t('What did you pay for one? (ETB)'),
                       true,
                       '0.00',
                     )}
                     <Text allowFontScaling style={styles.muted}>
-                      Adds stock at a weighted average cost. Record rent and
-                      other running costs as expenses.
+                      {t(
+                        'This adds items to your stock and updates their average purchase cost. Their cost reduces profit when you sell them.',
+                      )}
                     </Text>
                   </>
                 ) : (
@@ -1130,7 +1308,7 @@ function ShopForm({
                     {!!productId && (
                       <>
                         <Field
-                          label="Quantity (whole units)"
+                          label={t('How many are you selling?')}
                           value={lineQuantity}
                           numeric
                           onChange={value => {
@@ -1139,7 +1317,7 @@ function ShopForm({
                           }}
                         />
                         <Field
-                          label="Selling price per unit (ETB)"
+                          label={t('What do you sell one for? (ETB)')}
                           value={linePrice}
                           numeric
                           onChange={value => {
@@ -1147,16 +1325,17 @@ function ShopForm({
                             setDirty(true);
                           }}
                         />
-                        <Button title="Add to sale" onPress={addLine} />
+                        <Button title={t('Add to sale')} onPress={addLine} />
                       </>
                     )}
                     <Text allowFontScaling style={styles.heading}>
-                      Sale items
+                      {t('Sale items')}
                     </Text>
                     {!lines.length && (
                       <Text allowFontScaling style={styles.muted}>
-                        Choose a product, enter the quantity and add it to the
-                        sale.
+                        {t(
+                          'Choose a product, enter the quantity and add it to the sale.',
+                        )}
                       </Text>
                     )}
                     {lines.map(line => (
@@ -1174,7 +1353,7 @@ function ShopForm({
                           </Text>
                         </View>
                         <Button
-                          title="Remove"
+                          title={t('Remove')}
                           onPress={() => {
                             setLines(prev =>
                               prev.filter(l => l.productId !== line.productId),
@@ -1186,7 +1365,7 @@ function ShopForm({
                     ))}
                     <View style={styles.totalRow}>
                       <Text allowFontScaling style={styles.heading}>
-                        Sale total
+                        {t('Sale total')}
                       </Text>
                       <Text allowFontScaling style={styles.heading}>
                         {money(total)}
@@ -1194,20 +1373,24 @@ function ShopForm({
                     </View>
                     {input(
                       'received',
-                      'Collected now (ETB)',
+                      t('How much did the customer pay? (ETB)'),
                       true,
-                      `${(total / 100).toFixed(2)} — full payment`,
+                      t('{amount} — full payment', {
+                        amount: (total / 100).toFixed(2),
+                      }),
                     )}
                     <Text allowFontScaling style={styles.muted}>
-                      Leave blank for full payment. Enter 0 for a fully unpaid
-                      sale.
+                      {t(
+                        'Paid in full? Leave this blank. Paid some? Enter that amount. Paid nothing? Enter 0.',
+                      )}
                     </Text>
                     <Text allowFontScaling style={styles.heading}>
-                      Customer
+                      {t('Customer')}
                     </Text>
                     <Text allowFontScaling style={styles.muted}>
-                      Required when any amount is unpaid. You can add a new
-                      customer here without losing this sale.
+                      {t(
+                        'If the customer will pay later, choose their name. Add a new customer here if needed.',
+                      )}
                     </Text>
                     <View style={styles.choices}>
                       <Pressable
@@ -1223,7 +1406,7 @@ function ShopForm({
                         }}
                       >
                         <Text allowFontScaling style={styles.rowTitle}>
-                          Walk-in · fully paid
+                          {t('No customer name · paid in full')}
                         </Text>
                       </Pressable>
                       {[...data.customers, ...extraCustomers].map(c => (
@@ -1249,21 +1432,21 @@ function ShopForm({
                     <Button
                       title={
                         creatingCustomer
-                          ? 'Cancel new customer'
-                          : '＋ New customer'
+                          ? t('Cancel new customer')
+                          : t('＋ New customer')
                       }
                       disabled={busy}
                       onPress={() => setCreatingCustomer(value => !value)}
                     />
                     {creatingCustomer && (
                       <>
-                        {input('name', 'New customer name')}
-                        {input('phone', 'Phone (optional)')}
+                        {input('name', t('New customer name'))}
+                        {input('phone', t('Phone (optional)'))}
                         <Button
                           title={
                             busy
-                              ? 'Saving customer…'
-                              : 'Save customer & keep sale'
+                              ? t('Saving customer…')
+                              : t('Save customer & keep sale')
                           }
                           disabled={busy}
                           onPress={saveInlineCustomer}
@@ -1278,12 +1461,12 @@ function ShopForm({
               <>
                 {input(
                   'description',
-                  'What was the expense?',
+                  t('What was the expense?'),
                   false,
-                  'e.g. Monthly shop rent',
+                  t('e.g. Monthly shop rent'),
                 )}
                 <Text allowFontScaling style={styles.label}>
-                  Category
+                  {t('Category')}
                 </Text>
                 <View style={styles.choices}>
                   {['Rent', 'Transport', 'Utilities', 'Wages', 'Other'].map(
@@ -1303,15 +1486,16 @@ function ShopForm({
                           setDirty(true);
                         }}
                       >
-                        <Text allowFontScaling>{category}</Text>
+                        <Text allowFontScaling>{t(category)}</Text>
                       </Pressable>
                     ),
                   )}
                 </View>
-                {input('amount', 'Amount (ETB)', true, '0.00')}
+                {input('amount', t('Amount (ETB)'), true, '0.00')}
                 <Text allowFontScaling style={styles.muted}>
-                  For running costs. Use Restock for product purchases to keep
-                  profit accurate.
+                  {t(
+                    'Use this for rent, transport, wages or bills. Buying items to sell? Use Buy stock instead.',
+                  )}
                 </Text>
               </>
             )}
@@ -1324,14 +1508,21 @@ function ShopForm({
                   }
                 </Text>
                 <Text allowFontScaling style={styles.muted}>
-                  Sale on {dateLabel(form.sale!.date)}
+                  {t('Sale on')} {dateLabel(form.sale!.date)}
                 </Text>
                 <Text allowFontScaling style={styles.heading}>
-                  Unpaid {money(remaining(form.sale!, data))}
+                  {t('Unpaid')} {money(remaining(form.sale!, data))}
                 </Text>
-                {input('amount', 'Amount received (ETB)', true, '0.00')}
+                {input(
+                  'amount',
+                  t('How much did they pay? (ETB)'),
+                  true,
+                  '0.00',
+                )}
                 <Text allowFontScaling style={styles.muted}>
-                  This reduces the unpaid balance and adds to collections.
+                  {t(
+                    'This reduces what the customer owes and increases money received. It does not count as a new sale.',
+                  )}
                 </Text>
               </>
             )}
@@ -1348,12 +1539,12 @@ function ShopForm({
             <Button
               title={
                 busy
-                  ? 'Saving…'
+                  ? t('Saving…')
                   : form.kind === 'sale'
-                  ? 'Save sale'
+                  ? t('Save sale')
                   : form.kind === 'repayment'
-                  ? 'Save repayment'
-                  : 'Save'
+                  ? t('Save debt payment')
+                  : t('Save')
               }
               primary
               disabled={busy}
@@ -1366,6 +1557,16 @@ function ShopForm({
   );
 }
 const styles = StyleSheet.create({
+  guideToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 48,
+    gap: 12,
+  },
+  guide: { gap: 18, paddingVertical: 8 },
+  guideStep: { gap: 6 },
+  setup: { gap: 12, paddingVertical: 12 },
   screen: { flex: 1, backgroundColor: theme.colors.background },
   content: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
   formContent: { padding: 20, paddingBottom: 40, gap: 16 },

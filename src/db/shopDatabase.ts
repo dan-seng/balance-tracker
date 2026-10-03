@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import SQLite from './sqliteRuntime';
 import {
   EMPTY_SHOP,
@@ -36,7 +37,7 @@ const stamp = () => new Date().toISOString();
 function text(value: string, label: string): string {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length > 120)
-    throw new Error(`${label} must contain 1–120 characters.`);
+    throw new Error(t('{label} must contain 1–120 characters.', { label }));
   return trimmed;
 }
 async function database(): Promise<ShopDatabase> {
@@ -124,8 +125,8 @@ export function loadShop(): Promise<ShopData> {
 }
 export function addProduct(input: Omit<ShopProduct, 'id'>): Promise<void> {
   return exclusive(async () => {
-    const name = text(input.name, 'Product name');
-    const unit = text(input.unit, 'Unit');
+    const name = text(input.name, t('Product name'));
+    const unit = text(input.unit, t('Unit'));
     parseQuantity(String(input.quantity));
     parseQuantity(String(input.lowStock));
     assertMoney(input.costCents);
@@ -164,11 +165,12 @@ export function addProduct(input: Omit<ShopProduct, 'id'>): Promise<void> {
 export function addCustomer(name: string, phone: string): Promise<string> {
   return exclusive(async () => {
     const db = await database();
-    if (phone.trim().length > 40) throw new Error('Phone number is too long.');
+    if (phone.trim().length > 40)
+      throw new Error(t('Phone number is too long.'));
     const customerId = id();
     await db.executeSql('INSERT INTO customers VALUES (?, ?, ?)', [
       customerId,
-      text(name, 'Customer name'),
+      text(name, t('Customer name')),
       phone.trim(),
     ]);
     return customerId;
@@ -183,10 +185,10 @@ export function restockProduct(
     parseQuantity(String(quantity));
     assertMoney(costCents);
     if (quantity === 0)
-      throw new Error('Restock quantity must be greater than zero.');
+      throw new Error(t('Restock quantity must be greater than zero.'));
     const data = await read();
     const product = data.products.find(p => p.id === productId);
-    if (!product) throw new Error('Select a product.');
+    if (!product) throw new Error(t('Select a product.'));
     parseQuantity(String(product.quantity + quantity));
     const newCost = weightedCost(product, quantity, costCents);
     const db = await database();
@@ -212,11 +214,11 @@ export function recordSale(
     const prepared = prepareSale(data.products, inputs);
     assertMoney(receivedCents);
     if (receivedCents > prepared.totalCents)
-      throw new Error('Amount received cannot exceed the sale total.');
+      throw new Error(t('Amount received cannot exceed the sale total.'));
     if (customerId && !data.customers.some(c => c.id === customerId))
-      throw new Error('Select an existing customer.');
+      throw new Error(t('Select an existing customer.'));
     if (receivedCents < prepared.totalCents && !customerId)
-      throw new Error('Choose a customer for an unpaid sale.');
+      throw new Error(t('Choose a customer for an unpaid sale.'));
     const saleId = id();
     const date = stamp();
     const statements: Statement[] = [
@@ -272,13 +274,13 @@ export function addExpense(
   return exclusive(async () => {
     assertMoney(amountCents);
     if (!amountCents)
-      throw new Error('Expense amount must be greater than zero.');
+      throw new Error(t('Expense amount must be greater than zero.'));
     const db = await database();
     await db.executeSql('INSERT INTO expenses VALUES (?, ?, ?, ?, ?)', [
       id(),
       stamp(),
-      text(description, 'Description'),
-      text(category, 'Category'),
+      text(description, t('Description')),
+      text(category, t('Category')),
       amountCents,
     ]);
   });
@@ -293,7 +295,9 @@ export function recordRepayment(
     const sale = data.sales.find(s => s.id === saleId);
     if (!sale || amountCents <= 0 || amountCents > remaining(sale, data))
       throw new Error(
-        'Enter a repayment greater than zero and no more than the unpaid balance.',
+        t(
+          'Enter a repayment greater than zero and no more than the unpaid balance.',
+        ),
       );
     const db = await database();
     await db.executeSql('INSERT INTO payments VALUES (?, ?, ?, ?, ?)', [
@@ -319,8 +323,8 @@ export function editProduct(
     await db.executeSql(
       'UPDATE products SET name = ?, unit = ?, priceCents = ?, lowStock = ? WHERE id = ?',
       [
-        text(name, 'Product name'),
-        text(unit, 'Unit'),
+        text(name, t('Product name')),
+        text(unit, t('Unit')),
         priceCents,
         lowStock,
         productId,
