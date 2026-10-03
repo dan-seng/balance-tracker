@@ -23,6 +23,8 @@ jest.mock('react-native-biometrics', () =>
   jest.fn(() => ({ simplePrompt: jest.fn() })),
 );
 jest.mock('../src/db', () => ({
+  getAppLanguageFromDb: jest.fn(async () => 'en'),
+  setAppLanguageInDb: jest.fn(async () => undefined),
   initDatabase: jest.fn(async () => undefined),
   getUserNameFromDb: jest.fn(async () => 'Shop owner'),
   getBalanceHiddenFromDb: jest.fn(async () => false),
@@ -52,7 +54,7 @@ test('opens the offline shop ledger when SMS permission is declined', async () =
     });
     expect(loadShop).toHaveBeenCalled();
     expect(
-      renderer.root.findAll(node => node.props.children === 'Your daily ledger')
+      renderer.root.findAll(node => node.props.children === 'Your shop notebook')
         .length,
     ).toBeGreaterThan(0);
   } finally {
@@ -60,5 +62,96 @@ test('opens the offline shop ledger when SMS permission is declined', async () =
       await act(async () => {
         renderer.unmount();
       });
+  }
+});
+
+test('switches the whole app, retains Amharic on reopening, and returns to English', async () => {
+  const { getAppLanguageFromDb, setAppLanguageInDb } = require('../src/db');
+  const { setLanguage } = require('../src/i18n');
+  let saved = 'en';
+  getAppLanguageFromDb.mockImplementation(async () => saved);
+  setAppLanguageInDb.mockImplementation(async (value: string) => {
+    saved = value;
+  });
+  let renderer!: TestRenderer.ReactTestRenderer;
+  const press = async (label: string) => {
+    const node = renderer.root
+      .findAllByProps({ accessibilityLabel: label })
+      .find(item => typeof item.props.onPress === 'function');
+    expect(node).toBeDefined();
+    await act(async () => {
+      node!.props.onPress();
+    });
+  };
+  try {
+    await act(async () => {
+      renderer = TestRenderer.create(<App />);
+    });
+    await press('Settings');
+    await press('አማርኛ');
+    expect(saved).toBe('am');
+    expect(
+      renderer.root.findAll(node => node.props.children === 'ቅንብሮች').length,
+    ).toBeGreaterThan(0);
+    await press('ሱቅ');
+    expect(
+      renderer.root.findAll(node => node.props.children === 'የሱቅ ማስታወሻዎ')
+        .length,
+    ).toBeGreaterThan(0);
+    await act(async () => {
+      renderer.unmount();
+      setLanguage('en');
+    });
+    await act(async () => {
+      renderer = TestRenderer.create(<App />);
+    });
+    await press('ቅንብሮች');
+    await press('English');
+    expect(saved).toBe('en');
+    expect(
+      renderer.root.findAll(node => node.props.children === 'Settings').length,
+    ).toBeGreaterThan(0);
+  } finally {
+    await act(async () => {
+      renderer.unmount();
+      setLanguage('en');
+    });
+    getAppLanguageFromDb.mockImplementation(async () => 'en');
+  }
+});
+
+test('keeps the selected language when saving a new language fails', async () => {
+  const { setAppLanguageInDb } = require('../src/db');
+  const { getLanguage } = require('../src/i18n');
+  const { Alert } = require('react-native');
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  setAppLanguageInDb.mockRejectedValueOnce(new Error('Disk unavailable'));
+  let renderer!: TestRenderer.ReactTestRenderer;
+  try {
+    await act(async () => {
+      renderer = TestRenderer.create(<App />);
+    });
+    const settings = renderer.root
+      .findAllByProps({ accessibilityLabel: 'Settings' })
+      .find(node => typeof node.props.onPress === 'function')!;
+    await act(async () => {
+      settings.props.onPress();
+    });
+    const amharic = renderer.root
+      .findAllByProps({ accessibilityLabel: 'አማርኛ' })
+      .find(node => typeof node.props.onPress === 'function')!;
+    await act(async () => {
+      amharic.props.onPress();
+    });
+    expect(getLanguage()).toBe('en');
+    expect(alert).toHaveBeenCalledWith(
+      'Error',
+      'Could not save your language. Try again.',
+    );
+  } finally {
+    await act(async () => {
+      renderer.unmount();
+    });
+    alert.mockRestore();
   }
 });

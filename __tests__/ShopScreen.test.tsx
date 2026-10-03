@@ -73,13 +73,13 @@ test('keeps a sale draft when adding its first credit customer and records a par
     press(renderer, 'Coffee');
   });
   await act(async () => {
-    field(renderer, 'Quantity (whole units)', '2');
+    field(renderer, 'How many are you selling?', '2');
   });
   await act(async () => {
     press(renderer, 'Add to sale');
   });
   await act(async () => {
-    field(renderer, 'Collected now (ETB)', '60');
+    field(renderer, 'How much did the customer pay? (ETB)', '60');
     press(renderer, '＋ New customer');
   });
   await act(async () => {
@@ -98,4 +98,43 @@ test('keeps a sale draft when adding its first credit customer and records a par
     6000,
     'customer-1',
   );
+});
+
+test('a new owner can find the guide and start adding their first product', async () => {
+  mockLoad.mockResolvedValue(EMPTY_SHOP);
+  let renderer!: TestRenderer.ReactTestRenderer;
+  await act(async () => {
+    renderer = TestRenderer.create(<ShopScreen />);
+    activeRenderer = renderer;
+  });
+  const guide = () =>
+    renderer.root
+      .findAllByProps({ accessibilityLabel: 'How to use Shop' })
+      .find(node => typeof node.props.onPress === 'function')!;
+  expect(guide().props.accessibilityState.expanded).toBe(false);
+  await act(async () => {
+    guide().props.onPress();
+  });
+  expect(guide().props.accessibilityState.expanded).toBe(true);
+  expect(
+    renderer.root.findAll(
+      node => node.props.children === '2. Write down each sale',
+    ).length,
+  ).toBeGreaterThan(0);
+  await act(async () => {
+    guide().props.onPress();
+  });
+  await act(async () => {
+    press(renderer, 'Add your first product');
+  });
+  expect(
+    renderer.root.findAllByProps({
+      accessibilityLabel: 'How many do you have now?',
+    }).length,
+  ).toBeGreaterThan(0);
+  expect(
+    renderer.root.findAllByProps({
+      accessibilityLabel: 'What did one cost you? (ETB)',
+    }).length,
+  ).toBeGreaterThan(0);
 });
