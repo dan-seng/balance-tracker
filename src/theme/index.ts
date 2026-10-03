@@ -59,6 +59,7 @@ export const theme = {
   },
   typography: {
     fonts: {
+      amharic: 'nokiapure',
       regular: 'Poppins-Regular',
       bold: 'Poppins-Bold',
     },
