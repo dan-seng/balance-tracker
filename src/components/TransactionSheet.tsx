@@ -1,3 +1,5 @@
+import { getLocale } from '../i18n';
+import { t } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -50,12 +52,12 @@ function dayLabel(date: Date): string {
     (startOfToday.getTime() - startOfDay.getTime()) / (24 * 60 * 60 * 1000),
   );
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
+  if (diffDays === 0) return t('Today');
+  if (diffDays === 1) return t('Yesterday');
   if (diffDays > 1 && diffDays < 7) {
-    return date.toLocaleDateString(undefined, { weekday: 'long' });
+    return date.toLocaleDateString(getLocale(), { weekday: 'long' });
   }
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(getLocale(), {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -63,7 +65,7 @@ function dayLabel(date: Date): string {
 }
 
 const fmt = (value: number) =>
-  value.toLocaleString(undefined, {
+  value.toLocaleString(getLocale(), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -237,7 +239,7 @@ export function TransactionSheet({
             style={StyleSheet.absoluteFill}
             onPress={onClose}
             accessibilityRole="button"
-            accessibilityLabel="Dismiss transaction details"
+            accessibilityLabel={t('Dismiss transaction details')}
           />
         </Animated.View>
 
@@ -273,7 +275,7 @@ export function TransactionSheet({
                       </Text>
                       <View style={styles.heroBadge}>
                         <Text style={styles.heroBadgeText}>
-                          {transactions.length} TXNS
+                          {transactions.length} {t('TXNS')}{' '}
                         </Text>
                       </View>
                     </View>
@@ -289,9 +291,11 @@ export function TransactionSheet({
 
                     <View style={styles.heroBottomRow}>
                       <View>
-                        <Text style={styles.heroBalanceLabel}>Balance</Text>
+                        <Text style={styles.heroBalanceLabel}>
+                          {t('Balance')}
+                        </Text>
                         <Text style={styles.heroBalanceValue}>
-                          ETB {fmt(renderedAccount.currentBalance)}
+                          {t('ETB')} {fmt(renderedAccount.currentBalance)}
                         </Text>
                       </View>
                       <View style={styles.heroLogo}>
@@ -309,9 +313,9 @@ export function TransactionSheet({
                       <Text style={styles.statArrowCredit}>↑</Text>
                     </View>
                     <View style={styles.statBody}>
-                      <Text style={styles.statLabel}>In</Text>
+                      <Text style={styles.statLabel}>{t('In')}</Text>
                       <Text style={styles.statValueCredit}>
-                        ETB {fmt(income)}
+                        {t('ETB')} {fmt(income)}
                       </Text>
                     </View>
                   </View>
@@ -321,15 +325,17 @@ export function TransactionSheet({
                       <Text style={styles.statArrowDebit}>↓</Text>
                     </View>
                     <View style={styles.statBody}>
-                      <Text style={styles.statLabel}>Out</Text>
-                      <Text style={styles.statValueDebit}>ETB {fmt(expense)}</Text>
+                      <Text style={styles.statLabel}>{t('Out')}</Text>
+                      <Text style={styles.statValueDebit}>
+                        {t('ETB')} {fmt(expense)}
+                      </Text>
                     </View>
                   </View>
                 </View>
 
                 <View style={styles.segmentWrap}>
                   <SegmentedControl
-                    options={['All', 'Income', 'Expense']}
+                    options={[t('All'), t('Income'), t('Expense')]}
                     value={segmentedIndex}
                     onChange={index => {
                       setSegment(
@@ -340,17 +346,20 @@ export function TransactionSheet({
                             : 'expense',
                       );
                     }}
-                    accessibilityLabel="Filter transactions"
+                    accessibilityLabel={t('Filter transactions')}
                   />
                 </View>
 
                 {grouped.length === 0 ? (
                   <Text style={styles.emptyText}>
-                    No transactions recorded yet.
+                    {t('No transactions recorded yet.')}
                   </Text>
                 ) : (
                   grouped.map(group => (
-                    <View key={`${group.label}-header`} style={styles.daySection}>
+                    <View
+                      key={`${group.label}-header`}
+                      style={styles.daySection}
+                    >
                       <Text style={styles.dayLabel}>{group.label}</Text>
                       <View style={styles.dayCard}>
                         {group.items.map((transaction, index) => {
@@ -385,14 +394,17 @@ export function TransactionSheet({
 
                               <View style={styles.txnBody}>
                                 <Text style={styles.txnTitle} numberOfLines={1}>
-                                  {transaction.sender || 'Transaction'}
+                                  {transaction.sender || t('Transaction')}
                                 </Text>
                                 <Text style={styles.txnSubline}>
-                                  {new Date(transaction.date).toLocaleString()}
+                                  {new Date(transaction.date).toLocaleString(
+                                    getLocale(),
+                                  )}
                                 </Text>
                                 {transaction.balanceAfter != null && (
                                   <Text style={styles.txnBalance}>
-                                    Balance ETB {fmt(transaction.balanceAfter)}
+                                    {t('Balance ETB')}{' '}
+                                    {fmt(transaction.balanceAfter)}
                                   </Text>
                                 )}
                               </View>
@@ -403,8 +415,10 @@ export function TransactionSheet({
                                   isCredit
                                     ? styles.txnAmountCredit
                                     : styles.txnAmountDebit,
-                                ]}>
-                                {isCredit ? '+' : '-'}ETB {fmt(transaction.amount)}
+                                ]}
+                              >
+                                {isCredit ? '+' : '-'}
+                                {t('ETB')} {fmt(transaction.amount)}
                               </Text>
                             </View>
                           );

@@ -1,6 +1,8 @@
+import { getLocale } from '../i18n';
+import { t } from '../i18n';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { AppText as Text } from '../components/AppText';;
+import { AppText as Text } from '../components/AppText';
 
 import { BankCard } from '../components/BankCard';
 import { SearchBar } from '../components/SearchBar';
@@ -22,7 +24,10 @@ export function BankDetailScreen({
 }: BankDetailScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({ start: null, end: null });
+  const [dateRange, setDateRange] = useState<{
+    start: Date | null;
+    end: Date | null;
+  }>({ start: null, end: null });
 
   const credits = transactions
     .filter(item => item.type === 'credit')
@@ -45,8 +50,12 @@ export function BankDetailScreen({
   return (
     <Screen scrollable>
       <View style={styles.headerRow}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Text style={styles.backText}>← Back</Text>
+        <Pressable
+          onPress={onBack}
+          style={styles.backButton}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.backText}>{t('← Back')}</Text>
         </Pressable>
         <SearchBar onSearch={setSearchQuery} />
         <Pressable onPress={() => setIsFilterDrawerOpen(true)} style={styles.filterButton} hitSlop={10}>
@@ -66,7 +75,9 @@ export function BankDetailScreen({
             <View style={styles.statIcon}>
               <Text style={[styles.statIconText, styles.creditIconText]}>↑</Text>
             </View>
-            <Text style={styles.statValue}>ETB {credits.toLocaleString()}</Text>
+            <Text style={styles.statValue}>
+              {t('ETB')} {credits.toLocaleString(getLocale())}
+            </Text>
           </View>
         </View>
         <View style={styles.statCard}>
@@ -74,13 +85,15 @@ export function BankDetailScreen({
             <View style={styles.statIcon}>
               <Text style={[styles.statIconText, styles.debitIconText]}>↓</Text>
             </View>
-            <Text style={styles.statValue}>ETB {debits.toLocaleString()}</Text>
+            <Text style={styles.statValue}>
+              {t('ETB')} {debits.toLocaleString(getLocale())}
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Transactions</Text>
+        <Text style={styles.sectionTitle}>{t('Transactions')}</Text>
         <Text style={styles.sectionHint}>{filteredTransactions.length}</Text>
       </View>
 

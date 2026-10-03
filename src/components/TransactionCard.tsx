@@ -1,5 +1,7 @@
+import { getLocale } from '../i18n';
+import { t } from '../i18n';
 import { StyleSheet, View } from 'react-native';
-import { AppText as Text } from './AppText';;
+import { AppText as Text } from './AppText';
 
 import { Transaction } from '../models';
 
@@ -14,23 +16,30 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.icon}>
-          <Text style={[styles.iconText, isCredit ? styles.creditIcon : styles.debitIcon]}>
+          <Text
+            style={[
+              styles.iconText,
+              isCredit ? styles.creditIcon : styles.debitIcon,
+            ]}
+          >
             {isCredit ? '↑' : '↓'}
           </Text>
         </View>
         <View style={styles.bankInfo}>
           <Text style={styles.bank}>{transaction.bankName}</Text>
           <Text style={styles.date}>
-            {new Date(transaction.date).toLocaleDateString()}
+            {new Date(transaction.date).toLocaleDateString(getLocale())}
           </Text>
         </View>
         <Text style={[styles.amount, isCredit ? styles.credit : styles.debit]}>
-          {isCredit ? '+' : '-'}{transaction.amount.toLocaleString()}
+          {isCredit ? '+' : '-'}
+          {transaction.amount.toLocaleString(getLocale())}
         </Text>
       </View>
       <View style={styles.footer}>
         <Text style={styles.balance}>
-          Balance: ETB {transaction.balanceAfter?.toLocaleString() ?? 'N/A'}
+          {t('Balance: ETB')}{' '}
+          {transaction.balanceAfter?.toLocaleString(getLocale()) ?? t('N/A')}
         </Text>
         <Text style={styles.sms} numberOfLines={2}>
           {transaction.rawSms}
