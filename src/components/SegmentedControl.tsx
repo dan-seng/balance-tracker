@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 
@@ -24,12 +25,12 @@ export function SegmentedControl({
             key={option}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${accessibilityLabel ?? ''} ${option}`}
+            accessibilityLabel={`${accessibilityLabel ?? ''} ${t(option)}`}
             onPress={() => onChange(index)}
-            style={[styles.item, active && styles.itemActive]}>
-            <AppText
-              style={[styles.label, active && styles.labelActive]}>
-              {option}
+            style={[styles.item, active && styles.itemActive]}
+          >
+            <AppText style={[styles.label, active && styles.labelActive]}>
+              {t(option)}
             </AppText>
           </Pressable>
         );

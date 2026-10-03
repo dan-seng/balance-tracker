@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -45,14 +46,23 @@ const ShopIcon = ({ size = 24, color = INACTIVE }) => (
   </Svg>
 );
 
-export type TabType = 'dashboard' | 'analytics' | 'shop' | 'settings' | 'addBank';
+export type TabType =
+  | 'dashboard'
+  | 'analytics'
+  | 'shop'
+  | 'settings'
+  | 'addBank';
 
 type BottomNavProps = {
   currentTab: TabType;
   onTabChange: (tab: TabType) => void;
 };
 
-const TABS: { key: TabType; label: string; icon: (p: { size?: number; color?: string }) => React.ReactNode }[] = [
+const TABS: {
+  key: TabType;
+  label: string;
+  icon: (p: { size?: number; color?: string }) => React.ReactNode;
+}[] = [
   { key: 'dashboard', label: 'Wallet', icon: WalletIcon },
   { key: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
   { key: 'shop', label: 'Shop', icon: ShopIcon },
@@ -67,11 +77,11 @@ export function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      () => setKeyboardVisible(true)
+      () => setKeyboardVisible(true),
     );
     const keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
-      () => setKeyboardVisible(false)
+      () => setKeyboardVisible(false),
     );
 
     return () => {
@@ -93,12 +103,12 @@ export function BottomNav({ currentTab, onTabChange }: BottomNavProps) {
             key={key}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={label}
+            accessibilityLabel={t(label)}
             onPress={() => onTabChange(key)}
             style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}>
             <Icon size={23} color={color} />
             <AppText style={[styles.label, active && styles.labelActive]}>
-              {label}
+              {t(label)}
             </AppText>
             <View style={styles.indicator}>
               <View style={[styles.dot, active && styles.dotActive]} />
