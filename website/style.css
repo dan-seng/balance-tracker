@@ -516,6 +516,16 @@ a {
   text-align: left;
 }
 
+/* Anonymous download counter shown beside the download CTAs */
+.download-counter strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.cta-group .download-counter {
+  flex-basis: 100%;
+}
+
 /* Feature Trust Chips */
 .hero-trust-row {
   display: flex;

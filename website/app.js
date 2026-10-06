@@ -30,6 +30,66 @@
   };
 
   /**
+   * Anonymous download counter
+   */
+  const VISITOR_ID_KEY = 'hisab_visitor_id';
+
+  function getVisitorId() {
+    try {
+      let id = localStorage.getItem(VISITOR_ID_KEY);
+      if (!id) {
+        id =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem(VISITOR_ID_KEY, id);
+      }
+      return id;
+    } catch (err) {
+      return '';
+    }
+  }
+
+  function trackDownload() {
+    try {
+      navigator.sendBeacon(`/api/download?id=${encodeURIComponent(getVisitorId())}`);
+    } catch (err) {
+      // tracking must never block the download itself
+    }
+  }
+
+  function formatCount(value) {
+    return new Intl.NumberFormat('en-US').format(value);
+  }
+
+  function renderDownloadCount() {
+    const hosts = document.querySelectorAll('[data-download-counter]');
+    if (!hosts.length || typeof fetch !== 'function') return;
+
+    fetch('/api/count', { headers: { Accept: 'application/json' } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (!data || !data.downloads) return;
+
+        hosts.forEach((host) => {
+          const downloads = host.querySelector('[data-count-downloads]');
+          const users = host.querySelector('[data-count-users]');
+          if (downloads) downloads.textContent = formatCount(data.downloads);
+          if (users) {
+            users.textContent =
+              data.users > 0
+                ? ` from ${formatCount(data.users)} ${data.users === 1 ? 'person' : 'people'}`
+                : '';
+          }
+          host.hidden = false;
+        });
+      })
+      .catch(() => {
+        // stay hidden when the counter is unavailable
+      });
+  }
+
+  /**
    * Theme Management (Light / Dark)
    */
   function initTheme() {
@@ -205,6 +265,20 @@
         }
       });
     });
+
+    // Count a download only when it actually navigates. Registered after the
+    // pill listener so its preventDefault() is already visible here.
+    document.addEventListener('click', (event) => {
+      if (event.defaultPrevented) return;
+      const target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+      const link = target.closest('a[href]');
+      if (!link) return;
+      if (!link.href.split('?')[0].endsWith('.apk')) return;
+      trackDownload();
+    });
+
+    renderDownloadCount();
 
     // Fetch real-time release info from GitHub API
     fetchGitHubReleases();
