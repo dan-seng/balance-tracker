@@ -88,21 +88,6 @@ const BankIcon = ({ size = 16, color = '#FFFFFF' }) => (
   </Svg>
 );
 
-const HeartIcon = ({ size = 16, color = '#FFFFFF' }) => (
-  <Svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <Path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />
-  </Svg>
-);
-
 const TrashIcon = ({ size = 15, color = RED }) => (
   <Svg
     width={size}
@@ -139,7 +124,6 @@ type SettingsScreenProps = {
     logoBase64: string | null,
   ) => Promise<void>;
   onDeleteCustomBank: (bankId: string) => Promise<void>;
-  onOpenSupport: () => void;
   accounts: Array<{
     id: string;
     bankId: string;
@@ -163,7 +147,6 @@ export function SettingsScreen({
   customBanks,
   onAddCustomBank: _onAddCustomBank,
   onDeleteCustomBank,
-  onOpenSupport,
 }: SettingsScreenProps) {
   const language = useLanguage();
   const [savingLanguage, setSavingLanguage] = useState(false);
@@ -369,24 +352,6 @@ export function SettingsScreen({
               </View>
             ))
           )}
-        </View>
-
-        <Text style={styles.groupHeader}>{t('Support')}</Text>
-        <View style={styles.group}>
-          <Pressable style={styles.row} onPress={onOpenSupport}>
-            <View style={[styles.icon, { backgroundColor: BLUE }]}>
-              <HeartIcon />
-            </View>
-            <View style={styles.rowBody}>
-              <Text style={styles.rowLabel}>
-                {t('Support the developer')}
-              </Text>
-              <Text style={styles.rowDescription}>
-                {t('Keep Hisab free')}
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </Pressable>
         </View>
 
         <View style={styles.footer}>
