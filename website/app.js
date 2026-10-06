@@ -74,7 +74,7 @@
     fetch('/api/count', { headers: { Accept: 'application/json' } })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
-        if (!data || !data.downloads) return;
+        if (!data || typeof data.downloads !== 'number') return;
 
         hosts.forEach((host) => {
           const downloads = host.querySelector('[data-count-downloads]');
@@ -257,6 +257,32 @@
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     updateDownloadButtons();
+
+    // Mobile hamburger menu
+    const navToggle = document.getElementById('nav-toggle');
+    const headerNav = document.getElementById('header-nav');
+    if (navToggle && headerNav) {
+      navToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const open = headerNav.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('click', (event) => {
+        if (
+          !event.target.closest('.site-header') &&
+          headerNav.classList.contains('open')
+        ) {
+          headerNav.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      headerNav.addEventListener('click', (event) => {
+        if (event.target.closest('a')) {
+          headerNav.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
 
     // Pill click listener to select formats
     document.querySelectorAll('.pill-link').forEach((pill) => {
