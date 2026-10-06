@@ -167,7 +167,7 @@ export const am = {
   'Custom Banks': 'በእርስዎ የተጨመሩ ባንኮች',
   'No custom banks added yet.': 'እስካሁን ምንም ባንክ አልጨመሩም።',
   'Sender:': 'መላኪያ፦',
-  'Version 1.0 · Developed by SPDY': 'ስሪት 1.0 · በSPDY የተሠራ',
+  'Version 1.0 · Developed by Daniel Gidey': 'ስሪት 1.0 · በDaniel Gidey የተሠራ',
   'Auto-Lock': 'በራስ-ሰር መቆለፍ',
   Today: 'ዛሬ',
   'This month': 'በዚህ ወር',

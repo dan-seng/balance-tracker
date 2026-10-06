@@ -2,14 +2,11 @@ import { t, useLanguage, setLanguage, Language } from '../i18n';
 import { setAppLanguageInDb } from '../db';
 import { Alert } from 'react-native';
 import { useState } from 'react';
+import { StyleSheet, View, Pressable, Modal, Switch } from 'react-native';
 import {
-  StyleSheet,
-  View,
-  Pressable,
-  Modal,
-  Switch,
-} from 'react-native';
-import { AppText as Text, AppTextInput as TextInput } from '../components/AppText';
+  AppText as Text,
+  AppTextInput as TextInput,
+} from '../components/AppText';
 import { Screen } from '../components/Screen';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
@@ -24,30 +21,66 @@ const SEPARATOR = 'rgba(84, 84, 88, 0.55)';
 const GROUPED1 = '#1C1C1E';
 const GROUPED2 = '#2C2C2E';
 
-const UserIcon = ({ size = 16, color = "#FFFFFF" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const UserIcon = ({ size = 16, color = '#FFFFFF' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <Circle cx="12" cy="7" r="4" />
   </Svg>
 );
 
-const LockIcon = ({ size = 16, color = "#FFFFFF" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const LockIcon = ({ size = 16, color = '#FFFFFF' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
     <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
   </Svg>
 );
 
-const TimerIcon = ({ size = 16, color = "#FFFFFF" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const TimerIcon = ({ size = 16, color = '#FFFFFF' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M12 22a8 8 0 0 0 8-8c0-4-3-7.4-7-7.9V4h2V2h-6v2h2v2.1" />
     <Circle cx="12" cy="14" r="5" />
     <Path d="M12 12v2l1.5 1.5" />
   </Svg>
 );
 
-const BankIcon = ({ size = 16, color = "#FFFFFF" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const BankIcon = ({ size = 16, color = '#FFFFFF' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M3 21h18" />
     <Path d="M5 21V7l8-4 8 4v14" />
     <Path d="M17 21v-8.5a1.5 1.5 0 0 0-3 0V21" />
@@ -56,7 +89,16 @@ const BankIcon = ({ size = 16, color = "#FFFFFF" }) => (
 );
 
 const TrashIcon = ({ size = 15, color = RED }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M3 6h18" />
     <Path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
     <Path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -252,7 +294,8 @@ export function SettingsScreen({
 
           <Pressable
             style={styles.row}
-            onPress={() => setShowTimeoutModal(true)}>
+            onPress={() => setShowTimeoutModal(true)}
+          >
             <View style={[styles.icon, { backgroundColor: ORANGE }]}>
               <TimerIcon />
             </View>
@@ -284,7 +327,8 @@ export function SettingsScreen({
                 style={[
                   styles.row,
                   index !== customBanks.length - 1 && styles.rowBorder,
-                ]}>
+                ]}
+              >
                 <View style={[styles.icon, { backgroundColor: PURPLE }]}>
                   <BankIcon />
                 </View>
@@ -312,7 +356,7 @@ export function SettingsScreen({
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {t('Version 1.0 · Developed by SPDY')}
+            {t('Version 1.0 · Developed by Daniel Gidey')}
           </Text>
         </View>
       </View>
@@ -321,10 +365,12 @@ export function SettingsScreen({
         visible={showTimeoutModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowTimeoutModal(false)}>
+        onRequestClose={() => setShowTimeoutModal(false)}
+      >
         <Pressable
           style={styles.modalOverlay}
-          onPress={() => setShowTimeoutModal(false)}>
+          onPress={() => setShowTimeoutModal(false)}
+        >
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{t('Auto-Lock')}</Text>
             {timeoutOptions.map((option, index) => {
@@ -344,7 +390,8 @@ export function SettingsScreen({
                     style={[
                       styles.modalItemText,
                       selected && styles.modalItemTextSelected,
-                    ]}>
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   {selected && <Text style={styles.modalCheck}>✓</Text>}
