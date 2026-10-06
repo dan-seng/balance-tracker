@@ -438,4 +438,23 @@ export const am = {
     'ለ{name} በቂ ክምችት የለም። ያለው፦ {quantity} {unit}።',
   '{label} must contain 1–120 characters.': '{label} ከ1 እስከ 120 ፊደላት መያዝ አለበት።',
   'W{number}': 'ሳ{number}',
+  Support: 'ድጋፍ',
+  'Support the developer': 'ለገንቢው ድጋፍ ይስጡ',
+  'Keep Hisab free': 'ሂሳብን ነጻ ያድርጉ',
+  '‹ Back': '‹ ተመለስ',
+  'Choose an amount': 'መጠን ይምረጡ',
+  'Custom amount': 'ሌላ መጠን',
+  '{amount} Birr': '{amount} ብር',
+  'Donate {amount} Birr': '{amount} ብር ድጋፍ ይስጡ',
+  Donate: 'ድጋፍ ይስጡ',
+  'Opening payment…': 'ክፍያውን በመክፈት ላይ…',
+  'Hisab is free, with no ads and no data collection. If it helps you, support its development.':
+    'ሂሳብ ነጻ ነው፣ ማስታዎቂያም የመረጃ አሰባሰብም የለውም። ጠቃሚ ከሆነ፣ ልማቱን ይደግፉ።',
+  'Pay securely with Telebirr, CBE Birr or card. You will leave the app briefly and can return anytime.':
+    'በቴሌብር፣ በCBE Birr ወይም በካርድ በደህና ይክፈሉ። ከመተግበሪያው ለአጭር ጊዜ ይወጣሉ፣ በማንኛውም ጊዜ መመለስ ይችላሉ።',
+  'Enter an amount': 'መጠን ያስገቡ',
+  'That amount is too large.': 'ያ መጠን በጣም ትልቅ ነው።',
+  'e.g. 150': 'ለምሳሌ፣ 150',
+  'Could not open the payment page. Check your connection and try again.':
+    'የክፍያ ገጹን መክፈት አልተቻለም። ግንኙነትዎን ያረጋግጡ እና እንደገና ይሞክሩ።',
 } as const;

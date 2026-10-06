@@ -16,6 +16,7 @@ import { AnalyticsScreen } from './src/screens/AnalyticsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AddBankScreen } from './src/screens/AddBankScreen';
 import { ShopScreen } from './src/screens/ShopScreen';
+import { SupportScreen } from './src/screens/SupportScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
 import {
   clearAllAccountsFromDb,
@@ -153,6 +154,7 @@ function App() {
       logoBase64: string | null;
     }>
   >([]);
+  const [showSupport, setShowSupport] = useState(false);
   const accountsRef = useRef<Account[]>([]);
   const skipLockScreenRef = useRef(false);
   const hasSyncedRef = useRef(false);
@@ -709,6 +711,8 @@ function App() {
         />
       ) : isSyncing ? (
         <SyncingScreen />
+      ) : showSupport ? (
+        <SupportScreen onBack={() => setShowSupport(false)} />
       ) : (
         <View style={styles.tabContainer}>
           {currentTab === 'dashboard' ? (
@@ -755,6 +759,7 @@ function App() {
               customBanks={customBanks}
               onAddCustomBank={handleAddCustomBank}
               onDeleteCustomBank={handleDeleteCustomBank}
+              onOpenSupport={() => setShowSupport(true)}
               accounts={accounts}
               onRenameAccount={handleRenameAccount}
               onMergeAccounts={handleMergeAccounts}
