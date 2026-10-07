@@ -45,6 +45,6 @@ adb shell am instrument -w com.hisabapp.test/com.hisabapp.backup.BackupInstrumen
 
 The native checks use isolated temporary databases and never open the user's databases. They cover encryption round trips, wrong passwords, tampering, truncation, native validation, bank/Shop restoration and rollback after a forced write failure. React tests cover credential validation, preview, safety-copy cancellation, confirmation and preservation of restored history on reopening.
 
-Completed verification: 50 Jest tests, TypeScript and changed-file lint passed. Android app/test APK builds succeeded; all 29 isolated native checks passed. The emulator file-picker walkthrough saved a real encrypted `.hisab` file and displayed success.
+Release verification: all 55 Jest tests, TypeScript, changed-file lint and the Android v1.1.0 release build passed. Earlier version 2 app/test builds succeeded and all 29 isolated native checks passed. The emulator file-picker walkthrough saved a real encrypted `.hisab` file and displayed success.
 
-Transaction reasons are stored separately by SMS hash and included in backup version 3. Native app and test APK builds pass for version 3; its new cases were not run on an emulator, which remains off.
+Transaction reasons are stored separately by SMS hash and included in backup version 3. Native app and test APK builds pass for version 3; its new cases were not run on an emulator.

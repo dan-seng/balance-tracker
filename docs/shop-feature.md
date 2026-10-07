@@ -1,4 +1,4 @@
-# Shop ledger: confirmed scope and implementation plan
+# Shop ledger: workflows and accounting
 
 ## User-approved scope
 
@@ -35,8 +35,6 @@ Add Shop to the existing bottom navigation and preserve Wallet, Analytics, Add B
 
 Operate mode: owners enter transactions throughout the day and check totals at closing. Inherit Hisab's dark surfaces, system type through AppText, gold accent, semantic green/red, and simple grouped rows. Keep Android Back, accessible labels, large touch targets, and keyboard clearance. Generated comps use a clean sans serif as a hierarchy reference; implementation retains the platform font.
 
-Structural candidates considered: (1) sale-first counter, (2) product-first inventory, (3) customer-credit ledger, (4) daily ledger, (5) chronological cashbook, (6) closing-day worksheet, (7) compact task launcher. The design skill selected candidate 4, daily ledger (seed 31d9d944). External catalog was unavailable after a network-enabled retry. Preview compositions will compare daily ledger, sale-first, and stock-first while preserving the same visual system.
-
 ## Verification plan
 
 Test full and partial payments, repayments without duplicate revenue, insufficient stock, changing purchase costs, negative profit, invalid monetary input, duplicate submissions, and persistence across reopening and SMS resync. Check TypeScript and lint, then verify Android layout and workflows when a device or emulator is available.
@@ -47,9 +45,7 @@ Daily-ledger composition A is approved and implemented. Taxes, multi-shop, CSV/P
 
 ## Completed validation
 
-All 12 Jest tests pass, including the database lifecycle, accounting, inline customer creation while keeping a sale draft, and access to Shop when SMS permission is declined. TypeScript and lint for the changed application/test files pass. SQLite promise configuration is shared once across the bank and shop databases. Finishing source-review fixes are applied.
-
-Native layout screenshots and a completed APK build remain unverified: emulator inspection and the follow-up debug-build authorization were declined. Generated previews are design references rather than runtime screenshots.
+The v1.1.0 release passed all 55 Jest tests, TypeScript, changed-file lint and the signed ARM release build. Tests execute real SQLite statements and cover returns/refunds, supplier debt, stock losses, partial payments, sharing, compact totals and custom discard confirmation. Earlier Android checks covered startup, Amharic rendering and encrypted backups; the latest layout was not visually inspected on a device.
 
 ## Plain-language Shop interface
 
@@ -65,4 +61,6 @@ Shop → More shop tools provides returns, stock corrections, daily closing summ
 - Stock corrections save the actual shelf count and a reason. Reductions create a stock-loss expense at the current average buying cost; increases create no fictitious revenue or cash receipt. Both have an audit trail.
 - Daily summaries accept a local Gregorian YYYY-MM-DD date and share net sales, sold-item cost, expenses, profit/loss, refunds and money received after refunds. Customer statements share dated purchases, payments, returns/refunds and the current balance. Android's share sheet lets the owner choose the destination.
 - Supplier purchases add stock at a weighted average cost and record the amount paid now. Later payments reduce the unpaid purchase balance, cannot exceed it, and do not create another operating expense.
-- Backup payload version 2 includes all new tables. Version 1 files remain restorable with empty new tables.
+- Backup payload version 3 includes the new Shop tables and transaction reasons. Version 1 and 2 files remain restorable through migration.
+
+The main profit card is compact, with its breakdown behind Details. Money received and customer debt use separate rows. Cancelling a changed sale opens an in-app confirmation; Keep editing or Android Back preserves the draft.
