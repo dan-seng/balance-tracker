@@ -2,6 +2,10 @@ import { shopToolsAm } from './shopToolsAm';
 import { backupAm } from './backupAm';
 // English source keys keep translations auditable beside their meaning.
 export const am = {
+  'Account · {number}': 'ሂሳብ · {number}',
+  'Account number unavailable': 'የሂሳብ ቁጥር አይገኝም',
+  '{bank}, account ending in {digits}': '{bank}፣ የሂሳብ መጨረሻ ቁጥሮች {digits}',
+
   'Show fewer': 'ያነሱ አሳይ',
   'Show all recent transactions': 'ሁሉንም የቅርብ ጊዜ ግብይቶች አሳይ',
 
@@ -200,7 +204,7 @@ export const am = {
   'Custom Banks': 'በእርስዎ የተጨመሩ ባንኮች',
   'No custom banks added yet.': 'እስካሁን ምንም ባንክ አልጨመሩም።',
   'Sender:': 'መላኪያ፦',
-  'Version 1.1.0 · Developed by Daniel Gidey': 'ስሪት 1.1.0 · በDaniel Gidey የተሠራ',
+  'Version 1.1.1 · Developed by Daniel Gidey': 'ስሪት 1.1.1 · በDaniel Gidey የተሠራ',
   'Auto-Lock': 'በራስ-ሰር መቆለፍ',
   Today: 'ዛሬ',
   'This month': 'በዚህ ወር',

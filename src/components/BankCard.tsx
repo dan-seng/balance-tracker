@@ -6,15 +6,33 @@ import LinearGradient from 'react-native-linear-gradient';
 import { AppText as Text } from './AppText';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 
-const EyeIcon = ({ size = 15, color = "rgba(235,235,245,0.60)" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const EyeIcon = ({ size = 15, color = 'rgba(235,235,245,0.60)' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
     <Circle cx="12" cy="12" r="3" />
   </Svg>
 );
 
-const EyeOffIcon = ({ size = 15, color = "rgba(235,235,245,0.60)" }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const EyeOffIcon = ({ size = 15, color = 'rgba(235,235,245,0.60)' }) => (
+  <Svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
     <Line x1="1" y1="1" x2="23" y2="23" />
   </Svg>
@@ -382,12 +400,18 @@ export function getBankAbbrev(bankName: string): string {
   const words = cleaned.split(/\s+/).filter(Boolean);
   if (words.length === 0) return 'BK';
   if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
-  return words.slice(0, 3).map(word => word[0]).join('').toUpperCase();
+  return words
+    .slice(0, 3)
+    .map(word => word[0])
+    .join('')
+    .toUpperCase();
 }
 
 export function maskAccountNumber(accountNumber: string): string {
-  const digits = accountNumber.replace(/[^\d]/g, '');
-  if (digits.length < 4) return '•••• ••••';
+  const digits = /[*xX•●#]/.test(accountNumber)
+    ? accountNumber.match(/\d+$/)?.[0] ?? ''
+    : accountNumber.replace(/[^\d]/g, '');
+  if (digits.length < 2) return '';
   return `•• ${digits.slice(-4)}`;
 }
 
@@ -405,10 +429,7 @@ function DotRow() {
   return (
     <View style={styles.dotRow}>
       {DOT_COLORS.map((color, index) => (
-        <View
-          key={index}
-          style={[styles.dot, { backgroundColor: color }]}
-        />
+        <View key={index} style={[styles.dot, { backgroundColor: color }]} />
       ))}
     </View>
   );
@@ -452,7 +473,11 @@ export function BankCard({
               {account.bankName}
             </Text>
             <Text style={styles.acctNumber} numberOfLines={1}>
-              {maskAccountNumber(account.accountNumber)}
+              {maskAccountNumber(account.accountNumber)
+                ? t('Account · {number}', {
+                    number: maskAccountNumber(account.accountNumber),
+                  })
+                : t('Account number unavailable')}
             </Text>
           </View>
           <View style={styles.badge}>

@@ -1,8 +1,20 @@
+import { t } from '../i18n';
 import React, { forwardRef } from 'react';
-import { Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { AppText as Text } from './AppText';
-import { getBankAbbrev, getBankCardTheme, getBankLogo, maskAccountNumber } from './BankCard';
+import {
+  getBankAbbrev,
+  getBankCardTheme,
+  getBankLogo,
+  maskAccountNumber,
+} from './BankCard';
 import { Account } from '../models';
 
 type BankChipProps = {
@@ -19,39 +31,65 @@ export const BankChip = forwardRef<View, BankChipProps>(
 
     const theme = getBankCardTheme(account.bankId);
     const logoUri = customBankLogo ?? getBankLogo(account.bankId) ?? null;
-    const firstWord = account.bankName.trim().split(/\s+/)[0] || account.bankName;
+    const firstWord =
+      account.bankName.trim().split(/\s+/)[0] || account.bankName;
 
     return (
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={account.bankName}
-        style={({ pressed }) => [styles.container, pressed && styles.pressed]}>
+        accessibilityLabel={
+          maskAccountNumber(account.accountNumber)
+            ? t('{bank}, account ending in {digits}', {
+                bank: account.bankName,
+                digits: maskAccountNumber(account.accountNumber).replace(
+                  /\D/g,
+                  '',
+                ),
+              })
+            : account.bankName
+        }
+        style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      >
         <View
           ref={ref}
           collapsable={false}
           style={[
             styles.iconWrap,
-            { width: chipWidth, height: chipWidth, borderRadius: Math.round(chipWidth * 0.26) },
-          ]}>
+            {
+              width: chipWidth,
+              height: chipWidth,
+              borderRadius: Math.round(chipWidth * 0.26),
+            },
+          ]}
+        >
           <LinearGradient
             colors={[theme.color1, theme.color2]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.icon}>
+            style={styles.icon}
+          >
             {logoUri ? (
-              <Image source={logoUri} style={styles.logo} resizeMode="contain" />
+              <Image
+                source={logoUri}
+                style={styles.logo}
+                resizeMode="contain"
+              />
             ) : (
-              <Text style={styles.abbrev}>{getBankAbbrev(account.bankName)}</Text>
+              <Text style={styles.abbrev}>
+                {getBankAbbrev(account.bankName)}
+              </Text>
             )}
           </LinearGradient>
         </View>
         <Text style={styles.label} numberOfLines={1} ellipsizeMode="tail">
           {firstWord}
         </Text>
-        <Text style={styles.acct} numberOfLines={1} ellipsizeMode="tail">
-          {maskAccountNumber(account.accountNumber)}
-        </Text>
+        {!!maskAccountNumber(account.accountNumber) && (
+          <Text style={styles.acct} numberOfLines={1} ellipsizeMode="tail">
+            {maskAccountNumber(account.accountNumber)}
+          </Text>
+        )}
       </Pressable>
     );
   },
