@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 
 type SegmentedControlProps = {
+  minItemHeight?: number;
+  allowFontScaling?: boolean;
   options: string[];
   value: number;
   onChange: (index: number) => void;
@@ -11,6 +13,8 @@ type SegmentedControlProps = {
 
 export function SegmentedControl({
   options,
+  minItemHeight,
+  allowFontScaling = false,
   value,
   onChange,
   accessibilityLabel,
@@ -27,9 +31,19 @@ export function SegmentedControl({
             accessibilityState={{ selected: active }}
             accessibilityLabel={`${accessibilityLabel ?? ''} ${t(option)}`}
             onPress={() => onChange(index)}
-            style={[styles.item, active && styles.itemActive]}
+            style={[
+              styles.item,
+              minItemHeight !== undefined && styles.tallItem,
+              minItemHeight !== undefined && {
+                minHeight: minItemHeight,
+              },
+              active && styles.itemActive,
+            ]}
           >
-            <AppText style={[styles.label, active && styles.labelActive]}>
+            <AppText
+              allowFontScaling={allowFontScaling}
+              style={[styles.label, active && styles.labelActive]}
+            >
               {t(option)}
             </AppText>
           </Pressable>
@@ -40,6 +54,7 @@ export function SegmentedControl({
 }
 
 const styles = StyleSheet.create({
+  tallItem: { justifyContent: 'center' },
   wrapper: {
     backgroundColor: '#000000',
     borderColor: 'rgba(84, 84, 88, 0.30)',
