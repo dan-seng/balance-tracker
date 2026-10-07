@@ -1,3 +1,7 @@
+import LinearGradient from 'react-native-linear-gradient';
+import { SegmentedControl } from '../components/SegmentedControl';
+import { ShopNavigationRow } from '../components/ShopNavigationRow';
+import { ShopTools } from '../components/ShopTools';
 import { getLocale } from '../i18n';
 import { t } from '../i18n';
 /*
@@ -10,9 +14,9 @@ FORM: Daily ledger, grounded candidate 4; seed 31d9d944; approved shop-daily-led
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   KeyboardAvoidingView,
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -172,6 +176,8 @@ export function ShopScreen() {
   const [section, setSection] = useState<Section>('overview');
   const [period, setPeriod] = useState<ShopPeriod>('today');
   const [showGuide, setShowGuide] = useState(false);
+  const [showCalculation, setShowCalculation] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const [periodPicker, setPeriodPicker] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
   const [customer, setCustomer] = useState<ShopCustomer | null>(null);
@@ -287,7 +293,14 @@ export function ShopScreen() {
         title:
           data.products.find(p => p.id === m.productId)?.name ?? t('Product'),
         detail: t('{kind} · {quantity} units', {
-          kind: m.kind === 'opening' ? t('Opening stock') : t('Buy stock'),
+          kind:
+            m.kind === 'opening'
+              ? t('Opening stock')
+              : m.kind === 'return'
+              ? t('Returned stock')
+              : m.kind === 'adjustment'
+              ? t('Stock correction')
+              : t('Buy stock'),
           quantity: m.quantity,
         }),
         amount: -m.amountCents,
@@ -361,32 +374,22 @@ export function ShopScreen() {
             </Text>
           </Pressable>
         </View>
-        <View style={styles.tabs}>
-          {(['overview', 'stock', 'customers'] as Section[]).map(key => (
-            <Pressable
-              key={key}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: section === key }}
-              onPress={() => {
-                setSection(key);
-                setSearch('');
-                setNotice('');
-              }}
-              style={[styles.tab, section === key && styles.tabActive]}
-            >
-              <Text
-                allowFontScaling
-                style={[styles.tabText, section === key && styles.gold]}
-              >
-                {key === 'overview'
-                  ? t('Daily totals')
-                  : key === 'stock'
-                  ? t('Products')
-                  : t('Customers')}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <SegmentedControl
+          options={[t('Daily totals'), t('Products'), t('Customers')]}
+          value={(['overview', 'stock', 'customers'] as Section[]).indexOf(
+            section,
+          )}
+          minItemHeight={48}
+          allowFontScaling
+          accessibilityLabel={t('Shop sections')}
+          onChange={index => {
+            setSection(
+              (['overview', 'stock', 'customers'] as Section[])[index],
+            );
+            setSearch('');
+            setNotice('');
+          }}
+        />
         {loading ? (
           <View style={styles.empty}>
             <ActivityIndicator color={C.gold} />
@@ -424,20 +427,189 @@ export function ShopScreen() {
             )}
             {section === 'overview' && (
               <>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t('How to use Shop')}
-                  accessibilityState={{ expanded: showGuide }}
-                  style={styles.guideToggle}
-                  onPress={() => setShowGuide(value => !value)}
-                >
-                  <Text allowFontScaling style={styles.gold}>
-                    {t('How to use Shop')}
+                {!data.products.length && !activity.length && (
+                  <View style={styles.setup}>
+                    <Text allowFontScaling style={styles.heading}>
+                      {t('Start with what is on your shelf')}
+                    </Text>
+                    <Text allowFontScaling style={styles.muted}>
+                      {t(
+                        'Add one product and its quantity. Then you can record your first sale.',
+                      )}
+                    </Text>
+                    <Button
+                      title={t('Add your first product')}
+                      primary
+                      onPress={() => setForm({ kind: 'product' })}
+                    />
+                  </View>
+                )}
+                <View style={styles.summary}>
+                  <LinearGradient
+                    pointerEvents="none"
+                    colors={[C.goldHighlight, C.goldMid, C.goldDeep]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                  <View style={styles.profitHeader}>
+                    <Text
+                      allowFontScaling
+                      style={[styles.heroLabel, styles.flex]}
+                    >
+                      {totals.profitCents < 0 ? t('Loss ·') : t('Profit ·')}{' '}
+                      {t(periodLabels[period])}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        showCalculation
+                          ? t('Hide profit calculation')
+                          : t('Show profit calculation')
+                      }
+                      accessibilityState={{ expanded: showCalculation }}
+                      style={styles.detailsButton}
+                      onPress={() => setShowCalculation(value => !value)}
+                    >
+                      <Text allowFontScaling style={styles.heroMuted}>
+                        {showCalculation ? t('Hide details') : t('Details')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                  <View style={styles.profitRow}>
+                    <Text
+                      allowFontScaling
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.65}
+                      style={[
+                        styles.profit,
+                        styles.flex,
+                        totals.profitCents < 0 && styles.loss,
+                      ]}
+                    >
+                      {(totals.profitCents / 100).toLocaleString(getLocale(), {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </Text>
+                    <Text allowFontScaling style={styles.currency}>
+                      {t('ETB')}
+                    </Text>
+                  </View>
+                  {showCalculation && (
+                    <View style={styles.calculation}>
+                      <Text allowFontScaling style={styles.heroMuted}>
+                        {t(
+                          'Sales − purchase cost of sold items − shop expenses',
+                        )}
+                      </Text>
+                      <View style={styles.divider} />
+                      {[
+                        [t('Sales'), totals.salesCents],
+                        [t('What sold items cost you'), totals.costCents],
+                        [t('Expenses'), totals.expenseCents],
+                      ].map(([label, amount]) => (
+                        <View key={String(label)} style={styles.totalRow}>
+                          <Text allowFontScaling style={styles.heroMuted}>
+                            {label}
+                          </Text>
+                          <Text allowFontScaling style={styles.rowTitle}>
+                            {money(Number(amount))}
+                          </Text>
+                        </View>
+                      ))}
+                      <Text allowFontScaling style={styles.heroHint}>
+                        {t(
+                          'Profit includes sales customers have not paid for yet. It is not your cash balance.',
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.recordActions}>
+                  <Text allowFontScaling style={styles.rowTitle}>
+                    {t('Add a shop record')}
                   </Text>
-                  <Text allowFontScaling style={styles.gold}>
-                    {showGuide ? '−' : '+'}
-                  </Text>
-                </Pressable>
+                  <Button
+                    title={t('＋ Record sale')}
+                    primary
+                    onPress={openSale}
+                  />
+                  <View style={styles.actions}>
+                    <View style={styles.flex}>
+                      <Button title={t('Buy stock')} onPress={openRestock} />
+                    </View>
+                    <View style={styles.flex}>
+                      <Button
+                        title={t('Add expense')}
+                        onPress={() => setForm({ kind: 'expense' })}
+                      />
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.navigationGroup}>
+                  <View style={[styles.balanceRow, styles.balanceDivider]}>
+                    <View style={styles.balanceLabels}>
+                      <Text allowFontScaling style={styles.rowTitle}>
+                        {t('Money received')}
+                      </Text>
+                      <Text allowFontScaling style={styles.small}>
+                        {t('{period} · after refunds', {
+                          period: t(periodLabels[period]),
+                        })}
+                      </Text>
+                    </View>
+                    <Text
+                      allowFontScaling
+                      style={[
+                        styles.balanceValue,
+                        { color: totals.collectedCents < 0 ? C.red : C.green },
+                      ]}
+                    >
+                      {money(totals.collectedCents)}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={t('View customer debts')}
+                    style={styles.balanceRow}
+                    onPress={() => {
+                      setSection('customers');
+                      setSearch('');
+                    }}
+                  >
+                    <View style={styles.balanceLabels}>
+                      <Text allowFontScaling style={styles.rowTitle}>
+                        {t('Customers owe')}
+                      </Text>
+                      <Text allowFontScaling style={styles.small}>
+                        {t('All unpaid sales')}
+                      </Text>
+                    </View>
+                    <Text allowFontScaling style={styles.balanceValue}>
+                      {money(totals.outstandingCents)}
+                    </Text>
+                    <Text accessible={false} style={styles.muted}>
+                      ›
+                    </Text>
+                  </Pressable>
+                </View>
+                <View style={styles.navigationGroup}>
+                  <ShopNavigationRow
+                    title={t('More shop tools')}
+                    description={t('Returns, reports and supplier debts')}
+                    icon="tools"
+                    onPress={() => setShowTools(true)}
+                  />
+                  <ShopNavigationRow
+                    title={t('How to use Shop')}
+                    icon="help"
+                    expanded={showGuide}
+                    last
+                    onPress={() => setShowGuide(value => !value)}
+                  />
+                </View>
                 {showGuide && (
                   <View style={styles.guide}>
                     {[
@@ -477,108 +649,16 @@ export function ShopScreen() {
                     ))}
                     <Text allowFontScaling style={styles.small}>
                       {t(
+                        'Money received includes sale payments and later debt payments. Refunds reduce it.',
+                      )}
+                    </Text>
+                    <Text allowFontScaling style={styles.small}>
+                      {t(
                         'Example: buy an item for 100 ETB and sell it for 150 ETB. Your profit is 50 ETB before shop expenses, even if the customer pays later.',
                       )}
                     </Text>
                   </View>
                 )}
-                {!data.products.length && !activity.length && (
-                  <View style={styles.setup}>
-                    <Text allowFontScaling style={styles.heading}>
-                      {t('Start with what is on your shelf')}
-                    </Text>
-                    <Text allowFontScaling style={styles.muted}>
-                      {t(
-                        'Add one product and its quantity. Then you can record your first sale.',
-                      )}
-                    </Text>
-                    <Button
-                      title={t('Add your first product')}
-                      primary
-                      onPress={() => setForm({ kind: 'product' })}
-                    />
-                  </View>
-                )}
-                <View style={styles.summary}>
-                  <Text allowFontScaling style={styles.label}>
-                    {totals.profitCents < 0 ? t('Loss ·') : t('Profit ·')}{' '}
-                    {t(periodLabels[period])}
-                  </Text>
-                  <Text
-                    allowFontScaling
-                    style={[
-                      styles.profit,
-                      { color: totals.profitCents < 0 ? C.red : C.green },
-                    ]}
-                  >
-                    {money(totals.profitCents)}
-                  </Text>
-                  <Text allowFontScaling style={styles.muted}>
-                    {t('Sales − purchase cost of sold items − shop expenses')}
-                  </Text>
-                  <View style={styles.divider} />
-                  {[
-                    [t('Sales'), totals.salesCents],
-                    [t('What sold items cost you'), totals.costCents],
-                    [t('Expenses'), totals.expenseCents],
-                  ].map(([label, amount]) => (
-                    <View key={String(label)} style={styles.totalRow}>
-                      <Text allowFontScaling style={styles.muted}>
-                        {label}
-                      </Text>
-                      <Text allowFontScaling style={styles.rowTitle}>
-                        {money(Number(amount))}
-                      </Text>
-                    </View>
-                  ))}
-                  <Text allowFontScaling style={styles.small}>
-                    {t(
-                      'Profit includes sales customers have not paid for yet. It is not your cash balance.',
-                    )}
-                  </Text>
-                </View>
-                <Button
-                  title={t('＋ Record sale')}
-                  primary
-                  onPress={openSale}
-                />
-                <View style={styles.actions}>
-                  <View style={styles.flex}>
-                    <Button title={t('Buy stock')} onPress={openRestock} />
-                  </View>
-                  <View style={styles.flex}>
-                    <Button
-                      title={t('Add expense')}
-                      onPress={() => setForm({ kind: 'expense' })}
-                    />
-                  </View>
-                </View>
-                <View style={styles.collection}>
-                  <View style={styles.flex}>
-                    <Text allowFontScaling style={styles.label}>
-                      {t('Money received ·')} {t(periodLabels[period])}
-                    </Text>
-                    <Text
-                      allowFontScaling
-                      style={[styles.collectionValue, { color: C.green }]}
-                    >
-                      {money(totals.collectedCents)}
-                    </Text>
-                  </View>
-                  <View style={styles.flex}>
-                    <Text allowFontScaling style={styles.label}>
-                      {t('Customers owe · all time')}
-                    </Text>
-                    <Text allowFontScaling style={styles.collectionValue}>
-                      {money(totals.outstandingCents)}
-                    </Text>
-                  </View>
-                </View>
-                <Text allowFontScaling style={styles.small}>
-                  {t(
-                    'Money received includes sale payments and debt payments in this period. Customers owe shows all unpaid sales.',
-                  )}
-                </Text>
                 {data.products.some(p => p.quantity <= p.lowStock) && (
                   <Pressable
                     accessibilityRole="button"
@@ -611,7 +691,7 @@ export function ShopScreen() {
                       </Pressable>
                     </View>
                     {activity.length ? (
-                      rows(activity.slice(0, 5))
+                      rows(activity.slice(0, 3))
                     ) : (
                       <Empty
                         title={t('Ready for your first sale')}
@@ -810,6 +890,13 @@ export function ShopScreen() {
           </>
         )}
       </ScrollView>
+      {showTools && (
+        <ShopTools
+          data={data}
+          onClose={() => setShowTools(false)}
+          onChanged={refresh}
+        />
+      )}
       <Modal
         visible={periodPicker}
         transparent
@@ -971,6 +1058,7 @@ function ShopForm({
   const saving = useRef(false);
   const [error, setError] = useState('');
   const [dirty, setDirty] = useState(false);
+  const [showDiscard, setShowDiscard] = useState(false);
   const input = (
     key: string,
     label: string,
@@ -1003,14 +1091,8 @@ function ShopForm({
       onClose();
       return;
     }
-    Alert.alert(
-      t('Discard this entry?'),
-      t('Your unsaved changes will be lost.'),
-      [
-        { text: t('Keep editing'), style: 'cancel' },
-        { text: t('Discard'), style: 'destructive', onPress: onClose },
-      ],
-    );
+    Keyboard.dismiss();
+    setShowDiscard(true);
   };
   const total = lines.reduce((sum, l) => sum + l.quantity * l.priceCents, 0);
   const chooseProduct = (product: ShopProduct) => {
@@ -1149,426 +1231,478 @@ function ShopForm({
     }
   };
   return (
-    <Modal visible animationType="slide" onRequestClose={close}>
-      <SafeAreaView style={styles.screen}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.formContent}
+    <>
+      <Modal visible animationType="slide" onRequestClose={close}>
+        <SafeAreaView style={styles.screen}>
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <View style={styles.header}>
-              <Text allowFontScaling style={[styles.heading, styles.flex]}>
-                {titles[form.kind]}
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.formContent}
+            >
+              <View style={styles.header}>
+                <Text allowFontScaling style={[styles.heading, styles.flex]}>
+                  {titles[form.kind]}
+                </Text>
+                <Button title={t('Cancel')} disabled={busy} onPress={close} />
+              </View>
+              <Text allowFontScaling style={styles.muted}>
+                {form.kind === 'sale'
+                  ? t(
+                      'Choose what you sold, add it to the sale, then enter how much the customer paid.',
+                    )
+                  : form.kind === 'restock'
+                  ? t(
+                      'Use this when you buy more items to sell. Enter the quantity and the price you paid for one.',
+                    )
+                  : form.kind === 'repayment'
+                  ? t(
+                      'Record a payment for this past sale. You cannot enter more than the customer owes.',
+                    )
+                  : form.kind === 'expense'
+                  ? t(
+                      'Record money spent to run your shop. Product purchases go under Buy stock.',
+                    )
+                  : form.kind === 'customer'
+                  ? t(
+                      'Add someone who buys on credit so you can track what they owe.',
+                    )
+                  : form.kind === 'product'
+                  ? t(
+                      'Add an item you sell. Prices are for one piece, pack or bottle, not the whole stock.',
+                    )
+                  : t(
+                      'Update this product for future sales. Past sales will stay the same.',
+                    )}
               </Text>
-              <Button title={t('Cancel')} disabled={busy} onPress={close} />
-            </View>
-            <Text allowFontScaling style={styles.muted}>
-              {form.kind === 'sale'
-                ? t(
-                    'Choose what you sold, add it to the sale, then enter how much the customer paid.',
-                  )
-                : form.kind === 'restock'
-                ? t(
-                    'Use this when you buy more items to sell. Enter the quantity and the price you paid for one.',
-                  )
-                : form.kind === 'repayment'
-                ? t(
-                    'Record a payment for this past sale. You cannot enter more than the customer owes.',
-                  )
-                : form.kind === 'expense'
-                ? t(
-                    'Record money spent to run your shop. Product purchases go under Buy stock.',
-                  )
-                : form.kind === 'customer'
-                ? t(
-                    'Add someone who buys on credit so you can track what they owe.',
-                  )
-                : form.kind === 'product'
-                ? t(
-                    'Add an item you sell. Prices are for one piece, pack or bottle, not the whole stock.',
-                  )
-                : t(
-                    'Update this product for future sales. Past sales will stay the same.',
+              {(form.kind === 'product' || form.kind === 'edit') && (
+                <>
+                  {input('name', t('Product name'), false, t('e.g. Coffee'))}
+                  {input(
+                    'unit',
+                    t('How do you count this item?'),
+                    false,
+                    t('e.g. pieces, packs, bottles'),
                   )}
-            </Text>
-            {(form.kind === 'product' || form.kind === 'edit') && (
-              <>
-                {input('name', t('Product name'), false, t('e.g. Coffee'))}
-                {input(
-                  'unit',
-                  t('How do you count this item?'),
-                  false,
-                  t('e.g. pieces, packs, bottles'),
-                )}
-                {form.kind === 'product' && (
-                  <>
-                    {input('quantity', t('How many do you have now?'), true)}
-                    {input(
-                      'cost',
-                      t('What did one cost you? (ETB)'),
-                      true,
-                      '0.00',
-                    )}
-                  </>
-                )}
-                {input(
-                  'price',
-                  t('What do you sell one for? (ETB)'),
-                  true,
-                  '0.00',
-                )}
-                {input(
-                  'lowStock',
-                  t('Remind me when only this many are left'),
-                  true,
-                )}
-                <Text allowFontScaling style={styles.muted}>
-                  {form.kind === 'edit'
-                    ? t(
-                        'New names, units and prices apply to future sales. Past sales keep their original details.',
-                      )
-                    : t(
-                        'Enter the items already on your shelf. Use Buy stock for later purchases. Use whole numbers for quantities.',
+                  {form.kind === 'product' && (
+                    <>
+                      {input('quantity', t('How many do you have now?'), true)}
+                      {input(
+                        'cost',
+                        t('What did one cost you? (ETB)'),
+                        true,
+                        '0.00',
                       )}
-                </Text>
-              </>
-            )}
-            {form.kind === 'customer' && (
-              <>
-                {input('name', t('Customer name'))}
-                {input(
-                  'phone',
-                  t('Phone (optional)'),
-                  false,
-                  t('Phone number'),
-                )}
-                <Text allowFontScaling style={styles.muted}>
-                  {t('Customers let you record unpaid sales and repayments.')}
-                </Text>
-              </>
-            )}
-            {(form.kind === 'restock' || form.kind === 'sale') && (
-              <>
-                <Text allowFontScaling style={styles.heading}>
-                  {t('Choose a product')}
-                </Text>
-                {form.kind === 'restock' && !!form.product ? (
-                  <Text allowFontScaling style={styles.rowTitle}>
-                    {form.product.name} · {form.product.quantity}{' '}
-                    {form.product.unit} {t('in stock')}{' '}
+                    </>
+                  )}
+                  {input(
+                    'price',
+                    t('What do you sell one for? (ETB)'),
+                    true,
+                    '0.00',
+                  )}
+                  {input(
+                    'lowStock',
+                    t('Remind me when only this many are left'),
+                    true,
+                  )}
+                  <Text allowFontScaling style={styles.muted}>
+                    {form.kind === 'edit'
+                      ? t(
+                          'New names, units and prices apply to future sales. Past sales keep their original details.',
+                        )
+                      : t(
+                          'Enter the items already on your shelf. Use Buy stock for later purchases. Use whole numbers for quantities.',
+                        )}
                   </Text>
-                ) : (
-                  <View style={styles.choices}>
-                    {data.products
-                      .filter(p => form.kind === 'restock' || p.quantity > 0)
-                      .map(product => (
-                        <Pressable
-                          key={product.id}
-                          accessibilityRole="button"
-                          accessibilityState={{
-                            selected: productId === product.id,
-                          }}
-                          style={[
-                            styles.choice,
-                            productId === product.id && styles.choiceActive,
-                          ]}
-                          onPress={() => chooseProduct(product)}
-                        >
-                          <Text allowFontScaling style={styles.rowTitle}>
-                            {product.name}
-                          </Text>
-                          <Text allowFontScaling style={styles.muted}>
-                            {product.quantity} {product.unit} ·{' '}
-                            {money(product.priceCents)}
-                          </Text>
-                        </Pressable>
-                      ))}
-                  </View>
-                )}
-                {form.kind === 'restock' ? (
-                  <>
-                    {input('quantity', t('How many did you buy?'), true)}
-                    {input(
-                      'cost',
-                      t('What did you pay for one? (ETB)'),
-                      true,
-                      '0.00',
-                    )}
-                    <Text allowFontScaling style={styles.muted}>
-                      {t(
-                        'This adds items to your stock and updates their average purchase cost. Their cost reduces profit when you sell them.',
+                </>
+              )}
+              {form.kind === 'customer' && (
+                <>
+                  {input('name', t('Customer name'))}
+                  {input(
+                    'phone',
+                    t('Phone (optional)'),
+                    false,
+                    t('Phone number'),
+                  )}
+                  <Text allowFontScaling style={styles.muted}>
+                    {t('Customers let you record unpaid sales and repayments.')}
+                  </Text>
+                </>
+              )}
+              {(form.kind === 'restock' || form.kind === 'sale') && (
+                <>
+                  <Text allowFontScaling style={styles.heading}>
+                    {t('Choose a product')}
+                  </Text>
+                  {form.kind === 'restock' && !!form.product ? (
+                    <Text allowFontScaling style={styles.rowTitle}>
+                      {form.product.name} · {form.product.quantity}{' '}
+                      {form.product.unit} {t('in stock')}{' '}
+                    </Text>
+                  ) : (
+                    <View style={styles.choices}>
+                      {data.products
+                        .filter(p => form.kind === 'restock' || p.quantity > 0)
+                        .map(product => (
+                          <Pressable
+                            key={product.id}
+                            accessibilityRole="button"
+                            accessibilityState={{
+                              selected: productId === product.id,
+                            }}
+                            style={[
+                              styles.choice,
+                              productId === product.id && styles.choiceActive,
+                            ]}
+                            onPress={() => chooseProduct(product)}
+                          >
+                            <Text allowFontScaling style={styles.rowTitle}>
+                              {product.name}
+                            </Text>
+                            <Text allowFontScaling style={styles.muted}>
+                              {product.quantity} {product.unit} ·{' '}
+                              {money(product.priceCents)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                    </View>
+                  )}
+                  {form.kind === 'restock' ? (
+                    <>
+                      {input('quantity', t('How many did you buy?'), true)}
+                      {input(
+                        'cost',
+                        t('What did you pay for one? (ETB)'),
+                        true,
+                        '0.00',
                       )}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    {!!productId && (
-                      <>
-                        <Field
-                          label={t('How many are you selling?')}
-                          value={lineQuantity}
-                          numeric
-                          onChange={value => {
-                            setLineQuantity(value);
-                            setDirty(true);
-                          }}
-                        />
-                        <Field
-                          label={t('What do you sell one for? (ETB)')}
-                          value={linePrice}
-                          numeric
-                          onChange={value => {
-                            setLinePrice(value);
-                            setDirty(true);
-                          }}
-                        />
-                        <Button title={t('Add to sale')} onPress={addLine} />
-                      </>
-                    )}
-                    <Text allowFontScaling style={styles.heading}>
-                      {t('Sale items')}
-                    </Text>
-                    {!lines.length && (
                       <Text allowFontScaling style={styles.muted}>
                         {t(
-                          'Choose a product, enter the quantity and add it to the sale.',
+                          'This adds items to your stock and updates their average purchase cost. Their cost reduces profit when you sell them.',
                         )}
                       </Text>
-                    )}
-                    {lines.map(line => (
-                      <View key={line.productId} style={styles.row}>
-                        <View style={styles.rowBody}>
-                          <Text allowFontScaling style={styles.rowTitle}>
-                            {
-                              data.products.find(p => p.id === line.productId)
-                                ?.name
-                            }{' '}
-                            × {line.quantity}
-                          </Text>
-                          <Text allowFontScaling style={styles.muted}>
-                            {money(line.quantity * line.priceCents)}
-                          </Text>
-                        </View>
-                        <Button
-                          title={t('Remove')}
-                          onPress={() => {
-                            setLines(prev =>
-                              prev.filter(l => l.productId !== line.productId),
-                            );
-                            setDirty(true);
-                          }}
-                        />
-                      </View>
-                    ))}
-                    <View style={styles.totalRow}>
-                      <Text allowFontScaling style={styles.heading}>
-                        {t('Sale total')}
-                      </Text>
-                      <Text allowFontScaling style={styles.heading}>
-                        {money(total)}
-                      </Text>
-                    </View>
-                    {input(
-                      'received',
-                      t('How much did the customer pay? (ETB)'),
-                      true,
-                      t('{amount} — full payment', {
-                        amount: (total / 100).toFixed(2),
-                      }),
-                    )}
-                    <Text allowFontScaling style={styles.muted}>
-                      {t(
-                        'Paid in full? Leave this blank. Paid some? Enter that amount. Paid nothing? Enter 0.',
+                    </>
+                  ) : (
+                    <>
+                      {!!productId && (
+                        <>
+                          <Field
+                            label={t('How many are you selling?')}
+                            value={lineQuantity}
+                            numeric
+                            onChange={value => {
+                              setLineQuantity(value);
+                              setDirty(true);
+                            }}
+                          />
+                          <Field
+                            label={t('What do you sell one for? (ETB)')}
+                            value={linePrice}
+                            numeric
+                            onChange={value => {
+                              setLinePrice(value);
+                              setDirty(true);
+                            }}
+                          />
+                          <Button title={t('Add to sale')} onPress={addLine} />
+                        </>
                       )}
-                    </Text>
-                    <Text allowFontScaling style={styles.heading}>
-                      {t('Customer')}
-                    </Text>
-                    <Text allowFontScaling style={styles.muted}>
-                      {t(
-                        'If the customer will pay later, choose their name. Add a new customer here if needed.',
-                      )}
-                    </Text>
-                    <View style={styles.choices}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: !customerId }}
-                        style={[
-                          styles.choice,
-                          !customerId && styles.choiceActive,
-                        ]}
-                        onPress={() => {
-                          setCustomerId(null);
-                          setDirty(true);
-                        }}
-                      >
-                        <Text allowFontScaling style={styles.rowTitle}>
-                          {t('No customer name · paid in full')}
+                      <Text allowFontScaling style={styles.heading}>
+                        {t('Sale items')}
+                      </Text>
+                      {!lines.length && (
+                        <Text allowFontScaling style={styles.muted}>
+                          {t(
+                            'Choose a product, enter the quantity and add it to the sale.',
+                          )}
                         </Text>
-                      </Pressable>
-                      {[...data.customers, ...extraCustomers].map(c => (
+                      )}
+                      {lines.map(line => (
+                        <View key={line.productId} style={styles.row}>
+                          <View style={styles.rowBody}>
+                            <Text allowFontScaling style={styles.rowTitle}>
+                              {
+                                data.products.find(p => p.id === line.productId)
+                                  ?.name
+                              }{' '}
+                              × {line.quantity}
+                            </Text>
+                            <Text allowFontScaling style={styles.muted}>
+                              {money(line.quantity * line.priceCents)}
+                            </Text>
+                          </View>
+                          <Button
+                            title={t('Remove')}
+                            onPress={() => {
+                              setLines(prev =>
+                                prev.filter(
+                                  l => l.productId !== line.productId,
+                                ),
+                              );
+                              setDirty(true);
+                            }}
+                          />
+                        </View>
+                      ))}
+                      <View style={styles.totalRow}>
+                        <Text allowFontScaling style={styles.heading}>
+                          {t('Sale total')}
+                        </Text>
+                        <Text allowFontScaling style={styles.heading}>
+                          {money(total)}
+                        </Text>
+                      </View>
+                      {input(
+                        'received',
+                        t('How much did the customer pay? (ETB)'),
+                        true,
+                        t('{amount} — full payment', {
+                          amount: (total / 100).toFixed(2),
+                        }),
+                      )}
+                      <Text allowFontScaling style={styles.muted}>
+                        {t(
+                          'Paid in full? Leave this blank. Paid some? Enter that amount. Paid nothing? Enter 0.',
+                        )}
+                      </Text>
+                      <Text allowFontScaling style={styles.heading}>
+                        {t('Customer')}
+                      </Text>
+                      <Text allowFontScaling style={styles.muted}>
+                        {t(
+                          'If the customer will pay later, choose their name. Add a new customer here if needed.',
+                        )}
+                      </Text>
+                      <View style={styles.choices}>
                         <Pressable
-                          key={c.id}
                           accessibilityRole="button"
-                          accessibilityState={{ selected: customerId === c.id }}
+                          accessibilityState={{ selected: !customerId }}
                           style={[
                             styles.choice,
-                            customerId === c.id && styles.choiceActive,
+                            !customerId && styles.choiceActive,
                           ]}
                           onPress={() => {
-                            setCustomerId(c.id);
+                            setCustomerId(null);
                             setDirty(true);
                           }}
                         >
                           <Text allowFontScaling style={styles.rowTitle}>
-                            {c.name}
+                            {t('No customer name · paid in full')}
                           </Text>
                         </Pressable>
-                      ))}
-                    </View>
-                    <Button
-                      title={
-                        creatingCustomer
-                          ? t('Cancel new customer')
-                          : t('＋ New customer')
-                      }
-                      disabled={busy}
-                      onPress={() => setCreatingCustomer(value => !value)}
-                    />
-                    {creatingCustomer && (
-                      <>
-                        {input('name', t('New customer name'))}
-                        {input('phone', t('Phone (optional)'))}
-                        <Button
-                          title={
-                            busy
-                              ? t('Saving customer…')
-                              : t('Save customer & keep sale')
-                          }
-                          disabled={busy}
-                          onPress={saveInlineCustomer}
-                        />
-                      </>
+                        {[...data.customers, ...extraCustomers].map(c => (
+                          <Pressable
+                            key={c.id}
+                            accessibilityRole="button"
+                            accessibilityState={{
+                              selected: customerId === c.id,
+                            }}
+                            style={[
+                              styles.choice,
+                              customerId === c.id && styles.choiceActive,
+                            ]}
+                            onPress={() => {
+                              setCustomerId(c.id);
+                              setDirty(true);
+                            }}
+                          >
+                            <Text allowFontScaling style={styles.rowTitle}>
+                              {c.name}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <Button
+                        title={
+                          creatingCustomer
+                            ? t('Cancel new customer')
+                            : t('＋ New customer')
+                        }
+                        disabled={busy}
+                        onPress={() => setCreatingCustomer(value => !value)}
+                      />
+                      {creatingCustomer && (
+                        <>
+                          {input('name', t('New customer name'))}
+                          {input('phone', t('Phone (optional)'))}
+                          <Button
+                            title={
+                              busy
+                                ? t('Saving customer…')
+                                : t('Save customer & keep sale')
+                            }
+                            disabled={busy}
+                            onPress={saveInlineCustomer}
+                          />
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+              {form.kind === 'expense' && (
+                <>
+                  {input(
+                    'description',
+                    t('What was the expense?'),
+                    false,
+                    t('e.g. Monthly shop rent'),
+                  )}
+                  <Text allowFontScaling style={styles.label}>
+                    {t('Category')}
+                  </Text>
+                  <View style={styles.choices}>
+                    {['Rent', 'Transport', 'Utilities', 'Wages', 'Other'].map(
+                      category => (
+                        <Pressable
+                          key={category}
+                          accessibilityRole="button"
+                          accessibilityState={{
+                            selected: values.category === category,
+                          }}
+                          style={[
+                            styles.choice,
+                            values.category === category && styles.choiceActive,
+                          ]}
+                          onPress={() => {
+                            setValues(prev => ({ ...prev, category }));
+                            setDirty(true);
+                          }}
+                        >
+                          <Text allowFontScaling>{t(category)}</Text>
+                        </Pressable>
+                      ),
                     )}
-                  </>
-                )}
-              </>
-            )}
-            {form.kind === 'expense' && (
-              <>
-                {input(
-                  'description',
-                  t('What was the expense?'),
-                  false,
-                  t('e.g. Monthly shop rent'),
-                )}
-                <Text allowFontScaling style={styles.label}>
-                  {t('Category')}
-                </Text>
-                <View style={styles.choices}>
-                  {['Rent', 'Transport', 'Utilities', 'Wages', 'Other'].map(
-                    category => (
-                      <Pressable
-                        key={category}
-                        accessibilityRole="button"
-                        accessibilityState={{
-                          selected: values.category === category,
-                        }}
-                        style={[
-                          styles.choice,
-                          values.category === category && styles.choiceActive,
-                        ]}
-                        onPress={() => {
-                          setValues(prev => ({ ...prev, category }));
-                          setDirty(true);
-                        }}
-                      >
-                        <Text allowFontScaling>{t(category)}</Text>
-                      </Pressable>
-                    ),
+                  </View>
+                  {input('amount', t('Amount (ETB)'), true, '0.00')}
+                  <Text allowFontScaling style={styles.muted}>
+                    {t(
+                      'Use this for rent, transport, wages or bills. Buying items to sell? Use Buy stock instead.',
+                    )}
+                  </Text>
+                </>
+              )}
+              {form.kind === 'repayment' && (
+                <>
+                  <Text allowFontScaling style={styles.rowTitle}>
+                    {
+                      data.customers.find(c => c.id === form.sale!.customerId)
+                        ?.name
+                    }
+                  </Text>
+                  <Text allowFontScaling style={styles.muted}>
+                    {t('Sale on')} {dateLabel(form.sale!.date)}
+                  </Text>
+                  <Text allowFontScaling style={styles.heading}>
+                    {t('Unpaid')} {money(remaining(form.sale!, data))}
+                  </Text>
+                  {input(
+                    'amount',
+                    t('How much did they pay? (ETB)'),
+                    true,
+                    '0.00',
                   )}
-                </View>
-                {input('amount', t('Amount (ETB)'), true, '0.00')}
-                <Text allowFontScaling style={styles.muted}>
-                  {t(
-                    'Use this for rent, transport, wages or bills. Buying items to sell? Use Buy stock instead.',
-                  )}
+                  <Text allowFontScaling style={styles.muted}>
+                    {t(
+                      'This reduces what the customer owes and increases money received. It does not count as a new sale.',
+                    )}
+                  </Text>
+                </>
+              )}
+              {!!error && (
+                <Text
+                  allowFontScaling
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="assertive"
+                  style={styles.error}
+                >
+                  {error}
                 </Text>
-              </>
-            )}
-            {form.kind === 'repayment' && (
-              <>
-                <Text allowFontScaling style={styles.rowTitle}>
-                  {
-                    data.customers.find(c => c.id === form.sale!.customerId)
-                      ?.name
-                  }
-                </Text>
-                <Text allowFontScaling style={styles.muted}>
-                  {t('Sale on')} {dateLabel(form.sale!.date)}
-                </Text>
-                <Text allowFontScaling style={styles.heading}>
-                  {t('Unpaid')} {money(remaining(form.sale!, data))}
-                </Text>
-                {input(
-                  'amount',
-                  t('How much did they pay? (ETB)'),
-                  true,
-                  '0.00',
-                )}
-                <Text allowFontScaling style={styles.muted}>
-                  {t(
-                    'This reduces what the customer owes and increases money received. It does not count as a new sale.',
-                  )}
-                </Text>
-              </>
-            )}
-            {!!error && (
+              )}
+              <Button
+                title={
+                  busy
+                    ? t('Saving…')
+                    : form.kind === 'sale'
+                    ? t('Save sale')
+                    : form.kind === 'repayment'
+                    ? t('Save debt payment')
+                    : t('Save')
+                }
+                primary
+                disabled={busy}
+                onPress={save}
+              />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+      {showDiscard && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDiscard(false)}
+        >
+          <View style={styles.dialogBackdrop}>
+            <View accessibilityViewIsModal style={styles.dialog}>
               <Text
                 allowFontScaling
-                accessibilityRole="alert"
-                accessibilityLiveRegion="assertive"
-                style={styles.error}
+                accessibilityRole="header"
+                style={styles.heading}
               >
-                {error}
+                {form.kind === 'sale'
+                  ? t('Discard this sale?')
+                  : t('Discard this entry?')}
               </Text>
-            )}
-            <Button
-              title={
-                busy
-                  ? t('Saving…')
-                  : form.kind === 'sale'
-                  ? t('Save sale')
-                  : form.kind === 'repayment'
-                  ? t('Save debt payment')
-                  : t('Save')
-              }
-              primary
-              disabled={busy}
-              onPress={save}
-            />
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </Modal>
+              <Text allowFontScaling style={styles.muted}>
+                {form.kind === 'sale'
+                  ? t(
+                      'This sale has not been saved. Its items and payment details will be lost.',
+                    )
+                  : t('Your unsaved changes will be lost.')}
+              </Text>
+              <Button
+                title={t('Keep editing')}
+                primary
+                onPress={() => setShowDiscard(false)}
+              />
+              <Pressable
+                accessibilityRole="button"
+                disabled={busy}
+                accessibilityState={{ disabled: busy }}
+                style={({ pressed }) => [styles.button, pressed && styles.dim]}
+                onPress={() => {
+                  if (!saving.current) {
+                    setShowDiscard(false);
+                    onClose();
+                  }
+                }}
+              >
+                <Text
+                  allowFontScaling
+                  style={[styles.buttonText, styles.error]}
+                >
+                  {form.kind === 'sale' ? t('Discard sale') : t('Discard')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </>
   );
 }
 const styles = StyleSheet.create({
-  guideToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    minHeight: 48,
-    gap: 12,
-  },
   guide: { gap: 18, paddingVertical: 8 },
   guideStep: { gap: 6 },
   setup: { gap: 12, paddingVertical: 12 },
   screen: { flex: 1, backgroundColor: theme.colors.background },
-  content: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
+  content: { paddingHorizontal: 20, paddingTop: 8, gap: 20 },
   formContent: { padding: 20, paddingBottom: 40, gap: 16 },
   flex: { flex: 1 },
   header: {
@@ -1577,8 +1711,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  title: { color: C.label, fontSize: 34, fontWeight: '700' },
-  heading: { color: C.label, fontSize: 21, fontWeight: '600' },
+  title: { color: C.label, fontSize: 32, fontWeight: '800', letterSpacing: -1 },
+  heading: {
+    color: C.label,
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
   label: { color: C.label2, fontSize: 14, lineHeight: 21 },
   muted: { color: C.label2, fontSize: 14, lineHeight: 21 },
   small: { color: C.label2, fontSize: 12, lineHeight: 18 },
@@ -1587,34 +1726,71 @@ const styles = StyleSheet.create({
     backgroundColor: C.grouped1,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 18,
     minHeight: 48,
   },
-  tabs: {
-    flexDirection: 'row',
-    borderBottomColor: C.separator,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingVertical: 12,
-  },
-  tabActive: { borderBottomColor: C.gold, borderBottomWidth: 2 },
-  tabText: { color: C.label2, fontSize: 15, fontWeight: '600' },
   gold: { color: C.gold },
   summary: {
-    padding: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: C.goldMid,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: C.goldBorder,
+    gap: 6,
+  },
+  profitHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  detailsButton: {
+    minHeight: 48,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  calculation: { gap: 10, paddingTop: 8 },
+  recordActions: { gap: 12 },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    padding: 16,
+    minHeight: 64,
+  },
+  balanceDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: C.separator,
+  },
+  balanceLabels: { flex: 1, minWidth: 120, gap: 4 },
+  balanceValue: {
+    color: C.label,
+    fontSize: 16,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+    flexShrink: 1,
+  },
+  heroLabel: {
+    color: theme.colors.iOS.heroGold,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  heroMuted: { color: '#C9BB93', fontSize: 14, lineHeight: 21 },
+  heroHint: { color: '#C9BB93', fontSize: 12, lineHeight: 18 },
+  navigationGroup: {
     backgroundColor: C.grouped1,
     borderRadius: 16,
-    gap: 10,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
+  profitRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+  currency: { color: C.label2, fontSize: 14, fontWeight: '700' },
+  loss: { color: C.red },
   profit: {
     color: C.label,
-    fontSize: 36,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   divider: {
@@ -1631,14 +1807,14 @@ const styles = StyleSheet.create({
   },
   button: {
     minHeight: 48,
-    backgroundColor: C.grouped2,
-    borderRadius: 12,
+    backgroundColor: C.grouped1,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  primary: { backgroundColor: C.gold },
+  primary: { backgroundColor: C.gold, borderRadius: 16 },
   primaryText: { color: '#17140D' },
   buttonText: {
     color: C.label,
@@ -1648,21 +1824,6 @@ const styles = StyleSheet.create({
   },
   dim: { opacity: 0.55 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
-  collection: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: C.grouped1,
-    borderRadius: 16,
-    padding: 18,
-    gap: 16,
-  },
-  collectionValue: {
-    fontSize: 23,
-    fontWeight: '600',
-    color: C.label,
-    marginTop: 8,
-    fontVariant: ['tabular-nums'],
-  },
   sectionHeader: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1700,6 +1861,8 @@ const styles = StyleSheet.create({
     color: C.label,
     backgroundColor: C.grouped1,
     borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: C.separator,
     fontSize: 16,
   },
   productRow: {
