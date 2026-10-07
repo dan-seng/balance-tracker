@@ -21,7 +21,7 @@ The signed output is `android/app/build/outputs/apk/release/app-release.apk`. Th
 - Update the Settings version label and its Amharic translation.
 - GitHub Actions currently derives release tags/names from `package.json` plus the build number. Check that metadata separately from the APK's Android version.
 
-The current APK is Android 1.1.0, version code 2. The project currently signs releases with its existing debug signing configuration; changing certificates prevents an ordinary in-place update of that installation.
+The current APK is Android 1.1.1, version code 3. The project currently signs releases with its existing debug signing configuration; changing certificates prevents an ordinary in-place update of that installation.
 
 ## Replace the website download
 

@@ -4,7 +4,7 @@ This directory contains Hisab's download website and the bundled Android APK. Th
 
 ## Current download
 
-- **Android 1.1.0**, version code **2**.
+- **Android 1.1.1**, version code **3**.
 - Approximately **28 MB**, for **32-bit and 64-bit ARM phones** running Android 7.0+.
 - `Hisab.apk` is the signed release artifact committed with this website.
 - Download buttons use `Hisab.apk?v=1.1.0`; they are not overwritten by GitHub's latest-release API.

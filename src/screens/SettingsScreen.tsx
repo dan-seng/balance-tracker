@@ -399,7 +399,7 @@ export function SettingsScreen({
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {t('Version 1.1.0 · Developed by Daniel Gidey')}
+            {t('Version 1.1.1 · Developed by Daniel Gidey')}
           </Text>
         </View>
       </View>

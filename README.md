@@ -20,7 +20,7 @@ Allow installation from your browser or file manager if Android requests it. The
 
 ## Current release
 
-**Android v1.1.0** (version code 2) ships a signed, approximately **28 MB** APK for both `armeabi-v7a` and `arm64-v8a` phones. It requires Android 7.0 or newer and runs without Metro. The website serves its bundled APK instead of switching to a potentially older GitHub asset.
+**Android v1.1.1** (version code 3) ships a signed, approximately **28 MB** APK for both `armeabi-v7a` and `arm64-v8a` phones. It requires Android 7.0 or newer and runs without Metro. The website serves its bundled APK instead of switching to a potentially older GitHub asset.
 
 See the [changelog](CHANGELOG.md) and [release instructions](docs/releasing.md).
 
@@ -135,7 +135,7 @@ npm run lint
 
 The current test suite has **55 tests** covering shop accounting and SQLite persistence, returns/refunds, stock losses, supplier debt, shared reports, calendar boundaries, transaction reasons, discard confirmation, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
 
-The v1.1.0 release build, TypeScript, all 55 tests and lint for changed files passed. Earlier emulator checks verified startup, language persistence and encrypted backup/restore; the latest Shop layout and backup version 3 were build-checked without starting an emulator. Full-repository lint may report existing issues in other files.
+The v1.1.1 release build, TypeScript, all 58 tests and lint for changed files passed. Earlier emulator checks verified startup, language persistence and encrypted backup/restore; the latest Shop layout and backup version 3 were build-checked without starting an emulator. Full-repository lint may report existing issues in other files.
 
 ## Architecture
 

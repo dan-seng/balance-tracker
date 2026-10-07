@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Show masked account numbers for all banks and wallets, including two-digit SMS endings.
+- Place analytics charts before recent transactions.
+- Batch SMS imports into one database transaction for faster scans and rollback on failure.
+
+
 ## Android 1.1.0 — October 7, 2026
 
 ### Added
