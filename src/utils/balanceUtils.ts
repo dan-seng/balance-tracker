@@ -1,4 +1,4 @@
-import { TransactionType } from '../models';
+import { Account, ParsedSms, TransactionType } from '../models';
 
 /**
  * Calculate new balance based on transaction type and amount
@@ -10,7 +10,7 @@ import { TransactionType } from '../models';
 export function calculateBalance(
   currentBalance: number,
   transactionType: TransactionType,
-  amount: number
+  amount: number,
 ): number {
   if (transactionType === 'credit') {
     return currentBalance + amount;
@@ -28,14 +28,18 @@ export function calculateBalance(
  * @param timestamp SMS timestamp
  * @returns Hash string for deduplication
  */
-export function generateSmsHash(message: string, sender: string, timestamp: number): string {
+export function generateSmsHash(
+  message: string,
+  sender: string,
+  timestamp: number,
+): string {
   // Simple hash function for deduplication
   const str = `${sender}:${message}:${timestamp}`;
   let hash = 0;
-  
+
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
 
@@ -52,14 +56,30 @@ export function generateSmsHash(message: string, sender: string, timestamp: numb
 export function isLikelyDuplicate(
   message1: string,
   message2: string,
-  timeDifferenceMs: number
+  timeDifferenceMs: number,
 ): boolean {
   // Messages are duplicates if:
   // 1. They have the same content (ignoring whitespace)
   // 2. They were received within 5 seconds of each other
-  
+
   const normalized1 = message1.replace(/\s+/g, ' ').trim();
   const normalized2 = message2.replace(/\s+/g, ' ').trim();
 
   return normalized1 === normalized2 && timeDifferenceMs < 5000;
+}
+
+// Historical messages can add history without replacing a newer saved balance.
+export function balanceForSms(
+  account: Account,
+  parsed: ParsedSms,
+  timestamp: number,
+) {
+  const latest = Date.parse(account.lastUpdated);
+  const updateCurrent = !Number.isFinite(latest) || timestamp >= latest;
+  const balanceAfter =
+    parsed.balance ??
+    (updateCurrent
+      ? calculateBalance(account.currentBalance, parsed.type, parsed.amount)
+      : null);
+  return { balanceAfter, updateCurrent };
 }
