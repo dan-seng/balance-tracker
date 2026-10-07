@@ -189,3 +189,45 @@ test('non-bank senders cannot fabricate accounts unless explicitly registered', 
   ]);
   expect(parseSms(message, 'RandomShop')?.bankId).toBe('custom-shop');
 });
+
+test('uses only the visible tail of masked owner accounts and explicit wallet identifiers', () => {
+  expect(
+    extractAccountNumberHint('Your account 1000*****3012 was debited ETB 100.'),
+  ).toBe('****3012');
+  expect(
+    extractAccountNumberHint('Your account 1000*****12 was debited ETB 100.'),
+  ).toBe('****12');
+  expect(
+    extractAccountNumberHint('Your wallet ID 0912345678 received ETB 100.'),
+  ).toBe('0912345678');
+  expect(
+    extractAccountNumberHint('You paid ETB 100 to wallet 0999999999.'),
+  ).toBeNull();
+  expect(toDisplayAccountNumber('1000*****3012')).toBe('•••• 3012');
+  const existing = account('100012343012');
+  expect(resolveAccountForSms([existing], sms('1000*****3012'))).toEqual({
+    kind: 'matched',
+    account: existing,
+  });
+});
+
+test('two-digit account tails match only a unique account and can be upgraded', () => {
+  const existing = account('100012343012');
+  expect(toDisplayAccountNumber('1000*****12')).toBe('•••• 12');
+  expect(
+    extractAccountNumberHint('Your account ending in 12 was credited ETB 100.'),
+  ).toBe('12');
+  expect(resolveAccountForSms([existing], sms('****12'))).toEqual({
+    kind: 'matched',
+    account: existing,
+  });
+  expect(
+    resolveAccountForSms([existing, account('99999912')], sms('****12')),
+  ).toEqual({ kind: 'ambiguous' });
+  const partial = account('•••• 12');
+  expect(applyAccountIdentity(partial, sms('****3012'))).toBe(true);
+  expect(partial.accountNumber).toBe('•••• 3012');
+  expect(
+    extractAccountNumberHint('Paid ETB 100 to account ****12.'),
+  ).toBeNull();
+});

@@ -3,9 +3,12 @@ import { Account, ParsedSms } from '../models';
 type Identity = { digits: string; masked: boolean };
 function identity(value?: string | null): Identity | null {
   if (!value) return null;
-  const digits = value.replace(/\D/g, '');
-  if (digits.length < 4) return null;
-  return { digits, masked: /[*xX•●#]/.test(value) || digits.length < 6 };
+  const masked = /[*xX•●#]/.test(value);
+  const digits = masked
+    ? value.match(/\d+$/)?.[0] ?? ''
+    : value.replace(/\D/g, '');
+  if (digits.length < 2) return null;
+  return { digits, masked: masked || digits.length < 6 };
 }
 function compatible(left: Identity, right: Identity): boolean {
   if (!left.masked && !right.masked) return left.digits === right.digits;

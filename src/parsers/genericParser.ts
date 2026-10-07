@@ -226,18 +226,23 @@ function extractBalance(message: string): number | null {
 // and masked references can belong to recipients, phones or transaction IDs.
 export function extractAccountNumberHint(message: string): string | null {
   const pattern =
-    /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|number|#)?\s*(?:ending\s+(?:in|with)|is)?\s*[:=-]?\s*((?:[*xX•●#]{1,16}\s*\d{4,16})|(?:\d(?:[ -]?\d){3,17}))(?!\d)/gi;
+    /\b(?:acct\.?|account|a\/c|wallet)\s*(?:no\.?|number|id|#)?\s*(?:ending\s+(?:in|with)|is)?\s*[:=-]?\s*((?:\d{0,16}[*xX•●#]{1,16}\s*\d{2,16})|(?:\d(?:[ -]?\d){1,17}))(?![\d*xX•●#-])/gi;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(message)) !== null) {
     const before = message.slice(0, match.index);
     // "to account", "recipient account", etc. identify the other party.
     if (
-      /(?:\bto|\bfrom|recipient(?:'s)?|beneficiary(?:'s)?|receiver(?:'s)?|sender(?:'s)?)\s*(?:bank\s+)?$/i.test(
+      /(?:\bto|\bfrom|recipient(?:'s)?|beneficiary(?:'s)?|receiver(?:'s)?|sender(?:'s)?)\s*(?:(?:bank|wallet)\s+)?$/i.test(
         before,
       )
     )
       continue;
-    return match[1].replace(/[\s-]/g, '');
+    const value = match[1].replace(/[\s-]/g, '');
+    if (/[*xX•●#]/.test(value)) {
+      const tail = value.match(/\d+$/)?.[0];
+      return tail && tail.length >= 2 ? `****${tail}` : null;
+    }
+    return value;
   }
   return null;
 }
