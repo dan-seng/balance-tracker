@@ -1,3 +1,5 @@
+import { BackupDialog } from '../components/BackupDialog';
+import { DataOperation } from '../services/backupService';
 import { t, useLanguage, setLanguage, Language } from '../i18n';
 import { setAppLanguageInDb } from '../db';
 import { Alert } from 'react-native';
@@ -106,6 +108,8 @@ const TrashIcon = ({ size = 15, color = RED }) => (
 );
 
 type SettingsScreenProps = {
+  runDataOperation: DataOperation;
+  onBackupRestored: () => Promise<void>;
   userName: string;
   onNameChange: (name: string) => Promise<void>;
   isAppLocked: boolean;
@@ -139,6 +143,8 @@ type SettingsScreenProps = {
 
 export function SettingsScreen({
   userName,
+  runDataOperation,
+  onBackupRestored,
   onNameChange,
   isAppLocked,
   onToggleLock,
@@ -148,6 +154,9 @@ export function SettingsScreen({
   onAddCustomBank: _onAddCustomBank,
   onDeleteCustomBank,
 }: SettingsScreenProps) {
+  const [backupMode, setBackupMode] = useState<'create' | 'restore' | null>(
+    null,
+  );
   const language = useLanguage();
   const [savingLanguage, setSavingLanguage] = useState(false);
   const changeLanguage = async (next: Language) => {
@@ -310,6 +319,40 @@ export function SettingsScreen({
           </Pressable>
         </View>
 
+        <Text style={styles.groupHeader}>{t('Backup & restore')}</Text>
+        <View style={styles.group}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Create backup')}
+            style={[styles.row, styles.rowBorder]}
+            onPress={() => setBackupMode('create')}
+          >
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>{t('Create backup')}</Text>
+              <Text style={styles.rowDescription}>
+                {t('Save a password-protected copy of your records')}
+              </Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Restore backup')}
+            style={styles.row}
+            onPress={() => setBackupMode('restore')}
+          >
+            <View style={styles.rowBody}>
+              <Text style={styles.rowLabel}>{t('Restore backup')}</Text>
+              <Text style={styles.rowDescription}>
+                {t(
+                  'Choose a backup file and review it before replacing records',
+                )}
+              </Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </Pressable>
+        </View>
+
         <Text style={styles.groupHeader}>{t('Custom Banks')}</Text>
         <View style={styles.group}>
           {customBanks.length === 0 ? (
@@ -356,10 +399,19 @@ export function SettingsScreen({
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {t('Version 1.0 · Developed by Daniel Gidey')}
+            {t('Version 1.1.0 · Developed by Daniel Gidey')}
           </Text>
         </View>
       </View>
+
+      {backupMode && (
+        <BackupDialog
+          mode={backupMode}
+          onClose={() => setBackupMode(null)}
+          runOperation={runDataOperation}
+          onRestored={onBackupRestored}
+        />
+      )}
 
       <Modal
         visible={showTimeoutModal}

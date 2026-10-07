@@ -25,6 +25,9 @@ jest.mock('react-native-biometrics', () =>
 jest.mock('../src/db', () => ({
   getAppLanguageFromDb: jest.fn(async () => 'en'),
   setAppLanguageInDb: jest.fn(async () => undefined),
+  getPreserveRestoredBankDataFromDb: jest.fn(async () => false),
+  clearAllAccountsFromDb: jest.fn(async () => undefined),
+  clearAllTransactionsFromDb: jest.fn(async () => undefined),
   initDatabase: jest.fn(async () => undefined),
   getUserNameFromDb: jest.fn(async () => 'Shop owner'),
   getBalanceHiddenFromDb: jest.fn(async () => false),
@@ -54,8 +57,9 @@ test('opens the offline shop ledger when SMS permission is declined', async () =
     });
     expect(loadShop).toHaveBeenCalled();
     expect(
-      renderer.root.findAll(node => node.props.children === 'Your shop notebook')
-        .length,
+      renderer.root.findAll(
+        node => node.props.children === 'Your shop notebook',
+      ).length,
     ).toBeGreaterThan(0);
   } finally {
     if (renderer)
@@ -153,5 +157,32 @@ test('keeps the selected language when saving a new language fails', async () =>
       renderer.unmount();
     });
     alert.mockRestore();
+  }
+});
+
+test('reopening after restore imports SMS without clearing the restored bank history', async () => {
+  const db = require('../src/db');
+  const permissions = require('react-native-permissions');
+  const { nativeSmsService } = require('../src/services/nativeSmsService');
+  const inbox = jest
+    .spyOn(nativeSmsService, 'getInboxSms')
+    .mockResolvedValue([]);
+  permissions.check.mockResolvedValue('granted');
+  db.getPreserveRestoredBankDataFromDb.mockResolvedValue(true);
+  db.clearAllAccountsFromDb.mockClear();
+  db.clearAllTransactionsFromDb.mockClear();
+  let renderer!: TestRenderer.ReactTestRenderer;
+  try {
+    await act(async () => {
+      renderer = TestRenderer.create(<App />);
+    });
+    expect(inbox).toHaveBeenCalled();
+    expect(db.clearAllAccountsFromDb).not.toHaveBeenCalled();
+    expect(db.clearAllTransactionsFromDb).not.toHaveBeenCalled();
+  } finally {
+    await act(async () => renderer.unmount());
+    inbox.mockRestore();
+    permissions.check.mockResolvedValue('denied');
+    db.getPreserveRestoredBankDataFromDb.mockResolvedValue(false);
   }
 });

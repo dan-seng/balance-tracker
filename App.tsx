@@ -1,3 +1,12 @@
+import { setTransactionReasonInDb } from './src/db';
+import { loadShop } from './src/db/shopDatabase';
+import { DataOperation } from './src/services/backupService';
+import { getPreserveRestoredBankDataFromDb } from './src/db';
+import {
+  resolveAccountForSms,
+  toDisplayAccountNumber,
+  applyAccountIdentity,
+} from './src/utils/accountIdentity';
 import { t, useLanguage, setLanguage } from './src/i18n';
 import { getAppLanguageFromDb } from './src/db';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -6,7 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
-import { Account, ParsedSms, Transaction } from './src/models';
+import { Account, Transaction } from './src/models';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { LockScreen } from './src/screens/LockScreen';
 import { SyncingScreen } from './src/screens/SyncingScreen';
@@ -44,89 +53,13 @@ import {
 import { nativeSmsService } from './src/services/nativeSmsService';
 import { parseSms } from './src/services/parserService';
 import { setCustomBanks as setCustomBanksInParser } from './src/parsers/genericParser';
-import { calculateBalance, generateSmsHash } from './src/utils/balanceUtils';
+import { balanceForSms, generateSmsHash } from './src/utils/balanceUtils';
 import { getMockSmsMessages, NEW_BANKS } from './src/mocks/mockSmsData';
 import { mergeAccountsToDb, renameAccountToDb } from './src/db';
 
 // TEMPORARY: switch to mock SMS data instead of reading the real phone inbox.
 // Set this back to false to return to reading real SMS.
 const USE_MOCK_DATA = false;
-
-function accountDigits(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  const digits = raw.replace(/[^\d]/g, '');
-  return digits.length >= 4 ? digits : null;
-}
-
-function toDisplayAccountNumber(hint: string | null | undefined): string {
-  if (!hint) return '•••• ••••';
-  const digits = hint.replace(/[^\d]/g, '');
-  if (digits.length >= 6) return digits;
-  if (digits.length >= 4) return `•••• ${digits.slice(-4)}`;
-  return '•••• ••••';
-}
-
-function findAccountForSms(
-  accounts: Account[],
-  parsed: ParsedSms,
-  subId?: number | null,
-): Account | null {
-  const candidates = accounts.filter(a => a.bankId === parsed.bankId);
-  if (candidates.length === 0) return null;
-
-  const hintDigits = accountDigits(parsed.accountNumberHint);
-  if (hintDigits) {
-    for (const candidate of candidates) {
-      const candidateDigits = accountDigits(candidate.accountNumber);
-      if (!candidateDigits) continue;
-      const matchesFull =
-        candidateDigits.length >= 6 &&
-        hintDigits.length >= 6 &&
-        candidateDigits === hintDigits;
-      const matchesLast4 = candidateDigits.slice(-4) === hintDigits.slice(-4);
-      if (matchesFull || matchesLast4) return candidate;
-    }
-  }
-
-  if (subId != null) {
-    const bySub = candidates.find(a => a.subId === subId);
-    if (bySub) return bySub;
-  }
-
-  // Legacy glue: a sole account that carries no identity yet will absorb a
-  // message that reveals nothing distinguishing. Never glue onto an account
-  // that is already identified but failed to match — that would merge balances
-  // from a second SIM into the wrong wallet.
-  if (candidates.length === 1) {
-    const only = candidates[0];
-    const onlyDigits = accountDigits(only.accountNumber);
-    const unidentified = onlyDigits == null && only.subId == null;
-    if (unidentified) return only;
-  }
-
-  return null;
-}
-
-// Upgrades an existing account with identity details learned from a newer SMS.
-// Returns true when persisted fields changed.
-function applyAccountIdentity(
-  account: Account,
-  parsed: ParsedSms,
-  subId?: number | null,
-): boolean {
-  let changed = false;
-  if (subId != null && account.subId == null) {
-    account.subId = subId;
-    changed = true;
-  }
-  const hintDigits = accountDigits(parsed.accountNumberHint);
-  const storedDigits = accountDigits(account.accountNumber);
-  if (hintDigits && storedDigits && hintDigits.length > storedDigits.length) {
-    account.accountNumber = toDisplayAccountNumber(parsed.accountNumberHint);
-    changed = true;
-  }
-  return changed;
-}
 
 function App() {
   useLanguage();
@@ -143,7 +76,9 @@ function App() {
   const [autoLockTimeout, setAutoLockTimeout] = useState(0); // 0 = immediately, -1 = never
   const [lastActiveTime, setLastActiveTime] = useState(Date.now());
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
-  const [accountBalanceHidden, setAccountBalanceHidden] = useState<Record<string, boolean>>({});
+  const [accountBalanceHidden, setAccountBalanceHidden] = useState<
+    Record<string, boolean>
+  >({});
   const [userTitle, setUserTitle] = useState<string | null>(null);
   const [customBanks, setCustomBanks] = useState<
     Array<{
@@ -156,6 +91,8 @@ function App() {
   const accountsRef = useRef<Account[]>([]);
   const skipLockScreenRef = useRef(false);
   const hasSyncedRef = useRef(false);
+  const dataQueue = useRef<Promise<void>>(Promise.resolve());
+  const dataOperationActive = useRef(false);
 
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: true,
@@ -175,6 +112,7 @@ function App() {
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
+      if (dataOperationActive.current) return;
       if (
         nextAppState === 'active' &&
         isAppLocked &&
@@ -230,6 +168,40 @@ function App() {
     }
   };
 
+  const runDataOperation: DataOperation = operation => {
+    const task = dataQueue.current.then(async () => {
+      dataOperationActive.current = true;
+      try {
+        await loadShop();
+        return await operation();
+      } finally {
+        dataOperationActive.current = false;
+        setLastActiveTime(Date.now());
+      }
+    });
+    dataQueue.current = task.then(
+      () => undefined,
+      () => undefined,
+    );
+    return task;
+  };
+  const reloadAfterRestore = async () => {
+    hasSyncedRef.current = true;
+    const restoredAccounts = await getAccountsFromDb();
+    accountsRef.current = restoredAccounts;
+    setAccounts(restoredAccounts);
+    setTransactions(await getTransactionsFromDb());
+    setCustomBanks(await getCustomBanksFromDb());
+    setUserName(await getUserNameFromDb());
+    setUserTitle(await getUserTitleFromDb());
+    setIsBalanceHidden(await getBalanceHiddenFromDb());
+    setAutoLockTimeout(await getAutoLockTimeoutFromDb());
+    setLanguage(await getAppLanguageFromDb());
+    setAccountBalanceHidden({});
+    setIsAppLocked(false);
+    setShowLockScreen(false);
+  };
+
   const handleToggleBalanceHidden = async () => {
     const newState = !isBalanceHidden;
     setIsBalanceHidden(newState);
@@ -245,7 +217,7 @@ function App() {
 
   const handleToggleLock = async () => {
     const newLockState = !isAppLocked;
-    
+
     if (newLockState) {
       // Try to enable biometric authentication first
       try {
@@ -293,10 +265,10 @@ function App() {
       setUserTitle(savedTitle);
       const savedCustomBanks = await getCustomBanksFromDb();
       setCustomBanks(savedCustomBanks);
-      
+
       const savedAppLocked = await getAppLockedFromDb();
       setIsAppLocked(savedAppLocked);
-      
+
       const savedTimeout = await getAutoLockTimeoutFromDb();
       setAutoLockTimeout(savedTimeout);
 
@@ -442,7 +414,9 @@ function App() {
           continue;
         }
 
-        let account = findAccountForSms(currentAccounts, parsed, subId);
+        const resolution = resolveAccountForSms(currentAccounts, parsed, subId);
+        if (resolution.kind === 'ambiguous') continue;
+        let account = resolution.kind === 'matched' ? resolution.account : null;
 
         if (!account) {
           const newAccount: Account = {
@@ -456,7 +430,7 @@ function App() {
             currency: 'ETB',
             lastUpdated: new Date(timestamp).toISOString(),
             source: 'sms',
-            subId: subId != null ? subId : null,
+            subId: subId != null && subId >= 0 ? subId : null,
           };
           account = newAccount;
           await saveAccountToDb(newAccount);
@@ -465,18 +439,18 @@ function App() {
           await saveAccountToDb(account);
         }
 
-        let balanceAfter = parsed.balance;
-        if (balanceAfter == null) {
-          balanceAfter = calculateBalance(
-            account.currentBalance,
-            parsed.type,
-            parsed.amount,
-          );
-        }
+        const { balanceAfter, updateCurrent } = balanceForSms(
+          account,
+          parsed,
+          timestamp,
+        );
 
-        await updateAccountBalanceInDb(account.id, balanceAfter);
-        account.currentBalance = balanceAfter;
-        account.lastUpdated = new Date(timestamp).toISOString();
+        if (updateCurrent && balanceAfter != null) {
+          const updatedAt = new Date(timestamp).toISOString();
+          await updateAccountBalanceInDb(account.id, balanceAfter, updatedAt);
+          account.currentBalance = balanceAfter;
+          account.lastUpdated = updatedAt;
+        }
 
         const transaction: Transaction = {
           id: `txn-${hash}`,
@@ -504,13 +478,14 @@ function App() {
   const syncSmsState = useCallback(async () => {
     setIsSyncing(true);
     try {
-      await clearAllTransactionsFromDb();
-      await clearAllAccountsFromDb();
-
       // Read real SMS data natively (or use mock data while USE_MOCK_DATA is on)
       const smsData = USE_MOCK_DATA
         ? getMockSmsMessages()
         : await nativeSmsService.getInboxSms(5000);
+      if (!(await getPreserveRestoredBankDataFromDb())) {
+        await clearAllTransactionsFromDb();
+        await clearAllAccountsFromDb();
+      }
       if (USE_MOCK_DATA) {
         setCustomBanksInParser([...customBanks, ...NEW_BANKS]);
       }
@@ -596,7 +571,7 @@ function App() {
       return;
     }
 
-    const handleSms = async (data: {
+    const processSms = async (data: {
       sender: string;
       message: string;
       timestamp: number;
@@ -615,7 +590,13 @@ function App() {
           return;
         }
 
-        let account = findAccountForSms(accountsRef.current, parsed, subId);
+        const resolution = resolveAccountForSms(
+          accountsRef.current,
+          parsed,
+          subId,
+        );
+        if (resolution.kind === 'ambiguous') return;
+        let account = resolution.kind === 'matched' ? resolution.account : null;
 
         if (!account) {
           const newAccount: Account = {
@@ -627,7 +608,7 @@ function App() {
             currency: 'ETB',
             lastUpdated: new Date(timestamp).toISOString(),
             source: 'sms',
-            subId: subId != null ? subId : null,
+            subId: subId != null && subId >= 0 ? subId : null,
           };
           account = newAccount;
           await saveAccountToDb(newAccount);
@@ -636,26 +617,29 @@ function App() {
           await saveAccountToDb(account);
         }
 
-        let balanceAfter = parsed.balance;
-        if (balanceAfter == null) {
-          balanceAfter = calculateBalance(
-            account.currentBalance,
-            parsed.type,
-            parsed.amount,
-          );
-        }
-
-        await updateAccountBalanceInDb(account.id, balanceAfter);
-        accountsRef.current = accountsRef.current.map(a =>
-          a.id === account!.id
-            ? {
-                ...a,
-                currentBalance: balanceAfter!,
-                lastUpdated: new Date(timestamp).toISOString(),
-              }
-            : a,
+        const { balanceAfter, updateCurrent } = balanceForSms(
+          account,
+          parsed,
+          timestamp,
         );
-        setAccounts(accountsRef.current);
+
+        if (updateCurrent && balanceAfter != null) {
+          await updateAccountBalanceInDb(
+            account.id,
+            balanceAfter,
+            new Date(timestamp).toISOString(),
+          );
+          accountsRef.current = accountsRef.current.map(a =>
+            a.id === account!.id
+              ? {
+                  ...a,
+                  currentBalance: balanceAfter!,
+                  lastUpdated: new Date(timestamp).toISOString(),
+                }
+              : a,
+          );
+          setAccounts(accountsRef.current);
+        }
 
         const transaction: Transaction = {
           id: `txn-${hash}`,
@@ -679,6 +663,12 @@ function App() {
       }
     };
 
+    // Process events in order so simultaneous notifications cannot both create
+    // the first account before the other event finishes saving it.
+    const handleSms = (data: Parameters<typeof processSms>[0]) => {
+      dataQueue.current = dataQueue.current.then(() => processSms(data));
+      return dataQueue.current;
+    };
     nativeSmsService.addListener(handleSms);
 
     return () => {
@@ -726,7 +716,19 @@ function App() {
               customBanks={customBanks}
             />
           ) : currentTab === 'analytics' ? (
-            <AnalyticsScreen transactions={transactions} />
+            <AnalyticsScreen
+              transactions={transactions}
+              onReasonSave={async (hash, reason) => {
+                await setTransactionReasonInDb(hash, reason);
+                setTransactions(previous =>
+                  previous.map(item =>
+                    item.hash === hash
+                      ? { ...item, reason: reason.trim() || undefined }
+                      : item,
+                  ),
+                );
+              }}
+            />
           ) : currentTab === 'shop' ? (
             <ShopScreen />
           ) : currentTab === 'addBank' ? (
@@ -739,6 +741,8 @@ function App() {
             />
           ) : (
             <SettingsScreen
+              runDataOperation={runDataOperation}
+              onBackupRestored={reloadAfterRestore}
               userName={userName!}
               onNameChange={async name => {
                 skipLockScreenRef.current = true;

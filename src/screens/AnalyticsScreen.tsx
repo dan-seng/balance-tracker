@@ -1,3 +1,4 @@
+import { RecentTransactions } from '../components/RecentTransactions';
 import { getLocale } from '../i18n';
 import { t, useLanguage } from '../i18n';
 import { useState } from 'react';
@@ -12,6 +13,8 @@ import { Screen } from '../components/Screen';
 import { Transaction } from '../models';
 import {
   getInsights,
+  getReportPeriod,
+  shiftReportPeriod,
   InsightRange,
   SPEND_CATEGORY_COLORS,
 } from '../utils/insightsUtils';
@@ -31,7 +34,9 @@ const CHART_HEIGHT = 104;
 
 function compact(value: number): string {
   if (value >= 1000) {
-    return t('{amount}k', { amount: (value / 1000).toFixed(1).replace(/\.0$/, '') });
+    return t('{amount}k', {
+      amount: (value / 1000).toFixed(1).replace(/\.0$/, ''),
+    });
   }
   if (value >= 100) {
     return Math.round(value / 10) * 10 + '';
@@ -67,25 +72,33 @@ function DeltaPill({ pct, isUp }: { pct: number; isUp: boolean }) {
 }
 
 type AnalyticsScreenProps = {
+  onReasonSave: (hash: string, reason: string) => Promise<void>;
   transactions: Transaction[];
 };
 
-export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
+export function AnalyticsScreen({
+  transactions,
+  onReasonSave,
+}: AnalyticsScreenProps) {
   useLanguage();
+  const [reference, setReference] = useState(Date.now());
   const [rangeIndex, setRangeIndex] = useState(0);
   const [selectedBar, setSelectedBar] = useState(6);
 
   const range = RANGES[rangeIndex];
 
-  const insights = getInsights(transactions, range);
+  const insights = getInsights(transactions, range, reference);
 
   const { bars, maxBar, categories, merchants } = insights;
-  const isEmpty =
-    insights.totalSpend === 0 && insights.totalIncome === 0;
+  const reportPeriod = getReportPeriod(range, reference);
+  const canGoNext =
+    getReportPeriod(range, reference).start < getReportPeriod(range).start;
+  const isEmpty = insights.totalSpend === 0 && insights.totalIncome === 0;
 
   const handleRangeChange = (index: number) => {
     setRangeIndex(index);
-    setSelectedBar(Math.max(0, (index === 0 ? 7 : index === 1 ? 5 : 12) - 1));
+    setSelectedBar(0);
+    setReference(Date.now());
   };
 
   return (
@@ -93,9 +106,7 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
       <View style={styles.wrapper}>
         <View style={styles.header}>
           <Text style={styles.title}>{t('Analytics')}</Text>
-          <Text style={styles.subtitle}>
-            {t(insights.periodLabel)} {t('spending')}
-          </Text>
+          <Text style={styles.subtitle}>{t('Calendar reports')}</Text>
         </View>
 
         <View style={styles.segmentWrap}>
@@ -105,6 +116,43 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
             onChange={handleRangeChange}
             accessibilityLabel={t('Analytics range')}
           />
+        </View>
+
+        <View style={styles.periodNavigation}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Previous period')}
+            style={styles.periodButton}
+            onPress={() => {
+              setReference(value => shiftReportPeriod(range, value, -1));
+              setSelectedBar(0);
+            }}
+          >
+            <Text style={styles.periodArrow}>‹</Text>
+          </Pressable>
+          <View style={styles.periodCaption}>
+            <Text style={styles.periodLabel}>{insights.periodLabel}</Text>
+            <Text style={styles.periodHint}>
+              {range === 'week'
+                ? t('Monday–Sunday')
+                : range === 'month'
+                ? t('First to last day of the month')
+                : t('January–December')}
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('Next period')}
+            accessibilityState={{ disabled: !canGoNext }}
+            disabled={!canGoNext}
+            style={[styles.periodButton, !canGoNext && styles.periodDisabled]}
+            onPress={() => {
+              setReference(value => shiftReportPeriod(range, value, 1));
+              setSelectedBar(0);
+            }}
+          >
+            <Text style={styles.periodArrow}>›</Text>
+          </Pressable>
         </View>
 
         <View style={styles.totalCard}>
@@ -130,6 +178,18 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
               : t('No income recorded yet')}
           </Text>
         </View>
+
+        <RecentTransactions
+          key={`${range}-${reportPeriod.start.getTime()}`}
+          transactions={transactions.filter(item => {
+            const timestamp = Date.parse(item.date);
+            return (
+              timestamp >= reportPeriod.start.getTime() &&
+              timestamp < reportPeriod.end.getTime()
+            );
+          })}
+          onSave={onReasonSave}
+        />
 
         {isEmpty ? (
           <View style={styles.emptyCard}>
@@ -163,7 +223,8 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                         bar.value,
                       )}`}
                       onPress={() => setSelectedBar(index)}
-                      style={styles.barColumn}>
+                      style={styles.barColumn}
+                    >
                       <View style={styles.tooltipSlot}>
                         {active ? (
                           <Text
@@ -180,9 +241,7 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                         {bar.value > 0 || active ? (
                           <LinearGradient
                             colors={
-                              active
-                                ? ['#F0D38C', GOLD]
-                                : ['#6CB4FF', BLUE]
+                              active ? ['#F0D38C', GOLD] : ['#6CB4FF', BLUE]
                             }
                             start={{ x: 0, y: 1 }}
                             end={{ x: 0, y: 0 }}
@@ -196,7 +255,8 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                         style={[
                           styles.barLabel,
                           active && styles.barLabelActive,
-                        ]}>
+                        ]}
+                      >
                         {bar.label}
                       </Text>
                     </Pressable>
@@ -270,12 +330,14 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
                       style={[
                         styles.merchantRow,
                         !isLast && styles.merchantRowBorder,
-                      ]}>
+                      ]}
+                    >
                       <View
                         style={[
                           styles.merchantIcon,
                           { backgroundColor: `${color}29` },
-                        ]}>
+                        ]}
+                      >
                         <Text style={[styles.merchantLetter, { color }]}>
                           {merchant.name.charAt(0).toUpperCase()}
                         </Text>
@@ -307,6 +369,28 @@ export function AnalyticsScreen({ transactions }: AnalyticsScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  periodNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  periodButton: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodArrow: { fontSize: 28, color: GOLD },
+  periodDisabled: { opacity: 0.3 },
+  periodCaption: { flex: 1, gap: 4 },
+  periodLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  periodHint: { color: LABEL2, fontSize: 12, textAlign: 'center' },
   wrapper: {
     flex: 1,
     paddingTop: 8,

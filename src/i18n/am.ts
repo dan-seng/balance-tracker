@@ -1,5 +1,38 @@
+import { shopToolsAm } from './shopToolsAm';
+import { backupAm } from './backupAm';
 // English source keys keep translations auditable beside their meaning.
 export const am = {
+  'Show fewer': 'ያነሱ አሳይ',
+  'Show all recent transactions': 'ሁሉንም የቅርብ ጊዜ ግብይቶች አሳይ',
+
+  'Keep the reason within 200 characters.': 'ምክንያቱን ከ200 ፊደላት በታች ያድርጉት።',
+  'This transaction is no longer available. Refresh and try again.':
+    'ይህ ግብይት ከእንግዲህ አይገኝም። ያድሱና እንደገና ይሞክሩ።',
+  'Could not save the reason. Your text is still here; try again.':
+    'ምክንያቱን ማስቀመጥ አልተቻለም። ጽሑፍዎ እዚህ አለ፤ እንደገና ይሞክሩ።',
+  'Recent transactions': 'የቅርብ ጊዜ ግብይቶች',
+  'Latest 10 in this report. Tap one to add or edit its reason.':
+    'በዚህ ሪፖርት ያሉ የመጨረሻ 10 ግብይቶች። ምክንያት ለመጨመር ወይም ለማስተካከል አንዱን ይንኩ።',
+  'Edit reason for {bank}, {amount}': 'ለ{bank}፣ {amount} ምክንያት አስተካክል',
+  '＋ Add reason': '＋ ምክንያት ጨምር',
+  'No transactions in this report yet.': 'በዚህ ሪፖርት እስካሁን ግብይቶች የሉም።',
+  'Transaction reason': 'የግብይት ምክንያት',
+  'Write what this transaction was for. Leave it blank to remove the reason.':
+    'ይህ ግብይት ለምን እንደነበር ይጻፉ። ምክንያቱን ለማስወገድ ባዶ ይተዉት።',
+  'For example: lunch, rent, or a customer payment':
+    'ለምሳሌ፦ ምሳ፣ ኪራይ ወይም የደንበኛ ክፍያ',
+  'Save reason': 'ምክንያቱን አስቀምጥ',
+  'Transaction reasons': 'የግብይት ምክንያቶች',
+
+  ...backupAm,
+  ...shopToolsAm,
+  'Calendar reports': 'በቀን መቁጠሪያ መሠረት የተዘጋጁ ሪፖርቶች',
+  'Previous period': 'ያለፈው ጊዜ',
+  'Next period': 'ቀጣዩ ጊዜ',
+  'Monday–Sunday': 'ሰኞ–እሁድ',
+  'First to last day of the month': 'ከወሩ መጀመሪያ እስከ መጨረሻ ቀን',
+  'January–December': 'ጃንዋሪ–ዲሴምበር',
+
   'Loss ·': 'ኪሳራ ·',
   '· Average buying price': '· አማካይ የግዢ ዋጋ',
   'If the customer will pay later, choose their name. Add a new customer here if needed.':
@@ -167,7 +200,7 @@ export const am = {
   'Custom Banks': 'በእርስዎ የተጨመሩ ባንኮች',
   'No custom banks added yet.': 'እስካሁን ምንም ባንክ አልጨመሩም።',
   'Sender:': 'መላኪያ፦',
-  'Version 1.0 · Developed by Daniel Gidey': 'ስሪት 1.0 · በDaniel Gidey የተሠራ',
+  'Version 1.1.0 · Developed by Daniel Gidey': 'ስሪት 1.1.0 · በDaniel Gidey የተሠራ',
   'Auto-Lock': 'በራስ-ሰር መቆለፍ',
   Today: 'ዛሬ',
   'This month': 'በዚህ ወር',
