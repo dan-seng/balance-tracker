@@ -6,6 +6,28 @@ let directory = '';
 jest.mock('react-native-sqlite-storage', () => ({
   enablePromise: jest.fn(),
   openDatabase: async () => ({
+    transaction: async (callback: (tx: any) => void) => {
+      const statements: unknown[] = [];
+      callback({
+        executeSql: (sql: string, params: unknown[] = []) =>
+          statements.push([sql, params]),
+      });
+      const result = require('child_process').spawnSync(
+        'python3',
+        [
+          '-c',
+          `
+import sys,json,sqlite3
+with sqlite3.connect(sys.argv[1]) as db:
+ for sql,params in json.loads(sys.argv[2]): db.execute(sql,params)
+`,
+          mockDbPath,
+          JSON.stringify(statements),
+        ],
+        { encoding: 'utf8' },
+      );
+      if (result.status !== 0) throw new Error(result.stderr);
+    },
     executeSql: async (sql: string, params: unknown[] = []) => {
       const { spawnSync } = require('child_process');
       const result = spawnSync(
@@ -35,6 +57,9 @@ with sqlite3.connect(sys.argv[1]) as db:
 }));
 import {
   initDatabase,
+  saveSmsImport,
+  getTransactionHashes,
+  getAccounts,
   saveAccount,
   saveTransaction,
   getTransactions,
@@ -88,4 +113,26 @@ test('persists notes through clearing and reimporting transactions and validates
   await expect(setTransactionReason('missing', 'Note')).rejects.toThrow(
     'no longer available',
   );
+});
+
+test('batch import preserves notes and rolls back replacement when a row is invalid', async () => {
+  const accounts = await getAccounts();
+  const transactions = await getTransactions();
+  await setTransactionReason('hash', 'Lunch');
+  await saveSmsImport(accounts, transactions, true);
+  expect(await getTransactionHashes()).toEqual(new Set(['hash']));
+  expect((await getTransactions())[0].reason).toBe('Lunch');
+  await expect(
+    saveSmsImport(
+      accounts,
+      [{ ...transactions[0], id: 'bad', amount: null as any }],
+      true,
+    ),
+  ).rejects.toThrow();
+  expect((await getTransactions())[0].id).toBe(transactions[0].id);
+  expect((await getAccounts())[0].currentBalance).toBe(
+    accounts[0].currentBalance,
+  );
+  await saveSmsImport(accounts, [], false);
+  expect(await getTransactions()).toHaveLength(1);
 });

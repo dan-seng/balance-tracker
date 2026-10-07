@@ -27,8 +27,8 @@ import { AddBankScreen } from './src/screens/AddBankScreen';
 import { ShopScreen } from './src/screens/ShopScreen';
 import { BottomNav, TabType } from './src/components/BottomNav';
 import {
-  clearAllAccountsFromDb,
-  clearAllTransactionsFromDb,
+  saveSmsImportToDb,
+  getTransactionHashesFromDb,
   getAccountsFromDb,
   getTransactionsFromDb,
   initDatabase,
@@ -395,8 +395,13 @@ function App() {
         timestamp: number;
         subId?: number | null;
       }>,
+      replaceExisting: boolean,
     ) => {
-      const currentAccounts = await getAccountsFromDb();
+      const currentAccounts = replaceExisting ? [] : await getAccountsFromDb();
+      const hashes = replaceExisting
+        ? new Set<string>()
+        : await getTransactionHashesFromDb();
+      const importedTransactions: Transaction[] = [];
       const orderedMessages = [...smsMessages].sort(
         (left, right) => left.timestamp - right.timestamp,
       );
@@ -409,8 +414,7 @@ function App() {
         }
 
         const hash = generateSmsHash(message, sender, timestamp);
-        const exists = await transactionExistsInDb(hash);
-        if (exists) {
+        if (hashes.has(hash)) {
           continue;
         }
 
@@ -433,10 +437,9 @@ function App() {
             subId: subId != null && subId >= 0 ? subId : null,
           };
           account = newAccount;
-          await saveAccountToDb(newAccount);
           currentAccounts.push(newAccount);
-        } else if (applyAccountIdentity(account, parsed, subId)) {
-          await saveAccountToDb(account);
+        } else {
+          applyAccountIdentity(account, parsed, subId);
         }
 
         const { balanceAfter, updateCurrent } = balanceForSms(
@@ -447,7 +450,6 @@ function App() {
 
         if (updateCurrent && balanceAfter != null) {
           const updatedAt = new Date(timestamp).toISOString();
-          await updateAccountBalanceInDb(account.id, balanceAfter, updatedAt);
           account.currentBalance = balanceAfter;
           account.lastUpdated = updatedAt;
         }
@@ -467,9 +469,19 @@ function App() {
           sender: parsed.sender,
         };
 
-        await saveTransactionToDb(transaction);
+        importedTransactions.push(transaction);
+        hashes.add(hash);
+        // Give touch/paint work a turn during large imports.
+        if (importedTransactions.length % 100 === 0) {
+          await new Promise<void>(resolve => setTimeout(resolve, 0));
+        }
       }
 
+      await saveSmsImportToDb(
+        currentAccounts,
+        importedTransactions,
+        replaceExisting,
+      );
       return currentAccounts;
     },
     [],
@@ -482,14 +494,11 @@ function App() {
       const smsData = USE_MOCK_DATA
         ? getMockSmsMessages()
         : await nativeSmsService.getInboxSms(5000);
-      if (!(await getPreserveRestoredBankDataFromDb())) {
-        await clearAllTransactionsFromDb();
-        await clearAllAccountsFromDb();
-      }
+      const replaceExisting = !(await getPreserveRestoredBankDataFromDb());
       if (USE_MOCK_DATA) {
         setCustomBanksInParser([...customBanks, ...NEW_BANKS]);
       }
-      const rebuiltAccounts = await ingestSmsMessages(smsData);
+      const rebuiltAccounts = await ingestSmsMessages(smsData, replaceExisting);
 
       const mergedAccounts = await ensureCustomBankAccounts(
         customBanks,

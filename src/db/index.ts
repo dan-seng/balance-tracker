@@ -223,3 +223,8 @@ export async function setTransactionReasonInDb(
   await ensureDatabaseInitialized();
   return setTransactionReason(hash, reason);
 }
+
+export {
+  saveSmsImport as saveSmsImportToDb,
+  getTransactionHashes as getTransactionHashesFromDb,
+} from './sqliteDatabase';

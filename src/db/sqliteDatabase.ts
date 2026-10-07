@@ -599,3 +599,77 @@ export async function setTransactionReason(
     [hash, value, new Date().toISOString()],
   );
 }
+
+// Queue the whole import before committing: one disk transaction instead of
+// separate commits for every SMS and balance update. A failed import rolls back.
+export async function saveSmsImport(
+  accounts: Account[],
+  transactions: Transaction[],
+  replaceExisting: boolean,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
+  await db.transaction(tx => {
+    if (replaceExisting) {
+      tx.executeSql('DELETE FROM transactions;');
+      tx.executeSql('DELETE FROM accounts;');
+    }
+    for (const a of accounts) {
+      tx.executeSql(
+        `INSERT OR IGNORE INTO accounts (id, bank_id, bank_name, account_number, current_balance, currency, last_updated, source, sub_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          a.id,
+          a.bankId,
+          a.bankName,
+          a.accountNumber,
+          a.currentBalance,
+          a.currency,
+          a.lastUpdated,
+          a.source,
+          a.subId ?? null,
+        ],
+      );
+    }
+    for (const a of accounts) {
+      tx.executeSql(
+        'UPDATE accounts SET account_number = ?, current_balance = ?, last_updated = ?, sub_id = ? WHERE id = ?',
+        [
+          a.accountNumber,
+          a.currentBalance,
+          a.lastUpdated,
+          a.subId ?? null,
+          a.id,
+        ],
+      );
+    }
+    for (const item of transactions) {
+      tx.executeSql(
+        `INSERT INTO transactions (id, account_id, bank_id, bank_name, type, amount, balance_after, date, raw_sms, hash, currency, sender)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.id,
+          item.accountId,
+          item.bankId,
+          item.bankName,
+          item.type,
+          item.amount,
+          item.balanceAfter,
+          item.date,
+          item.rawSms,
+          item.hash,
+          item.currency,
+          item.sender,
+        ],
+      );
+    }
+  });
+}
+
+export async function getTransactionHashes(): Promise<Set<string>> {
+  if (!db) throw new Error(t('Database not initialized'));
+  const [result] = await db.executeSql('SELECT hash FROM transactions');
+  const hashes = new Set<string>();
+  for (let i = 0; i < result.rows.length; i++)
+    hashes.add(result.rows.item(i).hash);
+  return hashes;
+}

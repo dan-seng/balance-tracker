@@ -23,6 +23,8 @@ jest.mock('react-native-biometrics', () =>
   jest.fn(() => ({ simplePrompt: jest.fn() })),
 );
 jest.mock('../src/db', () => ({
+  saveSmsImportToDb: jest.fn(async () => undefined),
+  getTransactionHashesFromDb: jest.fn(async () => new Set()),
   getAppLanguageFromDb: jest.fn(async () => 'en'),
   setAppLanguageInDb: jest.fn(async () => undefined),
   getPreserveRestoredBankDataFromDb: jest.fn(async () => false),
