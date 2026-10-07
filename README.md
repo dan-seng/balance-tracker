@@ -22,9 +22,11 @@ Allow installation from your browser or file manager if Android requests it. The
 
 - **Wallet:** bank SMS import, individual account balances, combined balance, income and spending totals, and balance visibility controls.
 - **Bank accounts:** multiple accounts, custom bank names and SMS sender IDs, transaction history, search and filters.
-- **Analytics:** weekly, monthly and yearly spending views, categories, and top merchants inferred from bank messages.
-- **Shop:** products, quantities, stock purchases, sales, expenses, profit, customer debt and debt payments.
+- **Transaction reasons:** add or edit a personal reason for recent bank transactions in Analytics. Reasons survive SMS reimports and are included in encrypted backups.
+- **Analytics:** calendar reports for Monday–Sunday weeks, complete months and January–December years, with previous/next period navigation, categories and top merchants inferred from bank messages.
+- **Shop:** products, quantities, stock purchases, sales, expenses, profit, customer debt and debt payments, returns, stock corrections, shareable daily/customer reports, and supplier credit.
 - **English and Amharic:** switch in Settings; your choice is remembered offline. Amharic uses the bundled Nokia Pure font.
+- **Backup and restore:** password-protected `.hisab` files, record previews and optional safety copies before replacement.
 - **Security:** biometric app lock and configurable automatic locking.
 
 ## Using Shop
@@ -51,11 +53,19 @@ Stock purchases reduce profit as the items sell. Record them through **Buy stock
 
 Shop has its own SQLite database, works without SMS permission, and survives bank SMS resyncs. Shop records are entered manually and are not automatically matched to bank transactions. See [Shop documentation](docs/shop-feature.md).
 
+### More shop tools
+
+Open **Shop → More shop tools** to record full or partial returns, correct stock counts with a reason, share a daily closing summary or customer statement, and track suppliers, stock purchases on credit and later payments. Returns automatically reduce unpaid customer balances and calculate any cash refund. Only saleable returns go back into stock; missing or damaged shelf stock is recorded as a loss.
+
 ## Language settings
 
 Go to **Settings → Language** and choose **English** or **አማርኛ**. Navigation, onboarding, wallet, analytics, settings and Shop update immediately, and the selection is restored after reopening.
 
 Names, account numbers and original SMS contents stay as entered or received. Dates and amounts follow the selected language; this does not switch to the Ethiopian calendar. Android-owned permission dialogs follow the device language. See [language support](docs/languages.md) for implementation and translation maintenance.
+
+## Backup and restore
+
+Open **Settings → Backup & restore** to create an encrypted file or restore one. Save it to your phone or an installed storage provider. You need the file and its password to restore. Restoration replaces existing bank and Shop records; the preview offers a safety backup first. See [backup documentation](docs/backup.md).
 
 ## Development
 
@@ -98,7 +108,7 @@ npm test -- --runInBand
 npm run lint
 ```
 
-The current test suite has **17 tests** covering shop accounting and SQLite persistence, partial payments, sale drafts, first-product setup, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
+The current test suite has **55 tests** covering shop accounting and SQLite persistence, partial payments, sale drafts, first-product setup, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
 
 Android emulator checks also verified startup, persisted Amharic selection, Nokia Pure rendering and the Shop guide. TypeScript, all tests and lint for changed files passed; the full-repository lint command may report existing issues in other files.
 
@@ -130,8 +140,8 @@ Built with React Native, TypeScript, `react-native-sqlite-storage`, `react-nativ
 
 ## Privacy and permissions
 
-`READ_SMS` and `RECEIVE_SMS` enable bank-message imports and incoming transaction tracking. SMS data stays on the device. **Shop does not need these permissions.**
+`READ_SMS` and `RECEIVE_SMS` enable bank-message imports and incoming transaction tracking. SMS data is processed locally. Manual encrypted backups include the original SMS text and are saved only to the location you choose. **Shop does not need these permissions.**
 
 ## Future work
 
-Export and backup, returns and stock adjustments, fractional quantities, supplier credit, taxes and multi-shop support are not implemented in the current Shop version. iOS support would require a different approach to bank-message imports.
+CSV/PDF export, fractional quantities, taxes and multi-shop support are not implemented in the current Shop version. iOS support would require a different approach to bank-message imports.

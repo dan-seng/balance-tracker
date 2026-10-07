@@ -43,7 +43,7 @@ Test full and partial payments, repayments without duplicate revenue, insufficie
 
 ## Pending
 
-Daily-ledger composition A is approved and implemented. Supplier credit, taxes, multi-shop, backup/export, stock adjustments/returns, and fractional product quantities need explicit design if included later; they are not promised as implemented features.
+Daily-ledger composition A is approved and implemented. Taxes, multi-shop, CSV/PDF export, and fractional product quantities need explicit design if included later; they are not promised as implemented features.
 
 ## Completed validation
 
@@ -56,3 +56,13 @@ Native layout screenshots and a completed APK build remain unverified: emulator 
 The Shop screen now calls its overview **Daily totals** and its stock tab **Products**. **Buy stock** adds purchased items; **Add expense** records running costs. **Money received** includes sale payments and debt payments, while **Customers owe** shows all unpaid sales. Negative profit is explicitly labelled **Loss**.
 
 A collapsible **How to use Shop** guide explains the four steps and gives a 100 ETB purchase / 150 ETB sale example. New shops have a direct **Add your first product** starting point. Forms ask practical questions about quantities, buying/selling prices and money paid. These changes are available in English and Amharic without changing accounting or saved records.
+
+## Returns, corrections and shared reports
+
+Shop → More shop tools provides returns, stock corrections, daily closing summaries, customer statements and supplier credit.
+
+- Returns refer to an original sale line and cannot exceed its unreturned quantity. They reduce net sales and unpaid customer balances. Only payments exceeding the revised sale total are refunded. Saleable returns restore stock at the original sale-time cost and reverse that cost of goods; damaged returns do not restore stock or reverse their cost. The owner records the actual refund manually.
+- Stock corrections save the actual shelf count and a reason. Reductions create a stock-loss expense at the current average buying cost; increases create no fictitious revenue or cash receipt. Both have an audit trail.
+- Daily summaries accept a local Gregorian YYYY-MM-DD date and share net sales, sold-item cost, expenses, profit/loss, refunds and money received after refunds. Customer statements share dated purchases, payments, returns/refunds and the current balance. Android's share sheet lets the owner choose the destination.
+- Supplier purchases add stock at a weighted average cost and record the amount paid now. Later payments reduce the unpaid purchase balance, cannot exceed it, and do not create another operating expense.
+- Backup payload version 2 includes all new tables. Version 1 files remain restorable with empty new tables.

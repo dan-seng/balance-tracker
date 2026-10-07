@@ -74,7 +74,7 @@ components:
 
 Hisab uses a black canvas, flat dark grouped surfaces, system typography and restrained gold actions. White amounts establish hierarchy; secondary labels recede while green and red communicate income and spending.
 
-The Shop extension carries the incumbent visual system into a practical daily ledger. Entry speed, readable amounts, validation and honest totals take priority over decoration. This document records source evidence; runtime rendering has not been inspected.
+The Shop extension carries the wallet’s warm gold totals surface and Settings’ grouped navigation into a practical daily ledger. Entry speed, readable amounts, validation and honest totals take priority over decoration. This document records source evidence; runtime rendering has not been inspected.
 
 **Key Characteristics:**
 - Black canvas and tonal grouping
@@ -110,21 +110,21 @@ The incumbent palette combines black and dark neutral surfaces with gold identit
 
 **Display and Body Font:** Platform system font; AppText does not force a font family. Poppins remains available in the theme and is not the default wrapper face.
 
-The hierarchy is numeric and direct. Shop uses display for profit, headline for the screen title, title for section headings, body for explanatory text and label for controls. Row titles and inputs use 16 dp; collection figures use 23 dp semibold. The persistent bottom navigation retains its incumbent 10 dp medium labels.
+The hierarchy is numeric and direct. Shop uses compact 28 dp extra-bold profit amounts, 32 dp extra-bold screen titles and 20 dp extra-bold section headings, matching the weight and hierarchy of the wallet and Settings. Row titles and inputs use 16 dp; collection figures use 23 dp semibold. The persistent bottom navigation retains its incumbent 10 dp medium labels.
 
 **The Amount Before Annotation Rule.** Give totals stronger size and weight than their explanatory labels; use tabular numerals for ledger amounts.
 
 ## Layout
 
-Phone screens use vertically scrolling content with 20 dp horizontal gutters and 16 dp section gaps in Shop. Summary and form padding is 20 dp. Inline row spacing uses 8–16 dp; financial rows, collection groups and section headings wrap as needed. No fixed responsive breakpoints are present.
+Phone screens use vertically scrolling content with 20 dp horizontal gutters and 20 dp section gaps in Shop; entry forms retain 16 dp gaps. The compact profit summary uses 18 dp horizontal and 12 dp vertical padding; forms use 20 dp. Inline row spacing uses 8–16 dp; financial rows, collection groups and section headings wrap as needed. No fixed responsive breakpoints are present.
 
 Persistent bottom navigation overlays the screen edge. Shop reserves 100 dp plus the bottom safe-area inset for clearance. Navigation respects the bottom inset and hides during keyboard display. Modal entry uses safe-area layout and keyboard avoidance; Shop enables text scaling explicitly and handles Android Back. These are extension rules, not claims that all incumbent screens already implement them.
 
 ## Elevation & Depth
 
-Depth comes from dark surface tones and hairline separators. Shop summary panels, controls and dialogs have no shadows. Dialogs dim the canvas with a black translucent backdrop; bottom navigation uses a translucent dark film.
+Depth comes from dark surface tones and hairline separators. Shop mirrors the wallet’s dark gold gradient and quiet gold border for the profit summary, while controls, lists and dialogs retain flat grouped surfaces without decorative shadows. Dialogs dim the canvas with a black translucent backdrop; bottom navigation uses a translucent dark film.
 
-**The Flat Grouping Rule.** Group content with surface tone, spacing and separators; the ledger uses no decorative shadows.
+**The Grouping Rule.** Carry the wallet’s warm totals surface into the profit summary; group other content with flat surface tone, spacing and separators.
 
 ## Shapes
 
@@ -150,7 +150,7 @@ Fields use grouped1 fill, lg corners, 16 dp text, 12 dp vertical and 14 dp horiz
 
 ### Navigation
 
-Five bottom tabs use inline stroke icons, white selected labels and a small white selected dot. Inactive content uses nav-inactive tone. Tabs have minimum 48 dp height and dim to 0.6 opacity when pressed. Shop section navigation uses equal-width tabs, gold selected text and a 2 dp gold underline.
+Five bottom tabs use inline stroke icons, white selected labels and a small white selected dot. Inactive content uses nav-inactive tone. Tabs have minimum 48 dp height and dim to 0.6 opacity when pressed. Shop section navigation reuses the app’s shared segmented control with white selected text, raised selected surface and 48 dp touch targets. Help and tool destinations use Settings-style grouped rows with small tinted icons.
 
 ### Ledger Summary
 
@@ -170,3 +170,5 @@ Profit receives the strongest numeric emphasis. Supporting rows explain sales, s
 - **Don't** force the theme's available Poppins fonts into the system-text wrapper.
 - **Don't** collapse profit, collections and customer balances into one unexplained total.
 - **Don't** add decorative shadows to the flat ledger surfaces.
+
+Shop daily totals keeps the calculation collapsed behind Details. Recording actions have their own short label; money received and customer debt use separate labelled rows with direct customer navigation. Recent activity previews three entries, with the complete ledger available through View all.
