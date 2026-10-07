@@ -1,6 +1,7 @@
 import { BankId, TransactionType } from './parsedSms';
 
 export type Transaction = {
+  reason?: string;
   id: string;
   accountId: string;
   bankId: BankId;

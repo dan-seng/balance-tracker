@@ -1,6 +1,8 @@
 import { Transaction, Account } from '../models';
 import {
   getAppLanguage,
+  setTransactionReason,
+  getPreserveRestoredBankData,
   setAppLanguage,
   initDatabase,
   saveAccount,
@@ -63,9 +65,10 @@ export async function getAccountByIdFromDb(
 export async function updateAccountBalanceInDb(
   accountId: string,
   newBalance: number,
+  updatedAt?: string,
 ) {
   await ensureDatabaseInitialized();
-  return updateAccountBalance(accountId, newBalance);
+  return updateAccountBalance(accountId, newBalance, updatedAt);
 }
 
 export async function saveTransactionToDb(transaction: Transaction) {
@@ -206,4 +209,17 @@ export async function getAppLanguageFromDb(): Promise<'en' | 'am'> {
 export async function setAppLanguageInDb(language: 'en' | 'am'): Promise<void> {
   await ensureDatabaseInitialized();
   return setAppLanguage(language);
+}
+
+export async function getPreserveRestoredBankDataFromDb(): Promise<boolean> {
+  await ensureDatabaseInitialized();
+  return getPreserveRestoredBankData();
+}
+
+export async function setTransactionReasonInDb(
+  hash: string,
+  reason: string,
+): Promise<void> {
+  await ensureDatabaseInitialized();
+  return setTransactionReason(hash, reason);
 }

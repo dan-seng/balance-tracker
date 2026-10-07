@@ -64,6 +64,12 @@ async function createTables(): Promise<void> {
     );
   `);
 
+  // Notes are keyed by the stable SMS hash, so rebuilding account/transaction
+  // tables never deletes the user's reasons.
+  await db.executeSql(
+    'CREATE TABLE IF NOT EXISTS transaction_notes (hash TEXT PRIMARY KEY, reason TEXT NOT NULL, updated_at TEXT NOT NULL)',
+  );
+
   // Create indexes for better query performance
   await db.executeSql(
     `CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);`,
@@ -94,7 +100,8 @@ async function createTables(): Promise<void> {
 export async function saveAccount(account: Account): Promise<void> {
   if (!db) throw new Error(t('Database not initialized'));
 
-  await db.executeSql(`
+  await db.executeSql(
+    `
     INSERT OR REPLACE INTO accounts (id, bank_id, bank_name, account_number, current_balance, currency, last_updated, source, sub_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
@@ -167,15 +174,17 @@ export async function getAccountById(id: string): Promise<Account | null> {
 export async function updateAccountBalance(
   accountId: string,
   newBalance: number,
+  updatedAt = new Date().toISOString(),
 ): Promise<void> {
   if (!db) throw new Error(t('Database not initialized'));
 
-  await db.executeSql(`
+  await db.executeSql(
+    `
     UPDATE accounts
     SET current_balance = ?, last_updated = ?
     WHERE id = ?
   `,
-    [newBalance, new Date().toISOString(), accountId],
+    [newBalance, updatedAt, accountId],
   );
 }
 
@@ -227,14 +236,17 @@ export async function mergeAccountsInDb(
   let bankName = target.bank_name;
   let accountNumber = target.account_number;
   let subId = target.sub_id != null ? Number(target.sub_id) : null;
-  let balance = target.current_balance != null ? Number(target.current_balance) : null;
+  let balance =
+    target.current_balance != null ? Number(target.current_balance) : null;
   let lastUpdated = target.last_updated;
 
   const richerDigits =
-    sourceDigits && (!targetDigits || sourceDigits.length > targetDigits.length);
+    sourceDigits &&
+    (!targetDigits || sourceDigits.length > targetDigits.length);
   if (richerDigits) accountNumber = source.account_number;
   if (subId == null && source.sub_id != null) subId = Number(source.sub_id);
-  const placeholder = (n: string) => !n || /^(placeholder|unknown)$/i.test(n.trim());
+  const placeholder = (n: string) =>
+    !n || /^(placeholder|unknown)$/i.test(n.trim());
   if (placeholder(bankName) && !placeholder(source.bank_name)) {
     bankName = source.bank_name;
   }
@@ -287,7 +299,7 @@ export async function getTransactions(): Promise<Transaction[]> {
   if (!db) throw new Error(t('Database not initialized'));
 
   const [results] = await db.executeSql(
-    'SELECT * FROM transactions ORDER BY date DESC;',
+    'SELECT transactions.*, transaction_notes.reason AS reason FROM transactions LEFT JOIN transaction_notes ON transaction_notes.hash = transactions.hash ORDER BY transactions.date DESC;',
   );
 
   const transactions: Transaction[] = [];
@@ -306,6 +318,7 @@ export async function getTransactions(): Promise<Transaction[]> {
       hash: row.hash,
       currency: row.currency,
       sender: row.sender,
+      reason: typeof row.reason === 'string' ? row.reason : undefined,
     });
   }
 
@@ -318,7 +331,7 @@ export async function getTransactionsForAccount(
   if (!db) throw new Error(t('Database not initialized'));
 
   const [results] = await db.executeSql(
-    'SELECT * FROM transactions WHERE account_id = ? ORDER BY date DESC;',
+    'SELECT transactions.*, transaction_notes.reason AS reason FROM transactions LEFT JOIN transaction_notes ON transaction_notes.hash = transactions.hash WHERE transactions.account_id = ? ORDER BY transactions.date DESC;',
     [accountId],
   );
 
@@ -338,6 +351,7 @@ export async function getTransactionsForAccount(
       hash: row.hash,
       currency: row.currency,
       sender: row.sender,
+      reason: typeof row.reason === 'string' ? row.reason : undefined,
     });
   }
 
@@ -549,5 +563,39 @@ export async function setAppLanguage(language: 'en' | 'am'): Promise<void> {
   await db.executeSql(
     "INSERT OR REPLACE INTO user_settings (key, value) VALUES ('language', ?)",
     [language],
+  );
+}
+
+export async function getPreserveRestoredBankData(): Promise<boolean> {
+  if (!db) throw new Error(t('Database not initialized'));
+  const [result] = await db.executeSql(
+    "SELECT value FROM user_settings WHERE key = 'preserve_restored_bank_data'",
+  );
+  return result.rows.length > 0 && result.rows.item(0).value === 'true';
+}
+
+export async function setTransactionReason(
+  hash: string,
+  reason: string,
+): Promise<void> {
+  if (!db) throw new Error(t('Database not initialized'));
+  const value = reason.trim();
+  if (value.length > 200)
+    throw new Error(t('Keep the reason within 200 characters.'));
+  const [result] = await db.executeSql(
+    'SELECT id FROM transactions WHERE hash = ? LIMIT 1',
+    [hash],
+  );
+  if (!result.rows.length)
+    throw new Error(
+      t('This transaction is no longer available. Refresh and try again.'),
+    );
+  if (!value) {
+    await db.executeSql('DELETE FROM transaction_notes WHERE hash = ?', [hash]);
+    return;
+  }
+  await db.executeSql(
+    'INSERT OR REPLACE INTO transaction_notes (hash, reason, updated_at) VALUES (?, ?, ?)',
+    [hash, value, new Date().toISOString()],
   );
 }
