@@ -1,7 +1,12 @@
 const { mkdtempSync, rmSync } = require('fs');
 const { tmpdir } = require('os');
 const { join } = require('path');
-import { money, remaining, shopTotals } from '../src/utils/shopUtils';
+import {
+  money,
+  remaining,
+  shopTotals,
+  supplierOwed,
+} from '../src/utils/shopUtils';
 let mockDbPath = '';
 let directory = '';
 jest.setTimeout(30000);
@@ -53,6 +58,11 @@ with sqlite3.connect(sys.argv[1]) as db:
 }));
 import {
   addCustomer,
+  recordReturn,
+  correctStock,
+  addSupplier,
+  purchaseStock,
+  paySupplier,
   addExpense,
   addProduct,
   editProduct,
@@ -126,4 +136,106 @@ test('persists an entire shop lifecycle with stock, historical costs, credit and
   ]);
   expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
   expect((await loadShop()).products[0].quantity).toBe(0);
+});
+
+test('partial and damaged returns handle debt, refunds, stock and historical costs without double counting', async () => {
+  const baseline = shopTotals(await loadShop(), 'all');
+  await addProduct({
+    name: 'Return item',
+    unit: 'pieces',
+    quantity: 5,
+    costCents: 10000,
+    priceCents: 15000,
+    lowStock: 1,
+  });
+  const customerId = await addCustomer('Return customer', '');
+  let data = await loadShop();
+  const product = data.products.find(p => p.name === 'Return item')!;
+  await recordSale(
+    [{ productId: product.id, quantity: 2, priceCents: 15000 }],
+    10000,
+    customerId,
+  );
+  data = await loadShop();
+  const sale = data.sales.find(s => s.customerId === customerId)!;
+  const line = data.lines.find(l => l.saleId === sale.id)!;
+  await recordReturn(line.id, 1, true);
+  data = await loadShop();
+  expect(remaining(sale, data)).toBe(5000);
+  expect(data.returns!.find(r => r.lineId === line.id)!.refundCents).toBe(0);
+  expect(data.products.find(p => p.id === product.id)!.quantity).toBe(4);
+  await recordReturn(line.id, 1, false);
+  data = await loadShop();
+  expect(remaining(sale, data)).toBe(0);
+  expect(
+    data
+      .returns!.filter(r => r.lineId === line.id)
+      .reduce((sum, r) => sum + r.refundCents, 0),
+  ).toBe(10000);
+  expect(data.products.find(p => p.id === product.id)!.quantity).toBe(4);
+  expect(shopTotals(data, 'all').profitCents - baseline.profitCents).toBe(
+    -10000,
+  );
+  expect(shopTotals(data, 'all').collectedCents - baseline.collectedCents).toBe(
+    0,
+  );
+  await expect(recordReturn(line.id, 1, true)).rejects.toThrow(
+    'Return quantity',
+  );
+  await expect(recordRepayment(sale.id, 1)).rejects.toThrow();
+});
+
+test('stock corrections keep an audit trail and record missing inventory as a loss', async () => {
+  await addProduct({
+    name: 'Damage item',
+    unit: 'pieces',
+    quantity: 5,
+    costCents: 1000,
+    priceCents: 2000,
+    lowStock: 1,
+  });
+  const initial = await loadShop();
+  const product = initial.products.find(p => p.name === 'Damage item')!;
+  await correctStock(product.id, 3, 'Two broken');
+  await correctStock(product.id, 6, 'Found three more');
+  const data = await loadShop();
+  expect(data.products.find(p => p.id === product.id)!.quantity).toBe(6);
+  expect(
+    data
+      .adjustments!.filter(a => a.productId === product.id)
+      .map(a => a.quantityDelta),
+  ).toEqual([-2, 3]);
+  expect(
+    shopTotals(data, 'all').expenseCents -
+      shopTotals(initial, 'all').expenseCents,
+  ).toBe(2000);
+  await expect(correctStock(product.id, -1, 'Invalid')).rejects.toThrow();
+});
+
+test('supplier credit adds stock, tracks payments and never counts purchases as operating expenses', async () => {
+  await addSupplier('Credit supplier', '');
+  await addProduct({
+    name: 'Supplier item',
+    unit: 'pieces',
+    quantity: 0,
+    costCents: 0,
+    priceCents: 20000,
+    lowStock: 1,
+  });
+  const initial = await loadShop();
+  const supplier = initial.suppliers!.find(s => s.name === 'Credit supplier')!;
+  const product = initial.products.find(p => p.name === 'Supplier item')!;
+  await purchaseStock(supplier.id, product.id, 4, 10000, 10000);
+  let data = await loadShop();
+  const purchase = data.purchases!.find(p => p.supplierId === supplier.id)!;
+  expect(supplierOwed(data, purchase.id)).toBe(30000);
+  expect(data.products.find(p => p.id === product.id)!.quantity).toBe(4);
+  expect(data.products.find(p => p.id === product.id)!.costCents).toBe(10000);
+  await paySupplier(purchase.id, 20000);
+  data = await loadShop();
+  expect(supplierOwed(data, purchase.id)).toBe(10000);
+  expect(shopTotals(data, 'all').profitCents).toBe(
+    shopTotals(initial, 'all').profitCents,
+  );
+  await expect(paySupplier(purchase.id, 10001)).rejects.toThrow('Payment');
 });

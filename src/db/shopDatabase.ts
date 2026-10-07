@@ -2,6 +2,11 @@ import { t } from '../i18n';
 import SQLite from './sqliteRuntime';
 import {
   EMPTY_SHOP,
+  ShopReturn,
+  StockAdjustment,
+  ShopSupplier,
+  SupplierPurchase,
+  SupplierPayment,
   SaleInput,
   ShopCustomer,
   ShopData,
@@ -17,6 +22,8 @@ import {
   parseQuantity,
   prepareSale,
   remaining,
+  returnPreview,
+  supplierOwed,
   weightedCost,
 } from '../utils/shopUtils';
 
@@ -81,6 +88,26 @@ async function database(): Promise<ShopDatabase> {
           [],
         ],
         ['CREATE INDEX IF NOT EXISTS shop_line_sale ON lines(saleId)', []],
+        [
+          'CREATE TABLE IF NOT EXISTS returns (id TEXT PRIMARY KEY, saleId TEXT NOT NULL, lineId TEXT NOT NULL, date TEXT NOT NULL, quantity INTEGER NOT NULL, amountCents INTEGER NOT NULL, costCents INTEGER NOT NULL, refundCents INTEGER NOT NULL, restocked INTEGER NOT NULL)',
+          [],
+        ],
+        [
+          'CREATE TABLE IF NOT EXISTS adjustments (id TEXT PRIMARY KEY, productId TEXT NOT NULL, date TEXT NOT NULL, quantityDelta INTEGER NOT NULL, costCents INTEGER NOT NULL, reason TEXT NOT NULL)',
+          [],
+        ],
+        [
+          'CREATE TABLE IF NOT EXISTS suppliers (id TEXT PRIMARY KEY, name TEXT NOT NULL, phone TEXT NOT NULL)',
+          [],
+        ],
+        [
+          'CREATE TABLE IF NOT EXISTS purchases (id TEXT PRIMARY KEY, supplierId TEXT NOT NULL, productId TEXT NOT NULL, date TEXT NOT NULL, quantity INTEGER NOT NULL, costCents INTEGER NOT NULL, totalCents INTEGER NOT NULL)',
+          [],
+        ],
+        [
+          'CREATE TABLE IF NOT EXISTS supplierPayments (id TEXT PRIMARY KEY, purchaseId TEXT NOT NULL, date TEXT NOT NULL, amountCents INTEGER NOT NULL)',
+          [],
+        ],
       ]);
       return db;
     })().catch(error => {
@@ -109,8 +136,21 @@ async function read(): Promise<ShopData> {
       rows<ShopExpense>(db, 'expenses'),
       rows<ShopMovement>(db, 'movements'),
     ]);
+  const [returns, adjustments, suppliers, purchases, supplierPayments] =
+    await Promise.all([
+      rows<ShopReturn>(db, 'returns'),
+      rows<StockAdjustment>(db, 'adjustments'),
+      rows<ShopSupplier>(db, 'suppliers'),
+      rows<SupplierPurchase>(db, 'purchases'),
+      rows<SupplierPayment>(db, 'supplierPayments'),
+    ]);
   return {
     ...EMPTY_SHOP,
+    returns,
+    adjustments,
+    suppliers,
+    purchases,
+    supplierPayments,
     products,
     customers,
     sales,
@@ -330,5 +370,191 @@ export function editProduct(
         productId,
       ],
     );
+  });
+}
+
+export function recordReturn(
+  lineId: string,
+  quantity: number,
+  restocked: boolean,
+): Promise<void> {
+  return exclusive(async () => {
+    const data = await read();
+    const preview = returnPreview(data, lineId, quantity);
+    const date = stamp();
+    const statements: Statement[] = [
+      [
+        'INSERT INTO returns VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          id(),
+          preview.sale.id,
+          lineId,
+          date,
+          quantity,
+          preview.amountCents,
+          preview.costCents,
+          preview.refundCents,
+          restocked ? 1 : 0,
+        ],
+      ],
+    ];
+    if (restocked) {
+      const product = data.products.find(
+        item => item.id === preview.line.productId,
+      )!;
+      parseQuantity(String(product.quantity + quantity));
+      const cost = weightedCost(product, quantity, preview.line.costCents);
+      statements.push([
+        'UPDATE products SET quantity = ?, costCents = ? WHERE id = ?',
+        [product.quantity + quantity, cost, product.id],
+      ]);
+      statements.push([
+        'INSERT INTO movements VALUES (?, ?, ?, ?, ?, ?)',
+        [id(), product.id, date, 'return', quantity, preview.costCents],
+      ]);
+    }
+    const db = await database();
+    await db.sqlBatch(statements);
+  });
+}
+export function correctStock(
+  productId: string,
+  newQuantity: number,
+  reason: string,
+): Promise<void> {
+  return exclusive(async () => {
+    parseQuantity(String(newQuantity));
+    const data = await read();
+    const product = data.products.find(item => item.id === productId);
+    if (!product) throw new Error(t('Select a product.'));
+    assertMoney(newQuantity * product.costCents);
+    const delta = newQuantity - product.quantity;
+    if (!delta) throw new Error(t('Enter a different stock quantity.'));
+    const note = text(reason, t('Reason'));
+    const cost = Math.abs(delta) * product.costCents;
+    assertMoney(cost);
+    const adjustmentId = id(),
+      date = stamp();
+    const statements: Statement[] = [
+      [
+        'UPDATE products SET quantity = ? WHERE id = ?',
+        [newQuantity, productId],
+      ],
+      [
+        'INSERT INTO adjustments VALUES (?, ?, ?, ?, ?, ?)',
+        [adjustmentId, productId, date, delta, cost, note],
+      ],
+      [
+        'INSERT INTO movements VALUES (?, ?, ?, ?, ?, ?)',
+        [id(), productId, date, 'adjustment', delta, cost],
+      ],
+    ];
+    if (delta < 0 && cost > 0)
+      statements.push([
+        'INSERT INTO expenses VALUES (?, ?, ?, ?, ?)',
+        [
+          `adjustment-${adjustmentId}`,
+          date,
+          `${product.name}: ${note}`,
+          'Stock loss',
+          cost,
+        ],
+      ]);
+    const db = await database();
+    await db.sqlBatch(statements);
+  });
+}
+export function addSupplier(name: string, phone: string): Promise<void> {
+  return exclusive(async () => {
+    if (phone.trim().length > 40)
+      throw new Error(t('Phone number is too long.'));
+    const db = await database();
+    await db.executeSql('INSERT INTO suppliers VALUES (?, ?, ?)', [
+      id(),
+      text(name, t('Supplier name')),
+      phone.trim(),
+    ]);
+  });
+}
+export function purchaseStock(
+  supplierId: string,
+  productId: string,
+  quantity: number,
+  costCents: number,
+  paidCents: number,
+): Promise<void> {
+  return exclusive(async () => {
+    parseQuantity(String(quantity));
+    assertMoney(costCents);
+    assertMoney(paidCents);
+    const total = quantity * costCents;
+    assertMoney(total);
+    const data = await read();
+    const product = data.products.find(item => item.id === productId);
+    if (
+      !product ||
+      !(data.suppliers ?? []).some(item => item.id === supplierId)
+    )
+      throw new Error(t('Choose a product and supplier.'));
+    if (!quantity || !total || paidCents > total)
+      throw new Error(
+        t(
+          'Enter a positive purchase total and a payment no greater than that total.',
+        ),
+      );
+    parseQuantity(String(product.quantity + quantity));
+    const purchaseId = id(),
+      date = stamp();
+    const statements: Statement[] = [
+      [
+        'UPDATE products SET quantity = ?, costCents = ? WHERE id = ?',
+        [
+          product.quantity + quantity,
+          weightedCost(product, quantity, costCents),
+          productId,
+        ],
+      ],
+      [
+        'INSERT INTO movements VALUES (?, ?, ?, ?, ?, ?)',
+        [id(), productId, date, 'restock', quantity, total],
+      ],
+      [
+        'INSERT INTO purchases VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [purchaseId, supplierId, productId, date, quantity, costCents, total],
+      ],
+    ];
+    if (paidCents)
+      statements.push([
+        'INSERT INTO supplierPayments VALUES (?, ?, ?, ?)',
+        [id(), purchaseId, date, paidCents],
+      ]);
+    const db = await database();
+    await db.sqlBatch(statements);
+  });
+}
+export function paySupplier(
+  purchaseId: string,
+  amountCents: number,
+): Promise<void> {
+  return exclusive(async () => {
+    assertMoney(amountCents);
+    const data = await read();
+    if (
+      !(data.purchases ?? []).some(item => item.id === purchaseId) ||
+      amountCents <= 0 ||
+      amountCents > supplierOwed(data, purchaseId)
+    )
+      throw new Error(
+        t(
+          'Payment must be greater than zero and no more than the supplier debt.',
+        ),
+      );
+    const db = await database();
+    await db.executeSql('INSERT INTO supplierPayments VALUES (?, ?, ?, ?)', [
+      id(),
+      purchaseId,
+      stamp(),
+      amountCents,
+    ]);
   });
 }
