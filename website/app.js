@@ -6,11 +6,7 @@
 (function () {
   'use strict';
 
-  const FALLBACK_TAG = 'Latest';
-
-  // GitHub repository hosting the release APK
-  const REPO_OWNER = 'dan-seng';
-  const REPO_NAME = 'balance-tracker';
+  const FALLBACK_TAG = 'v1.1.0';
 
   // SVG Icons
   const ANDROID_ICON = `<svg class="os-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.413 13.8564 8 12 8s-3.5902.413-5.1368.9507L4.8409 5.4477a.416.416 0 00-.5676-.1521.416.416 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>`;
@@ -20,9 +16,9 @@
   const SUN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
   const MOON_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
 
-  // Default direct release URLs
+  // Serve the versioned APK bundled with this website deployment.
   const DEFAULT_URLS = {
-    androidApk: 'Hisab.apk',
+    androidApk: 'Hisab.apk?v=1.1.0',
     portfolio: 'https://daniii.dev'
   };
 
@@ -30,7 +26,7 @@
     tag: FALLBACK_TAG,
     urls: { ...DEFAULT_URLS },
     sizes: {
-      androidApk: '28 MB'
+      androidApk: '28.0 MB'
     }
   };
 
@@ -178,7 +174,7 @@
     } else {
       targetUrl = releaseData.urls.androidApk;
       label = `Download Android APK (${releaseData.sizes.androidApk})`;
-      meta = `${releaseData.tag} • Android 7.0+ (ARM64 & x86_64) • Direct Standalone APK`;
+      meta = `${releaseData.tag} • Android 7.0+ (32-bit & 64-bit ARM phones) • Direct Standalone APK`;
       activeKey = 'androidApk';
       iconSvg = ANDROID_ICON;
     }
@@ -214,41 +210,6 @@
         pill.classList.remove('active-pill');
       }
     });
-  }
-
-  /**
-   * Fetch Latest Release from GitHub API
-   */
-  async function fetchGitHubReleases() {
-    try {
-      const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`, {
-        headers: { Accept: 'application/vnd.github.v3+json' }
-      });
-
-      if (!response.ok) return;
-
-      const data = await response.json();
-      if (data.tag_name) {
-        releaseData.tag = data.tag_name;
-      }
-
-      if (Array.isArray(data.assets)) {
-        data.assets.forEach((asset) => {
-          const name = asset.name.toLowerCase();
-          const downloadUrl = asset.browser_download_url;
-          const size = formatBytes(asset.size);
-
-          if (name.endsWith('.apk')) {
-            releaseData.urls.androidApk = downloadUrl;
-            if (size) releaseData.sizes.androidApk = size;
-          }
-        });
-      }
-
-      updateDownloadButtons();
-    } catch (err) {
-      console.warn('Using fallback direct release paths:', err);
-    }
   }
 
   /**
@@ -311,7 +272,5 @@
 
     renderDownloadCount();
 
-    // Fetch real-time release info from GitHub API
-    fetchGitHubReleases();
   });
 })();
