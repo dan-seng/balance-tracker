@@ -14,9 +14,15 @@ Hisab is an Android app for tracking Ethiopian bank accounts from SMS and keepin
 
 ## Download
 
-[Download the latest Android APK](https://github.com/dan-seng/balance-tracker/releases/latest/download/Hisab.apk) · [All releases](https://github.com/dan-seng/balance-tracker/releases) · [Download page](https://dan-seng.github.io/balance-tracker/)
+[Download the current Android APK](https://github.com/dan-seng/balance-tracker/raw/refs/heads/main/website/Hisab.apk) · [GitHub releases](https://github.com/dan-seng/balance-tracker/releases) · [Website documentation](website/README.md)
 
 Allow installation from your browser or file manager if Android requests it. The repository's GitHub Actions release workflow builds and signs the APK.
+
+## Current release
+
+**Android v1.1.0** (version code 2) ships a signed, approximately **28 MB** APK for both `armeabi-v7a` and `arm64-v8a` phones. It requires Android 7.0 or newer and runs without Metro. The website serves its bundled APK instead of switching to a potentially older GitHub asset.
+
+See the [changelog](CHANGELOG.md) and [release instructions](docs/releasing.md).
 
 ## Features
 
@@ -39,12 +45,12 @@ Open **Shop** from the bottom navigation. The **How to use Shop** guide explains
 4. **Add an expense.** Record shop running costs such as rent, transport, wages or bills.
 5. **Record a debt payment.** Open Customers, choose the customer and unpaid sale, then enter their payment.
 
-**Daily totals** shows profit or loss, money received, and what customers owe. You can select today, this month or all time.
+**Daily totals** shows a compact profit/loss card. Tap **Details** to see the calculation. Money received and customer debt have separate rows; tap the debt row to open Customers. You can select today, this month or all time.
 
 | Total | What it means |
 | --- | --- |
-| Profit / loss | Sales minus the purchase cost of the items sold and shop expenses. Includes sales customers have not paid for yet. |
-| Money received | Sale payments and debt payments received in the selected period. |
+| Profit / loss | Sales after returns minus sold-item costs and shop expenses. Includes sales customers have not paid for yet. |
+| Money received | Sale payments and debt payments received in the selected period, minus refunds. |
 | Customers owe | All unpaid customer sales, regardless of the selected period. |
 
 For example, buying an item for **100 ETB** and selling it for **150 ETB** earns **50 ETB** before shop expenses. If the customer pays later, the sale still contributes to profit; their later payment increases money received without counting the sale twice.
@@ -56,6 +62,16 @@ Shop has its own SQLite database, works without SMS permission, and survives ban
 ### More shop tools
 
 Open **Shop → More shop tools** to record full or partial returns, correct stock counts with a reason, share a daily closing summary or customer statement, and track suppliers, stock purchases on credit and later payments. Returns automatically reduce unpaid customer balances and calculate any cash refund. Only saleable returns go back into stock; missing or damaged shelf stock is recorded as a loss.
+
+## Analytics and transaction reasons
+
+Choose **Week**, **Month** or **Year**, then use the arrows to browse earlier calendar periods:
+
+- Weeks run **Monday–Sunday**.
+- Months run from the **first through the last day** of that month.
+- Years run **January 1–December 31**.
+
+Under **Recent transactions**, tap an entry to add or edit a reason, such as lunch, rent or a customer payment. Three entries are previewed; **Show all recent transactions** expands up to ten in the selected report. Reasons support 200 characters. Saving a blank reason removes it. Amounts and original SMS text are unchanged, and reasons survive reimports and encrypted backup/restore. See [Analytics documentation](docs/analytics.md).
 
 ## Language settings
 
@@ -72,7 +88,7 @@ Open **Settings → Backup & restore** to create an encrypted file or restore on
 ### Requirements
 
 - Node.js **22.11.0 or newer**
-- Android Studio, Android SDK and a compatible Java environment
+- Android Studio, Android SDK 36, NDK `28.2.13676358` and JDK 17
 - An Android device or emulator
 - Python 3 for the SQLite integration tests
 
@@ -98,6 +114,15 @@ cd android
 ./gradlew app:assembleDebug -PreactNativeArchitectures=x86_64
 ```
 
+For an installable release APK supporting both ARM phone architectures:
+
+```sh
+cd android
+./gradlew app:assembleRelease -PreactNativeArchitectures=armeabi-v7a,arm64-v8a
+```
+
+The output is `android/app/build/outputs/apk/release/app-release.apk`. Use both ARM architectures when sharing an APK; a single-architecture build may be incompatible with another phone. See [release instructions](docs/releasing.md) for the website handoff.
+
 Bank imports require real bank SMS and SMS permissions. You can use Shop on an emulator without bank messages.
 
 ### Checks
@@ -108,9 +133,9 @@ npm test -- --runInBand
 npm run lint
 ```
 
-The current test suite has **55 tests** covering shop accounting and SQLite persistence, partial payments, sale drafts, first-product setup, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
+The current test suite has **55 tests** covering shop accounting and SQLite persistence, returns/refunds, stock losses, supplier debt, shared reports, calendar boundaries, transaction reasons, discard confirmation, language switching, preference restoration and save failures. The database integration tests execute real SQLite queries using Python 3 while replacing the Android bridge.
 
-Android emulator checks also verified startup, persisted Amharic selection, Nokia Pure rendering and the Shop guide. TypeScript, all tests and lint for changed files passed; the full-repository lint command may report existing issues in other files.
+The v1.1.0 release build, TypeScript, all 55 tests and lint for changed files passed. Earlier emulator checks verified startup, language persistence and encrypted backup/restore; the latest Shop layout and backup version 3 were build-checked without starting an emulator. Full-repository lint may report existing issues in other files.
 
 ## Architecture
 
@@ -145,3 +170,5 @@ Built with React Native, TypeScript, `react-native-sqlite-storage`, `react-nativ
 ## Future work
 
 CSV/PDF export, fractional quantities, taxes and multi-shop support are not implemented in the current Shop version. iOS support would require a different approach to bank-message imports.
+
+Developed by **Daniel Gidey**.

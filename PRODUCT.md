@@ -16,9 +16,9 @@ Turn bank SMS into local account records and give shop owners a practical daily 
 
 ## Capabilities and Constraints
 
-Existing implementation: React Native, TypeScript, native Android SMS access, ETB amounts, SQLite storage, biometric app lock, and local analytics. SMS import rebuilds its own account and transaction tables.
+Existing implementation: React Native, TypeScript, native Android SMS access, ETB amounts, SQLite storage, biometric app lock, English/Amharic interfaces and calendar analytics. Transaction reasons are stored separately by SMS hash. Restored bank history is preserved when importing messages.
 
-Confirmed Shop scope: stock, sales, expenses, profit, unpaid customer balances, and repayments. Shop records must survive SMS resyncs and app restarts. No cloud service or payment processing is part of this request.
+Implemented Shop scope: stock, sales, expenses, profit, customer debt/payments, returns/refunds, audited stock corrections, supplier credit/payments and shareable daily/customer reports. Shop records survive SMS resyncs and restarts. Manual encrypted file backup/restore includes bank data, Shop records, reasons and preferences. There is no Hisab cloud service or payment processing; users explicitly choose backup and share destinations.
 
 ## Operating Context
 
@@ -26,4 +26,4 @@ Owners currently write and calculate shop records using paper and pen. Workflows
 
 ## Open Decisions
 
-Supplier credit, taxes, multi-shop support, backup/export, and automatic matching of sales to SMS are outside the confirmed first-version scope.
+Taxes, multi-shop support, fractional quantities, CSV/PDF export and automatic reconciliation of shop sales with bank SMS remain outside the implemented scope.
