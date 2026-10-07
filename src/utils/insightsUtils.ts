@@ -46,8 +46,6 @@ export type Insights = {
   merchants: MerchantShare[];
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 function titleCase(name: string): string {
   return name
     .replace(/[.,;:!?]+$/, '')
@@ -76,7 +74,10 @@ export function extractMerchant(transaction: Transaction): string {
     const match = trimmed.match(pattern);
     if (match) {
       const candidate = (match[1] ?? match[2] ?? match[3] ?? '').trim();
-      if (candidate.length >= 2 && !/\b(?:etb|birr|currency|amt)\b/i.test(candidate)) {
+      if (
+        candidate.length >= 2 &&
+        !/\b(?:etb|birr|currency|amt)\b/i.test(candidate)
+      ) {
         return titleCase(candidate);
       }
     }
@@ -134,97 +135,124 @@ function parseStamp(transaction: Transaction): number {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function bucketWithAge(
+export function getReportPeriod(range: InsightRange, reference = Date.now()) {
+  const date = new Date(reference);
+  let start: Date;
+  let end: Date;
+  let previousStart: Date;
+  if (range === 'week') {
+    start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    previousStart = new Date(start);
+    previousStart.setDate(previousStart.getDate() - 7);
+  } else if (range === 'month') {
+    start = new Date(date.getFullYear(), date.getMonth(), 1);
+    end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+    previousStart = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+  } else {
+    start = new Date(date.getFullYear(), 0, 1);
+    end = new Date(date.getFullYear() + 1, 0, 1);
+    previousStart = new Date(date.getFullYear() - 1, 0, 1);
+  }
+  return { start, end, previousStart };
+}
+
+export function shiftReportPeriod(
+  range: InsightRange,
+  reference: number,
+  direction: number,
+): number {
+  const { start } = getReportPeriod(range, reference);
+  if (range === 'week') start.setDate(start.getDate() + direction * 7);
+  else if (range === 'month') start.setMonth(start.getMonth() + direction);
+  else start.setFullYear(start.getFullYear() + direction);
+  return start.getTime();
+}
+
+function calendarBars(
   transactions: Transaction[],
-  bucketCount: number,
-  daysPerBucket: number,
-  labelFor: (index: number, day: Date) => string,
-  now: number,
+  range: InsightRange,
+  start: Date,
+  end: Date,
 ): InsightBar[] {
-  const buckets: InsightBar[] = Array.from(
-    { length: bucketCount },
-    (_, index) => ({
-      label: labelFor(
-        index,
-        new Date(now - (bucketCount - 1 - index) * daysPerBucket * DAY_MS),
-      ),
-      value: 0,
-    }),
-  );
-
-  for (const item of transactions) {
-    const stamp = parseStamp(item);
-    if (stamp === 0 || item.type !== 'debit') {
-      continue;
+  const intervals: { start: Date; end: Date; label: string }[] = [];
+  let cursor = new Date(start);
+  while (cursor < end) {
+    let next: Date;
+    let label: string;
+    if (range === 'year') {
+      next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      label = cursor.toLocaleDateString(getLocale(), { month: 'short' });
+    } else {
+      next = new Date(cursor);
+      next.setDate(
+        next.getDate() +
+          (range === 'week' ? 1 : 7 - ((cursor.getDay() + 6) % 7)),
+      );
+      if (next > end) next = new Date(end);
+      const last = new Date(next);
+      last.setDate(last.getDate() - 1);
+      label =
+        range === 'week'
+          ? cursor.toLocaleDateString(getLocale(), { weekday: 'short' })
+          : cursor.getDate() === last.getDate()
+          ? String(cursor.getDate())
+          : `${cursor.getDate()}–${last.getDate()}`;
     }
-    const ageDays = Math.floor((now - stamp) / DAY_MS);
-    if (ageDays < 0) {
-      continue;
-    }
-    const index = bucketCount - 1 - ageDays;
-    if (index >= 0 && index < bucketCount) {
-      buckets[index].value += item.amount;
-    }
+    intervals.push({ start: cursor, end: next, label });
+    cursor = next;
   }
-
-  return buckets;
+  return intervals.map(interval => ({
+    label: interval.label,
+    value: transactions.reduce((sum, item) => {
+      const stamp = parseStamp(item);
+      return stamp >= interval.start.getTime() && stamp < interval.end.getTime()
+        ? sum + item.amount
+        : sum;
+    }, 0),
+  }));
 }
-
-function bucketByMonth(transactions: Transaction[], now: number): InsightBar[] {
-  const current = new Date(now);
-  const buckets: InsightBar[] = Array.from({ length: 12 }, (_, index) => {
-    const monthDate = new Date(
-      current.getFullYear(),
-      current.getMonth() - (11 - index),
-      1,
-    );
-    return {
-      label: monthDate.toLocaleDateString(getLocale(), { month: 'short' }),
-      value: 0,
-    };
-  });
-
-  const monthKey = (date: Date) =>
-    `${date.getFullYear()}-${date.getMonth()}`;
-
-  for (const item of transactions) {
-    const stamp = parseStamp(item);
-    if (stamp === 0 || item.type !== 'debit') {
-      continue;
-    }
-    const date = new Date(stamp);
-    const key = monthKey(date);
-    const index = buckets.findIndex(
-      (_, i) =>
-        monthKey(
-          new Date(current.getFullYear(), current.getMonth() - (11 - i), 1),
-        ) === key,
-    );
-    if (index >= 0) {
-      buckets[index].value += item.amount;
-    }
-  }
-
-  return buckets;
-}
-
-const RANGE_CONFIG: Record<
-  InsightRange,
-  { days: number; periodLabel: string; barsTitle: string }
-> = {
-  week: { days: 7, periodLabel: 'This week', barsTitle: 'Spending by day' },
-  month: { days: 30, periodLabel: 'This month', barsTitle: 'Spending by week' },
-  year: { days: 365, periodLabel: 'This year', barsTitle: 'Spending by month' },
-};
 
 export function getInsights(
   transactions: Transaction[],
   range: InsightRange,
+  reference = Date.now(),
 ): Insights {
-  const { days, periodLabel, barsTitle } = RANGE_CONFIG[range];
-  const now = Date.now();
-  const currentStart = now - days * DAY_MS;
-  const previousStart = now - 2 * days * DAY_MS;
+  const {
+    start,
+    end,
+    previousStart: previousDate,
+  } = getReportPeriod(range, reference);
+  const currentStart = start.getTime();
+  const currentEnd = end.getTime();
+  const previousStart = previousDate.getTime();
+  const last = new Date(end);
+  last.setDate(last.getDate() - 1);
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  };
+  const periodLabel =
+    range === 'year'
+      ? start.toLocaleDateString(getLocale(), { year: 'numeric' })
+      : range === 'month'
+      ? start.toLocaleDateString(getLocale(), {
+          month: 'long',
+          year: 'numeric',
+        })
+      : `${start.toLocaleDateString(
+          getLocale(),
+          dateOptions,
+        )} – ${last.toLocaleDateString(getLocale(), dateOptions)}`;
+  const barsTitle =
+    range === 'year'
+      ? 'Spending by month'
+      : range === 'month'
+      ? 'Spending by week'
+      : 'Spending by day';
 
   const currentItems: Transaction[] = [];
   let totalIncome = 0;
@@ -238,32 +266,18 @@ export function getInsights(
     }
 
     if (item.type === 'debit') {
-      if (stamp >= currentStart && stamp <= now) {
+      if (stamp >= currentStart && stamp < currentEnd) {
         currentItems.push(item);
         totalSpend += item.amount;
       } else if (stamp >= previousStart && stamp < currentStart) {
         previousSpend += item.amount;
       }
-    } else if (stamp >= currentStart && stamp <= now) {
+    } else if (stamp >= currentStart && stamp < currentEnd) {
       totalIncome += item.amount;
     }
   }
 
-  let bars: InsightBar[];
-  if (range === 'year') {
-    bars = bucketByMonth(currentItems, now);
-  } else {
-    bars = bucketWithAge(
-      currentItems,
-      range === 'week' ? 7 : 5,
-      range === 'week' ? 1 : 6,
-      (index, day) =>
-        range === 'week'
-          ? day.toLocaleDateString(getLocale(), { weekday: 'short' })
-          : t('W{number}', { number: index + 1 }),
-      now,
-    );
-  }
+  const bars = calendarBars(currentItems, range, start, end);
 
   const maxBar = bars.reduce((max, bar) => Math.max(max, bar.value), 0);
 
@@ -281,7 +295,10 @@ export function getInsights(
     }))
     .sort((left, right) => right.amount - left.amount);
 
-  const merchantMap = new Map<string, { amount: number; count: number; category: SpendCategory }>();
+  const merchantMap = new Map<
+    string,
+    { amount: number; count: number; category: SpendCategory }
+  >();
   for (const item of currentItems) {
     const name = extractMerchant(item);
     const entry = merchantMap.get(name) ?? {
