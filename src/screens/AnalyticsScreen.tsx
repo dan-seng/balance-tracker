@@ -179,18 +179,6 @@ export function AnalyticsScreen({
           </Text>
         </View>
 
-        <RecentTransactions
-          key={`${range}-${reportPeriod.start.getTime()}`}
-          transactions={transactions.filter(item => {
-            const timestamp = Date.parse(item.date);
-            return (
-              timestamp >= reportPeriod.start.getTime() &&
-              timestamp < reportPeriod.end.getTime()
-            );
-          })}
-          onSave={onReasonSave}
-        />
-
         {isEmpty ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>{t('Nothing to show yet')}</Text>
@@ -314,52 +302,66 @@ export function AnalyticsScreen({
                 </View>
               </View>
             </View>
+          </>
+        )}
 
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t('Top merchants')}</Text>
-              {merchants.length === 0 ? (
-                <Text style={styles.legendEmpty}>{t('No merchants yet.')}</Text>
-              ) : (
-                merchants.map((merchant, index) => {
-                  const color = SPEND_CATEGORY_COLORS[merchant.category];
-                  const isLast = index === merchants.length - 1;
+        <RecentTransactions
+          key={`${range}-${reportPeriod.start.getTime()}`}
+          transactions={transactions.filter(item => {
+            const timestamp = Date.parse(item.date);
+            return (
+              timestamp >= reportPeriod.start.getTime() &&
+              timestamp < reportPeriod.end.getTime()
+            );
+          })}
+          onSave={onReasonSave}
+        />
 
-                  return (
+        {!isEmpty && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>{t('Top merchants')}</Text>
+            {merchants.length === 0 ? (
+              <Text style={styles.legendEmpty}>{t('No merchants yet.')}</Text>
+            ) : (
+              merchants.map((merchant, index) => {
+                const color = SPEND_CATEGORY_COLORS[merchant.category];
+                const isLast = index === merchants.length - 1;
+
+                return (
+                  <View
+                    key={`${merchant.name}-${index}`}
+                    style={[
+                      styles.merchantRow,
+                      !isLast && styles.merchantRowBorder,
+                    ]}
+                  >
                     <View
-                      key={`${merchant.name}-${index}`}
                       style={[
-                        styles.merchantRow,
-                        !isLast && styles.merchantRowBorder,
+                        styles.merchantIcon,
+                        { backgroundColor: `${color}29` },
                       ]}
                     >
-                      <View
-                        style={[
-                          styles.merchantIcon,
-                          { backgroundColor: `${color}29` },
-                        ]}
-                      >
-                        <Text style={[styles.merchantLetter, { color }]}>
-                          {merchant.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <View style={styles.merchantBody}>
-                        <Text style={styles.merchantName} numberOfLines={1}>
-                          {merchant.name}
-                        </Text>
-                        <Text style={styles.merchantMeta}>
-                          {merchant.count} {t('TXNS ·')}{' '}
-                          {Math.round(merchant.pct)}%
-                        </Text>
-                      </View>
-                      <Text style={styles.merchantAmount}>
-                        {t('ETB')} {fmt(merchant.amount)}
+                      <Text style={[styles.merchantLetter, { color }]}>
+                        {merchant.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
-                  );
-                })
-              )}
-            </View>
-          </>
+                    <View style={styles.merchantBody}>
+                      <Text style={styles.merchantName} numberOfLines={1}>
+                        {merchant.name}
+                      </Text>
+                      <Text style={styles.merchantMeta}>
+                        {merchant.count} {t('TXNS ·')}{' '}
+                        {Math.round(merchant.pct)}%
+                      </Text>
+                    </View>
+                    <Text style={styles.merchantAmount}>
+                      {t('ETB')} {fmt(merchant.amount)}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
+          </View>
         )}
 
         <View style={styles.tabSpacer} />

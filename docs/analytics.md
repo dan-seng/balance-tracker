@@ -12,7 +12,7 @@ Use the left/right arrows to view earlier periods and return to the current one.
 
 ## Add or edit a reason
 
-1. Find Recent transactions below the spending total.
+1. Find Recent transactions after the spending graph and chart.
 2. Tap a transaction and write its reason, up to 200 characters.
 3. Choose Save reason. Leave the field blank to remove an existing reason.
 
