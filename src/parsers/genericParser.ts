@@ -16,7 +16,9 @@ type BankMatcher = {
 
 let CUSTOM_BANKS: BankMatcher[] = [];
 
-export function setCustomBanks(banks: Array<{ bankId: string; bankName: string; senderId: string }>) {
+export function setCustomBanks(
+  banks: Array<{ bankId: string; bankName: string; senderId: string }>,
+) {
   CUSTOM_BANKS = banks.map(bank => ({
     bankId: bank.bankId as BankId,
     bankName: bank.bankName,
@@ -154,7 +156,10 @@ function detectTransactionType(message: string): 'credit' | 'debit' | null {
   return null;
 }
 
-function extractAmount(message: string, type: 'credit' | 'debit'): number | null {
+function extractAmount(
+  message: string,
+  type: 'credit' | 'debit',
+): number | null {
   const directionalPatterns =
     type === 'credit'
       ? [
@@ -217,38 +222,23 @@ function extractBalance(message: string): number | null {
   return null;
 }
 
-// Extracts a full or masked account number from an SMS body.
-// Returns null when the body carries no usable account reference.
+// Only explicit owner-account labels identify an account. Unlabelled numbers
+// and masked references can belong to recipients, phones or transaction IDs.
 export function extractAccountNumberHint(message: string): string | null {
-  // Labeled forms: "Acct: 1000473248437", "A/C ****1234", "Account Number ..." 
-  const labeled =
-    message.match(
-      /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|#|number)?\s*[:=-]?\s*([*Xx\u2022\u25CF#]{0,4}[\d][\d\s-]{3,17}[\d])\b/i,
-    ) ||
-    message.match(
-      /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|#|number)?\s*[:=-]?\s*(\*\*[*\d]{2,6})\b/i,
-    );
-
-  if (labeled) {
-    return labeled[1].trim().replace(/\s+/g, '');
+  const pattern =
+    /\b(?:acct\.?|account|a\/c)\s*(?:no\.?|number|#)?\s*(?:ending\s+(?:in|with)|is)?\s*[:=-]?\s*((?:[*xX•●#]{1,16}\s*\d{4,16})|(?:\d(?:[ -]?\d){3,17}))(?!\d)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(message)) !== null) {
+    const before = message.slice(0, match.index);
+    // "to account", "recipient account", etc. identify the other party.
+    if (
+      /(?:\bto|\bfrom|recipient(?:'s)?|beneficiary(?:'s)?|receiver(?:'s)?|sender(?:'s)?)\s*(?:bank\s+)?$/i.test(
+        before,
+      )
+    )
+      continue;
+    return match[1].replace(/[\s-]/g, '');
   }
-
-  // Bare masked tails like "****1234" or "•••• 5678"
-  const masked = message.match(/\*{2,5}[\d]{2,6}\b/i) ||
-    message.match(/[\u2022\u25CF\u2023]{2,4}[\d]{2,6}\b/);
-  if (masked) {
-    return masked[0].replace(/\s+/g, '');
-  }
-
-  // Standalone long numeric sequence (10-16 digits) that is neither amount nor
-  // balance — amount/balance numbers always carry a currency marker in practice.
-  const standalone = message.match(
-    /(?<![.\d,])(\d{4,6}[- ]?\d{3,6}[- ]?\d{3,6}|\d{10,16})(?![.\d])/,
-  );
-  if (standalone && standalone[1]) {
-    return standalone[1].replace(/[\s-]/g, '');
-  }
-
   return null;
 }
 
@@ -258,6 +248,8 @@ export function parseGenericSms(
 ): ParsedSms | null {
   const normalized = message.trim();
   const detectedBank = detectBank(sender);
+  // Unknown senders must be explicitly added as a custom bank first.
+  if (detectedBank.bankId === 'unknown') return null;
 
   const type = detectTransactionType(normalized);
   if (!type) {
@@ -273,17 +265,9 @@ export function parseGenericSms(
   const confidence: 'high' | 'medium' | 'low' =
     balance != null ? 'high' : 'medium';
 
-  // For unknown banks, use sender as bank name and generate a bank ID
-  const bankId = detectedBank.bankId === 'unknown'
-    ? `custom-${normalizeSender(sender)}`
-    : detectedBank.bankId;
-  const bankName = detectedBank.bankId === 'unknown'
-    ? sender || 'Unknown Bank'
-    : detectedBank.bankName;
-
   return {
-    bankId,
-    bankName,
+    bankId: detectedBank.bankId,
+    bankName: detectedBank.bankName,
     sender,
     type,
     amount,

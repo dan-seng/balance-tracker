@@ -1,6 +1,18 @@
+import { setCustomBanks } from '../src/parsers/genericParser';
 import { parseSms } from '../src/services/parserService';
 
 describe('parseSms sender gating', () => {
+  afterEach(() => setCustomBanks([]));
+
+  test('ignores Safaricom even if configured as a custom bank', () => {
+    setCustomBanks([{ bankId: 'custom-safaricom', bankName: 'Safaricom', senderId: 'Safaricom' }]);
+    const message = 'Payment received ETB 200. Available balance ETB 900.';
+    for (const sender of ['Safaricom', 'SAFARICOM', 'safaricom', ' Safaricom ']) {
+      expect(parseSms(message, sender)).toBeNull();
+    }
+    expect(parseSms(message, 'mpesa')?.bankId).toBe('mpesa');
+  });
+
   test('ignores the 251994 sender so it is never read as a bank or wallet', () => {
     // Matches the generic credit patterns, so this was previously parsed into a
     // "custom-251994" account before the ignore list existed.

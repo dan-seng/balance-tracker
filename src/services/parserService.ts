@@ -5,7 +5,7 @@ import { parseGenericSms } from '../parsers/genericParser';
 
 // Senders that must never be read as a bank account or wallet, even when they
 // otherwise match the generic transaction patterns (e.g. service shortcodes).
-const IGNORED_SENDERS = new Set(['251994']);
+const IGNORED_SENDERS = new Set(['251994', 'SAFARICOM']);
 
 export function parseSms(message: string, sender: string): ParsedSms | null {
   const normalizedSender = sender.trim().toUpperCase();
