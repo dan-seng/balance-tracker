@@ -43,11 +43,16 @@ export type ShopMovement = {
   id: string;
   productId: string;
   date: string;
-  kind: 'opening' | 'restock' | 'sale';
+  kind: 'opening' | 'restock' | 'sale' | 'return' | 'adjustment';
   quantity: number;
   amountCents: number;
 };
 export type ShopData = {
+  returns?: ShopReturn[];
+  adjustments?: StockAdjustment[];
+  suppliers?: ShopSupplier[];
+  purchases?: SupplierPurchase[];
+  supplierPayments?: SupplierPayment[];
   products: ShopProduct[];
   customers: ShopCustomer[];
   sales: ShopSale[];
@@ -62,6 +67,11 @@ export type SaleInput = {
   priceCents: number;
 };
 export const EMPTY_SHOP: ShopData = {
+  returns: [],
+  adjustments: [],
+  suppliers: [],
+  purchases: [],
+  supplierPayments: [],
   products: [],
   customers: [],
   sales: [],
@@ -69,4 +79,40 @@ export const EMPTY_SHOP: ShopData = {
   payments: [],
   expenses: [],
   movements: [],
+};
+
+export type ShopReturn = {
+  id: string;
+  saleId: string;
+  lineId: string;
+  date: string;
+  quantity: number;
+  amountCents: number;
+  costCents: number;
+  refundCents: number;
+  restocked: number;
+};
+export type StockAdjustment = {
+  id: string;
+  productId: string;
+  date: string;
+  quantityDelta: number;
+  costCents: number;
+  reason: string;
+};
+export type ShopSupplier = { id: string; name: string; phone: string };
+export type SupplierPurchase = {
+  id: string;
+  supplierId: string;
+  productId: string;
+  date: string;
+  quantity: number;
+  costCents: number;
+  totalCents: number;
+};
+export type SupplierPayment = {
+  id: string;
+  purchaseId: string;
+  date: string;
+  amountCents: number;
 };

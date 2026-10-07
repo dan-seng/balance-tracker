@@ -33,6 +33,9 @@ export function money(cents: number): string {
 export function remaining(sale: ShopSale, data: ShopData): number {
   return (
     sale.totalCents -
+    (data.returns ?? [])
+      .filter(r => r.saleId === sale.id)
+      .reduce((sum, r) => sum + r.amountCents - r.refundCents, 0) -
     data.payments
       .filter(p => p.saleId === sale.id)
       .reduce((sum, p) => sum + p.amountCents, 0)
@@ -104,14 +107,23 @@ export function shopTotals(
     period === 'all' ||
     (Date.parse(date) >= start.getTime() && Date.parse(date) <= now.getTime());
   const sales = data.sales.filter(s => within(s.date));
-  const salesCents = sales.reduce((sum, s) => sum + s.totalCents, 0);
-  const costCents = sales.reduce((sum, s) => sum + s.costCents, 0);
+  const returns = (data.returns ?? []).filter(r => within(r.date));
+  const salesCents =
+    sales.reduce((sum, s) => sum + s.totalCents, 0) -
+    returns.reduce((sum, r) => sum + r.amountCents, 0);
+  const costCents =
+    sales.reduce((sum, s) => sum + s.costCents, 0) -
+    returns
+      .filter(r => r.restocked === 1)
+      .reduce((sum, r) => sum + r.costCents, 0);
   const expenseCents = data.expenses
     .filter(e => within(e.date))
     .reduce((sum, e) => sum + e.amountCents, 0);
-  const collectedCents = data.payments
-    .filter(p => within(p.date))
-    .reduce((sum, p) => sum + p.amountCents, 0);
+  const collectedCents =
+    data.payments
+      .filter(p => within(p.date))
+      .reduce((sum, p) => sum + p.amountCents, 0) -
+    returns.reduce((sum, r) => sum + r.refundCents, 0);
   const outstandingCents = data.sales.reduce(
     (sum, s) => sum + remaining(s, data),
     0,
@@ -129,4 +141,52 @@ export function shopTotals(
     stockValueCents,
     profitCents: salesCents - costCents - expenseCents,
   };
+}
+
+export function returnPreview(
+  data: ShopData,
+  lineId: string,
+  quantity: number,
+) {
+  const line = data.lines.find(item => item.id === lineId);
+  const returned = (data.returns ?? [])
+    .filter(item => item.lineId === lineId)
+    .reduce((sum, item) => sum + item.quantity, 0);
+  if (
+    !line ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0 ||
+    quantity > line.quantity - returned
+  )
+    throw new Error(
+      t('Return quantity must not exceed the items still eligible for return.'),
+    );
+  const sale = data.sales.find(item => item.id === line.saleId)!;
+  const prior = (data.returns ?? []).filter(item => item.saleId === sale.id);
+  const amountCents = quantity * line.priceCents;
+  const netSale =
+    sale.totalCents -
+    prior.reduce((sum, item) => sum + item.amountCents, 0) -
+    amountCents;
+  const netPaid =
+    data.payments
+      .filter(item => item.saleId === sale.id)
+      .reduce((sum, item) => sum + item.amountCents, 0) -
+    prior.reduce((sum, item) => sum + item.refundCents, 0);
+  return {
+    line,
+    sale,
+    amountCents,
+    costCents: quantity * line.costCents,
+    refundCents: Math.max(0, netPaid - netSale),
+  };
+}
+export function supplierOwed(data: ShopData, purchaseId: string): number {
+  const purchase = (data.purchases ?? []).find(item => item.id === purchaseId);
+  return (
+    (purchase?.totalCents ?? 0) -
+    (data.supplierPayments ?? [])
+      .filter(item => item.purchaseId === purchaseId)
+      .reduce((sum, item) => sum + item.amountCents, 0)
+  );
 }
